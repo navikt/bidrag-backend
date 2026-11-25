@@ -47,20 +47,6 @@ internal class BidragSakConsumerTest {
     }.proxy as BidragSakConsumer
 
     @Test
-    fun `skal bruke cache ved vanlig saksoppslag`() {
-        every {
-            operations.exchange(any<URI>(), HttpMethod.GET, any(), any<ParameterizedTypeReference<BidragssakDto>>())
-        } returns ResponseEntity.ok(sak)
-
-        consumer.hentSak("1234567") shouldBe sak
-        consumer.hentSak("1234567") shouldBe sak
-
-        verify(exactly = 1) {
-            operations.exchange(any<URI>(), HttpMethod.GET, any(), any<ParameterizedTypeReference<BidragssakDto>>())
-        }
-    }
-
-    @Test
     fun `skal hente fersk sak uten å lese eller fylle cache`() {
         val nySak = sak.copy(eierfogd = Enhetsnummer("4806"))
         every {

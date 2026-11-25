@@ -1,5 +1,6 @@
 package no.nav.bidrag.arbeidsflyt.hendelse
 
+import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.get
@@ -37,6 +38,7 @@ import no.nav.bidrag.transport.sak.FogdhistorikkDto
 import no.nav.bidrag.transport.sak.SakHendelse
 import no.nav.bidrag.transport.sak.SakKafkaHendelsestype
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.transaction.PlatformTransactionManager
@@ -84,339 +86,323 @@ internal class SakHendelseTest : AbstractBehandleHendelseTest() {
         enableUnleashFeature(UnleashFeatures.FLYTT_OPPGAVER_VED_ENHETSBYTTE)
     }
 
-    @Test
-    fun `skal bare flytte oppgaver fra enheten saken ble flyttet fra`() {
-        stubOppgaver(listOf(oppgave, oppgave.copy(id = 1002, tildeltEnhetsnr = "4802"), oppgave.copy(id = 1003, tema = "FAR")))
+    @Nested
+    inner class Flytting {
+        @Test
+        fun `skal bare flytte oppgaver fra enheten saken ble flyttet fra`() {
+            stubOppgaver(listOf(oppgave, oppgave.copy(id = 1002, tildeltEnhetsnr = "4802"), oppgave.copy(id = 1003, tema = "FAR")))
 
-        service.behandleHendelse(hendelse)
+            service.behandleHendelse(hendelse)
 
-        verify(
-            1,
-            patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1001"))
-                .withRequestBody(matchingJsonPath("$.versjon", equalTo("3")))
-                .withRequestBody(matchingJsonPath("$.tildeltEnhetsnr", equalTo("4806")))
-                .withRequestBody(matchingJsonPath("$.status", equalTo("OPPRETTET"))),
-        )
-        verify(0, patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1002")))
-        verify(1, patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1003")))
-    }
-
-    @Test
-    fun `skal lagre ny eierfogd etter flytting`() {
-        service.behandleHendelse(hendelse)
-
-        testDataGenerator.hentSak("1234567")!!.eierfogd shouldBe "4806"
-    }
-
-    @Test
-    fun `skal bare lagre eierfogd når flagget er av`() {
-        disableUnleashFeature(UnleashFeatures.FLYTT_OPPGAVER_VED_ENHETSBYTTE)
-
-        service.behandleHendelse(hendelse)
-
-        verify(0, getRequestedFor(urlPathEqualTo("/oppgave/api/v1/oppgaver/")))
-        testDataGenerator.hentSak("1234567")!!.eierfogd shouldBe "4806"
-    }
-
-    @Test
-    fun `skal bruke fogdhistorikk når saken ikke er lagret`() {
-        testDataGenerator.sakRepository.deleteAll()
-        stubFogdhistorikk(
-            listOf(
-                eier(1, "4802", LocalDate.now().minusYears(1)),
-                eier(2, "4833", LocalDate.now()),
-                eier(3, "4806", null),
-            ),
-        )
-
-        service.behandleHendelse(hendelse)
-
-        verify(1, patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1001")))
-        testDataGenerator.hentSak("1234567")!!.eierfogd shouldBe "4806"
-    }
-
-    @Test
-    fun `skal ikke flytte når saken ikke er lagret og eierfogd ikke er endret nylig`() {
-        testDataGenerator.sakRepository.deleteAll()
-        stubFogdhistorikk(
-            listOf(
-                eier(1, "4833", LocalDate.now().minusYears(1)),
-                eier(2, "4806", null),
-            ),
-        )
-
-        service.behandleHendelse(hendelse)
-
-        verify(0, getRequestedFor(urlPathEqualTo("/oppgave/api/v1/oppgaver/")))
-        testDataGenerator.hentSak("1234567")!!.eierfogd shouldBe "4806"
-    }
-
-    @Test
-    fun `skal flytte til dagens eierfogd når saken er flyttet videre`() {
-        stubHentSak(sak.copy(eierfogd = Enhetsnummer("4802")))
-
-        service.behandleHendelse(hendelse)
-
-        verify(
-            1,
-            patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1001"))
-                .withRequestBody(matchingJsonPath("$.tildeltEnhetsnr", equalTo("4802"))),
-        )
-    }
-
-    @Test
-    fun `skal ikke flytte oppgaver når saken er flyttet tilbake`() {
-        stubHentSak(sak.copy(eierfogd = Enhetsnummer("4833")))
-
-        service.behandleHendelse(hendelse)
-
-        verify(0, getRequestedFor(urlPathEqualTo("/oppgave/api/v1/oppgaver/")))
-    }
-
-    @Test
-    fun `skal beholde saksbehandler som tilhører ny enhet`() {
-        stubOppgaver(listOf(oppgave.copy(tilordnetRessurs = "Z123456")))
-        stubFor(
-            get("/organisasjon/saksbehandler/enhetsliste/Z123456").willReturn(
-                aResponse()
-                    .withHeader("Content-Type", "application/json")
-                    .withBody(objectMapper.writeValueAsString(listOf(EnhetDto(Enhetsnummer("4806"))))),
-            ),
-        )
-
-        service.behandleHendelse(hendelse)
-
-        val request = hentPatch()
-        request.has("tilordnetRessurs") shouldBe false
-        request["tildeltEnhetsnr"].asText() shouldBe "4806"
-        request["status"].asText() shouldBe "OPPRETTET"
-    }
-
-    @Test
-    fun `skal fjerne saksbehandler som ikke tilhører ny enhet`() {
-        stubOppgaver(listOf(oppgave.copy(tilordnetRessurs = "Z123456")))
-        stubFor(
-            get("/organisasjon/saksbehandler/enhetsliste/Z123456").willReturn(
-                aResponse()
-                    .withHeader("Content-Type", "application/json")
-                    .withBody(objectMapper.writeValueAsString(listOf(EnhetDto(Enhetsnummer("4833"))))),
-            ),
-        )
-
-        service.behandleHendelse(hendelse)
-
-        hentPatch()["tilordnetRessurs"].asText() shouldBe ""
-    }
-
-    @Test
-    fun `skal fjerne saksbehandler når organisasjon returnerer ingen enheter`() {
-        stubOppgaver(listOf(oppgave.copy(tilordnetRessurs = "Z123456")))
-        stubFor(get("/organisasjon/saksbehandler/enhetsliste/Z123456").willReturn(aResponse().withStatus(204)))
-
-        service.behandleHendelse(hendelse)
-
-        hentPatch()["tilordnetRessurs"].asText() shouldBe ""
-    }
-
-    @Test
-    fun `skal fjerne saksbehandler når organisasjon ikke finner saksbehandleren`() {
-        stubOppgaver(listOf(oppgave.copy(tilordnetRessurs = "Z123456")))
-        stubFor(get("/organisasjon/saksbehandler/enhetsliste/Z123456").willReturn(aResponse().withStatus(404)))
-
-        service.behandleHendelse(hendelse)
-
-        hentPatch()["tilordnetRessurs"].asText() shouldBe ""
-    }
-
-    @Test
-    fun `skal ikke tolke ugyldig tomt enhetssvar som manglende medlemskap`() {
-        stubOppgaver(listOf(oppgave.copy(tilordnetRessurs = "Z123456")))
-        stubFor(get("/organisasjon/saksbehandler/enhetsliste/Z123456").willReturn(aResponse().withStatus(200)))
-
-        shouldThrow<RuntimeException> { service.behandleHendelse(hendelse) }
-
-        verify(0, patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1001")))
-    }
-
-    @Test
-    fun `skal bruke mappe med samme navn i ny enhet og samme tema`() {
-        stubOppgaver(listOf(oppgave.copy(mappeId = "10")))
-        stubMappe()
-        stubMapper(listOf(MappeDto(20, "4806", "Annen mappe"), MappeDto(30, "4806", "Til behandling")))
-
-        service.behandleHendelse(hendelse)
-
-        hentPatch()["mappeId"].asInt() shouldBe 30
-        verify(
-            1,
-            getRequestedFor(urlPathEqualTo("/oppgave/api/v1/mapper"))
-                .withQueryParam("enhetsnr", equalTo("4806"))
-                .withQueryParam("tema", equalTo("BID")),
-        )
-    }
-
-    @Test
-    fun `skal nullstille mappe eksplisitt når tilsvarende mappe ikke finnes`() {
-        stubOppgaver(listOf(oppgave.copy(mappeId = "10")))
-        stubMappe()
-        stubMapper(listOf(MappeDto(20, "4806", "Annen mappe")))
-
-        service.behandleHendelse(hendelse)
-
-        val request = hentPatch()
-        request.has("mappeId") shouldBe true
-        request["mappeId"].isNull shouldBe true
-    }
-
-    @Test
-    fun `skal finne tilsvarende mappe på neste side`() {
-        stubOppgaver(listOf(oppgave.copy(mappeId = "10")))
-        stubMappe()
-        stubFor(
-            get(urlPathEqualTo("/oppgave/api/v1/mapper"))
-                .withQueryParam("offset", equalTo("0"))
-                .willReturn(
-                    aResponse().withHeader("Content-Type", "application/json")
-                        .withBody(objectMapper.writeValueAsString(MapperResponse(2, listOf(MappeDto(20, "4806", "Annen mappe"))))),
-                ),
-        )
-        stubFor(
-            get(urlPathEqualTo("/oppgave/api/v1/mapper"))
-                .withQueryParam("offset", equalTo("1"))
-                .willReturn(
-                    aResponse().withHeader("Content-Type", "application/json")
-                        .withBody(objectMapper.writeValueAsString(MapperResponse(2, listOf(MappeDto(30, "4806", "Til behandling"))))),
-                ),
-        )
-
-        service.behandleHendelse(hendelse)
-
-        hentPatch()["mappeId"].asInt() shouldBe 30
-    }
-
-    @Test
-    fun `skal ikke slå opp mapper når oppgaven ikke har mappe`() {
-        service.behandleHendelse(hendelse)
-
-        verify(0, getRequestedFor(urlPathMatching("/oppgave/api/v1/mapper.*")))
-        hentPatch().has("mappeId") shouldBe false
-    }
-
-    @Test
-    fun `skal kaste feil når oppdatering av oppgave feiler`() {
-        stubFor(patch("/oppgave/api/v1/oppgaver/1001").willReturn(aResponse().withStatus(500)))
-
-        shouldThrow<HttpServerErrorException> { service.behandleHendelse(hendelse) }
-
-        testDataGenerator.hentSak("1234567")!!.eierfogd shouldBe "4806"
-        testDataGenerator.hentSak("1234567")!!.flytterFraEierfogder shouldBe setOf("4833")
-    }
-
-    @Test
-    fun `skal flytte rett til ny eierfogd når flytting er avbrutt`() {
-        lagreAvbruttFlytting()
-        stubHentSak(sak.copy(eierfogd = Enhetsnummer("4802")))
-
-        service.behandleHendelse(hendelse)
-
-        verify(
-            1,
-            patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1001"))
-                .withRequestBody(matchingJsonPath("$.tildeltEnhetsnr", equalTo("4802"))),
-        )
-        verify(
-            1,
-            patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1002"))
-                .withRequestBody(matchingJsonPath("$.tildeltEnhetsnr", equalTo("4802"))),
-        )
-        testDataGenerator.hentSak("1234567")!!.eierfogd shouldBe "4802"
-        testDataGenerator.hentSak("1234567")!!.flytterFraEierfogder shouldBe emptySet()
-    }
-
-    @Test
-    fun `skal flytte oppgaver tilbake når avbrutt flytting går tilbake til forrige eierfogd`() {
-        lagreAvbruttFlytting()
-        stubHentSak(sak.copy(eierfogd = Enhetsnummer("4833")))
-
-        service.behandleHendelse(hendelse)
-
-        verify(0, patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1001")))
-        verify(
-            1,
-            patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1002"))
-                .withRequestBody(matchingJsonPath("$.tildeltEnhetsnr", equalTo("4833"))),
-        )
-        testDataGenerator.hentSak("1234567")!!.eierfogd shouldBe "4833"
-        testDataGenerator.hentSak("1234567")!!.flytterFraEierfogder shouldBe emptySet()
-    }
-
-    @Test
-    fun `skal hente alle sider med oppgaver før flytting`() {
-        stubOppgaver(listOf(oppgave), antall = 2)
-        stubFor(
-            get(urlPathEqualTo("/oppgave/api/v1/oppgaver/"))
-                .withQueryParam("offset", equalTo("1"))
-                .willReturn(
-                    aResponse().withHeader("Content-Type", "application/json")
-                        .withBody(objectMapper.writeValueAsString(OppgaveSokResponse(2, listOf(oppgave.copy(id = 1002, tema = "BII"))))),
-                ),
-        )
-
-        service.behandleHendelse(hendelse)
-
-        verify(1, patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1001")))
-        verify(1, patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1002")))
-        verify(
-            2,
-            getRequestedFor(urlPathEqualTo("/oppgave/api/v1/oppgaver/"))
-                .withQueryParam("statuskategori", equalTo("AAPEN"))
-                .withQueryParam("saksreferanse", equalTo("1234567")),
-        )
-    }
-
-    @Test
-    fun `skal reprosessere sakshendelse fra DLQ`() {
-        testDataGenerator.opprettDLQMelding(
-            DLQKafka(
-                messageKey = "1234567",
-                topicName = "topic_sak",
-                payload = objectMapper.writeValueAsString(hendelse),
-                retry = true,
-            ),
-        )
-
-        scheduler.processMessages()
-
-        testDataGenerator.hentDlKafka() shouldBe emptyList()
-        verify(1, patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1001")))
-    }
-
-    @Test
-    fun `skal beholde påbegynt flytting når DLQ-batchen rulles tilbake`() {
-        stubFor(patch("/oppgave/api/v1/oppgaver/1001").willReturn(aResponse().withStatus(500)))
-        testDataGenerator.opprettDLQMelding(
-            DLQKafka(
-                messageKey = "1234567",
-                topicName = "topic_sak",
-                payload = objectMapper.writeValueAsString(hendelse),
-                retry = true,
-            ),
-        )
-
-        TransactionTemplate(transactionManager).executeWithoutResult {
-            scheduler.processMessages()
-            it.setRollbackOnly()
+            verify(
+                1,
+                patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1001"))
+                    .withRequestBody(matchingJsonPath("$.versjon", equalTo("3")))
+                    .withRequestBody(matchingJsonPath("$.tildeltEnhetsnr", equalTo("4806")))
+                    .withRequestBody(matchingJsonPath("$.status", equalTo("OPPRETTET"))),
+            )
+            verify(0, patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1002")))
+            verify(1, patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1003")))
         }
 
-        testDataGenerator.hentSak("1234567")!!.eierfogd shouldBe "4806"
-        testDataGenerator.hentSak("1234567")!!.flytterFraEierfogder shouldBe setOf("4833")
+        @Test
+        fun `skal bare lagre eierfogd når flagget er av`() {
+            disableUnleashFeature(UnleashFeatures.FLYTT_OPPGAVER_VED_ENHETSBYTTE)
+
+            service.behandleHendelse(hendelse)
+
+            verify(0, getRequestedFor(urlPathEqualTo("/oppgave/api/v1/oppgaver/")))
+            lagretSak().eierfogd shouldBe "4806"
+        }
+
+        @Test
+        fun `skal bruke fogdhistorikk når saken ikke er lagret`() {
+            testDataGenerator.sakRepository.deleteAll()
+            stubFogdhistorikk(
+                listOf(
+                    eier(1, "4802", LocalDate.now().minusYears(1)),
+                    eier(2, "4833", LocalDate.now()),
+                    eier(3, "4806", null),
+                ),
+            )
+
+            service.behandleHendelse(hendelse)
+
+            verify(1, patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1001")))
+            lagretSak().eierfogd shouldBe "4806"
+        }
+
+        @Test
+        fun `skal ikke flytte når saken ikke er lagret og eierfogd ikke er endret nylig`() {
+            testDataGenerator.sakRepository.deleteAll()
+            stubFogdhistorikk(
+                listOf(
+                    eier(1, "4833", LocalDate.now().minusYears(1)),
+                    eier(2, "4806", null),
+                ),
+            )
+
+            service.behandleHendelse(hendelse)
+
+            verify(0, getRequestedFor(urlPathEqualTo("/oppgave/api/v1/oppgaver/")))
+            lagretSak().eierfogd shouldBe "4806"
+        }
+
+        @Test
+        fun `skal ikke flytte oppgaver når saken er flyttet tilbake`() {
+            stubHentSak(sak.copy(eierfogd = Enhetsnummer("4833")))
+
+            service.behandleHendelse(hendelse)
+
+            verify(0, getRequestedFor(urlPathEqualTo("/oppgave/api/v1/oppgaver/")))
+        }
+
+        @Test
+        fun `skal hente alle sider med oppgaver før flytting`() {
+            stubOppgaver(listOf(oppgave), antall = 2)
+            stubFor(
+                get(urlPathEqualTo("/oppgave/api/v1/oppgaver/"))
+                    .withQueryParam("offset", equalTo("1"))
+                    .willReturn(
+                        aResponse().withHeader("Content-Type", "application/json")
+                            .withBody(objectMapper.writeValueAsString(OppgaveSokResponse(2, listOf(oppgave.copy(id = 1002, tema = "BII"))))),
+                    ),
+            )
+
+            service.behandleHendelse(hendelse)
+
+            verify(1, patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1001")))
+            verify(1, patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1002")))
+            verify(
+                2,
+                getRequestedFor(urlPathEqualTo("/oppgave/api/v1/oppgaver/"))
+                    .withQueryParam("statuskategori", equalTo("AAPEN"))
+                    .withQueryParam("saksreferanse", equalTo("1234567")),
+            )
+        }
+
+        @Test
+        fun `skal kaste feil når oppdatering av oppgave feiler`() {
+            stubFor(patch("/oppgave/api/v1/oppgaver/1001").willReturn(aResponse().withStatus(500)))
+
+            shouldThrow<HttpServerErrorException> { service.behandleHendelse(hendelse) }
+
+            lagretSak().eierfogd shouldBe "4806"
+            lagretSak().flytterFraEierfogder shouldBe setOf("4833")
+        }
     }
 
-    private fun lagreAvbruttFlytting() {
-        testDataGenerator.sakRepository.deleteAll()
-        testDataGenerator.sakRepository.save(Sak(saksnummer = "1234567", eierfogd = "4806", flytterFraEierfogder = setOf("4833")))
-        stubOppgaver(listOf(oppgave, oppgave.copy(id = 1002, tildeltEnhetsnr = "4806")))
+    @Nested
+    inner class Saksbehandler {
+        @BeforeEach
+        fun settOppSaksbehandler() {
+            stubOppgaver(listOf(oppgave.copy(tilordnetRessurs = "Z123456")))
+        }
+
+        @Test
+        fun `skal beholde saksbehandler som tilhører ny enhet`() {
+            stubEnhetsliste(enhetsliste("4806"))
+
+            service.behandleHendelse(hendelse)
+
+            hentPatch().has("tilordnetRessurs") shouldBe false
+        }
+
+        @Test
+        fun `skal fjerne saksbehandler som ikke tilhører ny enhet`() {
+            stubEnhetsliste(enhetsliste("4833"))
+
+            service.behandleHendelse(hendelse)
+
+            hentPatch()["tilordnetRessurs"].asText() shouldBe ""
+        }
+
+        @Test
+        fun `skal fjerne saksbehandler når organisasjon returnerer ingen enheter`() {
+            stubEnhetsliste(aResponse().withStatus(204))
+
+            service.behandleHendelse(hendelse)
+
+            hentPatch()["tilordnetRessurs"].asText() shouldBe ""
+        }
+
+        @Test
+        fun `skal fjerne saksbehandler når organisasjon ikke finner saksbehandleren`() {
+            stubEnhetsliste(aResponse().withStatus(404))
+
+            service.behandleHendelse(hendelse)
+
+            hentPatch()["tilordnetRessurs"].asText() shouldBe ""
+        }
+
+        @Test
+        fun `skal ikke tolke ugyldig tomt enhetssvar som manglende medlemskap`() {
+            stubEnhetsliste(aResponse().withStatus(200))
+
+            shouldThrow<RuntimeException> { service.behandleHendelse(hendelse) }
+
+            verify(0, patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1001")))
+        }
     }
+
+    @Nested
+    inner class Mappe {
+        @BeforeEach
+        fun settOppMappe() {
+            stubOppgaver(listOf(oppgave.copy(mappeId = "10")))
+            stubFor(
+                get("/oppgave/api/v1/mapper/10").willReturn(
+                    aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(objectMapper.writeValueAsString(MappeDto(10, "4833", "Til behandling"))),
+                ),
+            )
+        }
+
+        @Test
+        fun `skal bruke mappe med samme navn i ny enhet og samme tema`() {
+            stubMapper(listOf(MappeDto(20, "4806", "Annen mappe"), MappeDto(30, "4806", "Til behandling")))
+
+            service.behandleHendelse(hendelse)
+
+            hentPatch()["mappeId"].asInt() shouldBe 30
+            verify(
+                1,
+                getRequestedFor(urlPathEqualTo("/oppgave/api/v1/mapper"))
+                    .withQueryParam("enhetsnr", equalTo("4806"))
+                    .withQueryParam("tema", equalTo("BID")),
+            )
+        }
+
+        @Test
+        fun `skal nullstille mappe eksplisitt når tilsvarende mappe ikke finnes`() {
+            stubMapper(listOf(MappeDto(20, "4806", "Annen mappe")))
+
+            service.behandleHendelse(hendelse)
+
+            val request = hentPatch()
+            request.has("mappeId") shouldBe true
+            request["mappeId"].isNull shouldBe true
+        }
+
+        @Test
+        fun `skal finne tilsvarende mappe på neste side`() {
+            stubFor(
+                get(urlPathEqualTo("/oppgave/api/v1/mapper"))
+                    .withQueryParam("offset", equalTo("0"))
+                    .willReturn(
+                        aResponse().withHeader("Content-Type", "application/json")
+                            .withBody(objectMapper.writeValueAsString(MapperResponse(2, listOf(MappeDto(20, "4806", "Annen mappe"))))),
+                    ),
+            )
+            stubFor(
+                get(urlPathEqualTo("/oppgave/api/v1/mapper"))
+                    .withQueryParam("offset", equalTo("1"))
+                    .willReturn(
+                        aResponse().withHeader("Content-Type", "application/json")
+                            .withBody(objectMapper.writeValueAsString(MapperResponse(2, listOf(MappeDto(30, "4806", "Til behandling"))))),
+                    ),
+            )
+
+            service.behandleHendelse(hendelse)
+
+            hentPatch()["mappeId"].asInt() shouldBe 30
+        }
+
+        @Test
+        fun `skal ikke slå opp mapper når oppgaven ikke har mappe`() {
+            stubOppgaver(listOf(oppgave))
+
+            service.behandleHendelse(hendelse)
+
+            verify(0, getRequestedFor(urlPathMatching("/oppgave/api/v1/mapper.*")))
+            hentPatch().has("mappeId") shouldBe false
+        }
+    }
+
+    @Nested
+    inner class AvbruttFlytting {
+        @BeforeEach
+        fun lagreAvbruttFlytting() {
+            testDataGenerator.sakRepository.deleteAll()
+            testDataGenerator.sakRepository.save(Sak(saksnummer = "1234567", eierfogd = "4806", flytterFraEierfogder = setOf("4833")))
+            stubOppgaver(listOf(oppgave, oppgave.copy(id = 1002, tildeltEnhetsnr = "4806")))
+        }
+
+        @Test
+        fun `skal flytte rett til ny eierfogd når flytting er avbrutt`() {
+            stubHentSak(sak.copy(eierfogd = Enhetsnummer("4802")))
+
+            service.behandleHendelse(hendelse)
+
+            verify(
+                1,
+                patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1001"))
+                    .withRequestBody(matchingJsonPath("$.tildeltEnhetsnr", equalTo("4802"))),
+            )
+            verify(
+                1,
+                patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1002"))
+                    .withRequestBody(matchingJsonPath("$.tildeltEnhetsnr", equalTo("4802"))),
+            )
+            lagretSak().eierfogd shouldBe "4802"
+            lagretSak().flytterFraEierfogder shouldBe emptySet()
+        }
+
+        @Test
+        fun `skal flytte oppgaver tilbake når avbrutt flytting går tilbake til forrige eierfogd`() {
+            stubHentSak(sak.copy(eierfogd = Enhetsnummer("4833")))
+
+            service.behandleHendelse(hendelse)
+
+            verify(0, patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1001")))
+            verify(
+                1,
+                patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1002"))
+                    .withRequestBody(matchingJsonPath("$.tildeltEnhetsnr", equalTo("4833"))),
+            )
+            lagretSak().eierfogd shouldBe "4833"
+            lagretSak().flytterFraEierfogder shouldBe emptySet()
+        }
+    }
+
+    @Nested
+    inner class ReprosesseringFraDLQ {
+        @BeforeEach
+        fun opprettDLQMelding() {
+            testDataGenerator.opprettDLQMelding(
+                DLQKafka(
+                    messageKey = "1234567",
+                    topicName = "topic_sak",
+                    payload = objectMapper.writeValueAsString(hendelse),
+                    retry = true,
+                ),
+            )
+        }
+
+        @Test
+        fun `skal reprosessere sakshendelse fra DLQ`() {
+            scheduler.processMessages()
+
+            testDataGenerator.hentDlKafka() shouldBe emptyList()
+            verify(1, patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1001")))
+        }
+
+        @Test
+        fun `skal beholde påbegynt flytting når DLQ-batchen rulles tilbake`() {
+            stubFor(patch("/oppgave/api/v1/oppgaver/1001").willReturn(aResponse().withStatus(500)))
+
+            TransactionTemplate(transactionManager).executeWithoutResult {
+                scheduler.processMessages()
+                it.setRollbackOnly()
+            }
+
+            lagretSak().eierfogd shouldBe "4806"
+            lagretSak().flytterFraEierfogder shouldBe setOf("4833")
+        }
+    }
+
+    private fun lagretSak() = testDataGenerator.hentSak("1234567")!!
 
     private fun stubOppgaver(oppgaver: List<OppgaveData>, antall: Int = oppgaver.size) {
         stubFor(
@@ -428,6 +414,14 @@ internal class SakHendelseTest : AbstractBehandleHendelseTest() {
                 ),
         )
     }
+
+    private fun stubEnhetsliste(svar: ResponseDefinitionBuilder) {
+        stubFor(get("/organisasjon/saksbehandler/enhetsliste/Z123456").willReturn(svar))
+    }
+
+    private fun enhetsliste(enhet: String) = aResponse()
+        .withHeader("Content-Type", "application/json")
+        .withBody(objectMapper.writeValueAsString(listOf(EnhetDto(Enhetsnummer(enhet)))))
 
     private fun eier(tilgangId: Int, enhetsnummer: String, tilgangTomDato: LocalDate?) = FogdhistorikkDto(
         tilgangId = tilgangId,
@@ -444,16 +438,6 @@ internal class SakHendelseTest : AbstractBehandleHendelseTest() {
                 aResponse()
                     .withHeader("Content-Type", "application/json")
                     .withBody(objectMapper.writeValueAsString(historikk)),
-            ),
-        )
-    }
-
-    private fun stubMappe() {
-        stubFor(
-            get("/oppgave/api/v1/mapper/10").willReturn(
-                aResponse()
-                    .withHeader("Content-Type", "application/json")
-                    .withBody(objectMapper.writeValueAsString(MappeDto(10, "4833", "Til behandling"))),
             ),
         )
     }
