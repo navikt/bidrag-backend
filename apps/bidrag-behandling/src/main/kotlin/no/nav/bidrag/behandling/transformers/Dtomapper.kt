@@ -486,6 +486,7 @@ class Dtomapper(
             SærbidragUtgifterDto(
                 avslag = avslag,
                 kategori = tilSærbidragKategoriDto(),
+                rimeligÅInnvilge = tilSærbidragRimeligÅInnvilgeDto(),
                 begrunnelse = BegrunnelseDto(henteNotatinnhold(this, NotatType.UTGIFTER)),
                 begrunnelseFraOpprinneligVedtak = utgiftBegrunnelseFraOpprinneligVedtak(),
                 valideringsfeil = valideringsfeil,

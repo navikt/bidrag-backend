@@ -245,6 +245,8 @@ class BehandlingDtoMappingTest {
 
         behandling.utgift = oppretteUtgift(behandling, "")
         behandling.utgift!!.beløpDirekteBetaltAvBp = BigDecimal.valueOf(1000)
+        behandling.utgift!!.rimeligÅInnvilge = true
+        behandling.utgift!!.rimeligÅInnvilgeBegrunnelse = "Særlige forhold"
         behandling.utgift!!.utgiftsposter =
             mutableSetOf(
                 Utgiftspost(
@@ -276,6 +278,9 @@ class BehandlingDtoMappingTest {
             kategori.beskrivelse shouldBe "Høreapparat"
             notat.innhold shouldBe "Notat utgift"
             utgifter shouldHaveSize 0
+            rimeligÅInnvilge!!.rimeligÅInnvilge shouldBe true
+            rimeligÅInnvilge!!.begrunnelse shouldBe "Særlige forhold"
+            rimeligÅInnvilge!!.barnetsInntektErOverGrensen shouldBe false
         }
     }
 
