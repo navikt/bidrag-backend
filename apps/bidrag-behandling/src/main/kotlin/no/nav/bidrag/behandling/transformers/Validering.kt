@@ -110,7 +110,8 @@ fun OppdaterOpphørsdatoRequestDto.valider(behandling: Behandling) {
             ?: saksnummer?.let { søknadsbarnISak.minOfOrNull { it.virkningstidspunktRolle } }
             ?: behandling.eldsteVirkningstidspunkt
 
-    if (opphørsdato == virkningstidspunkt) {
+    val gjelderRevurderingsbarn = (rolle != null && rolle.erRevurderingsbarn) || (søknadsbarnISak.isNotEmpty() && søknadsbarnISak.all { it.erRevurderingsbarn })
+    if (opphørsdato == virkningstidspunkt && !gjelderRevurderingsbarn) {
         feilliste.add("Opphørsdato kan ikke settes lik virkningstidspunkt")
     }
     if ((rolle == null || !rolle.erRevurderingsbarn) && opphørsdato.isBefore(virkningstidspunkt)) {
