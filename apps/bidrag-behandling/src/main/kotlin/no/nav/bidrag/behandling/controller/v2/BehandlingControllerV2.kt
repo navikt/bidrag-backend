@@ -232,7 +232,10 @@ class BehandlingControllerV2(
         log.info { "Oppdaterer utgift for behandling $behandlingsid" }
         secureLogger.info { "Oppdaterer utgift for behandling $behandlingsid med forespørsel $request" }
 
-        return utgiftService.oppdatereUtgift(behandlingsid, request)
+        val respons = utgiftService.oppdatereUtgift(behandlingsid, request)
+        // Grensen for selvforsørget beregnes etter at oppdateringen er lagret, slik at beregningen ikke holder transaksjonen åpen
+        val behandling = behandlingService.hentBehandlingById(behandlingsid)
+        return respons.copy(rimeligÅInnvilge = dtomapper.run { behandling.tilSærbidragRimeligÅInnvilgeDto() })
     }
 
     @PutMapping("/behandling/{behandlingsid}/virkningstidspunkt")

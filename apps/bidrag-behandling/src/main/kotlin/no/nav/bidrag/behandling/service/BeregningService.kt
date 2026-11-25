@@ -100,6 +100,7 @@ import no.nav.bidrag.transport.felles.toYearMonth
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
+import org.springframework.web.client.HttpServerErrorException
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.YearMonth
@@ -216,6 +217,10 @@ class BeregningService(
         }
     } catch (e: Exception) {
         if (!e.erUfullstendigGrunnlag()) throw e
+        // SjablonProvider gir en tom liste når sjablontallene ikke kan hentes. Feilen fra beregningen er da teknisk.
+        if (SjablonProvider.hentSjablontall().isEmpty()) {
+            throw HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE, "Kunne ikke hente sjablontall: ${e.message}")
+        }
         LOGGER.debug(e) { "Kunne ikke beregne om barnets inntekt er over grensen for selvforsørget: ${e.message}" }
         false
     }

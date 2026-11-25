@@ -452,7 +452,6 @@ class Dtomapper(
     fun Utgift.tilOppdaterUtgiftResponse(utgiftspostId: Long? = null) = if (behandling.avslag != null) {
         OppdatereUtgiftResponse(
             avslag = behandling.avslag,
-            rimeligÅInnvilge = behandling.tilSærbidragRimeligÅInnvilgeDto(),
             begrunnelse = henteNotatinnhold(behandling, NotatType.UTGIFTER),
             valideringsfeil = behandling.utgift.hentValideringsfeil(),
         )
@@ -462,7 +461,6 @@ class Dtomapper(
             oppdatertUtgiftspost = utgiftsposter.find { it.id == utgiftspostId }?.tilDto(),
             utgiftposter = utgiftsposter.sorter().map { it.tilDto() },
             maksGodkjentBeløp = tilMaksGodkjentBeløpDto(),
-            rimeligÅInnvilge = behandling.tilSærbidragRimeligÅInnvilgeDto(),
             begrunnelse = henteNotatinnhold(behandling, NotatType.UTGIFTER),
             beregning = tilBeregningDto(),
             valideringsfeil = behandling.utgift.hentValideringsfeil(),

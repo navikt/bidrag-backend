@@ -574,18 +574,13 @@ class UtgiftserviceTest : TestContainerRunner() {
         behandling.utgift = Utgift(behandling = behandling)
         testdataManager.lagreBehandlingNewTransaction(behandling)
 
-        val response =
-            utgiftService.oppdatereUtgift(
-                behandling.id!!,
-                OppdatereUtgiftRequest(
-                    rimeligÅInnvilge = RimeligÅInnvilgeDto(rimeligÅInnvilge = true, begrunnelse = "Særlige forhold"),
-                ),
-            )
+        utgiftService.oppdatereUtgift(
+            behandling.id!!,
+            OppdatereUtgiftRequest(
+                rimeligÅInnvilge = RimeligÅInnvilgeDto(rimeligÅInnvilge = true, begrunnelse = "Særlige forhold"),
+            ),
+        )
 
-        assertSoftly(response.rimeligÅInnvilge!!) {
-            rimeligÅInnvilge shouldBe true
-            begrunnelse shouldBe "Særlige forhold"
-        }
         val behandlingEtter = testdataManager.hentBehandling(behandling.id!!)
         behandlingEtter!!.utgift!!.rimeligÅInnvilge shouldBe true
         behandlingEtter.utgift!!.rimeligÅInnvilgeBegrunnelse shouldBe "Særlige forhold"
@@ -600,22 +595,16 @@ class UtgiftserviceTest : TestContainerRunner() {
         behandling.søknadsbarn.forEach { it.avslag = Resultatkode.PRIVAT_AVTALE }
         testdataManager.lagreBehandlingNewTransaction(behandling)
 
-        val response =
-            utgiftService.oppdatereUtgift(
-                behandling.id!!,
-                OppdatereUtgiftRequest(
-                    rimeligÅInnvilge = RimeligÅInnvilgeDto(rimeligÅInnvilge = true, begrunnelse = "Særlige forhold"),
-                ),
-            )
+        utgiftService.oppdatereUtgift(
+            behandling.id!!,
+            OppdatereUtgiftRequest(
+                rimeligÅInnvilge = RimeligÅInnvilgeDto(rimeligÅInnvilge = true, begrunnelse = "Særlige forhold"),
+            ),
+        )
 
         val behandlingEtter = testdataManager.hentBehandling(behandling.id!!)!!
         behandlingEtter.avslag shouldBe Resultatkode.PRIVAT_AVTALE
         behandlingEtter.søknadsbarn.forEach { it.avslag shouldBe Resultatkode.PRIVAT_AVTALE }
-        assertSoftly(response.rimeligÅInnvilge!!) {
-            barnetsInntektErOverGrensen shouldBe false
-            rimeligÅInnvilge shouldBe true
-            begrunnelse shouldBe "Særlige forhold"
-        }
     }
 
     @Test

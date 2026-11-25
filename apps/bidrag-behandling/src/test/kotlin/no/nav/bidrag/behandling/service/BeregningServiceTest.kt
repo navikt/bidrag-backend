@@ -60,6 +60,7 @@ import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.OmgjøringOrkestrat
 import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.OmgjøringOrkestratorV2
 import no.nav.bidrag.beregn.forskudd.BeregnForskuddApi
 import no.nav.bidrag.beregn.særbidrag.BeregnSærbidragApi
+import no.nav.bidrag.commons.service.sjablon.SjablonProvider
 import no.nav.bidrag.commons.unleash.UnleashFeaturesProvider
 import no.nav.bidrag.commons.web.mock.stubKodeverkProvider
 import no.nav.bidrag.commons.web.mock.stubSjablonProvider
@@ -837,6 +838,18 @@ class BeregningServiceTest {
         behandling.inntekter.clear()
 
         beregningService.barnetsInntektErOverGrensenForSelvforsørget(behandling) shouldBe false
+    }
+
+    @Test
+    fun `skal gi teknisk feil når sjablontallene ikke kan hentes for å beregne om barnets inntekt er over grensen`() {
+        val beregningService =
+            BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator)
+        val behandling = opprettSærbidragBehandlingMedInntektBarn(BigDecimal(1000000))
+        every { SjablonProvider.hentSjablontall() } returns emptyList()
+
+        shouldThrow<HttpServerErrorException> {
+            beregningService.barnetsInntektErOverGrensenForSelvforsørget(behandling)
+        }
     }
 
     @Test
