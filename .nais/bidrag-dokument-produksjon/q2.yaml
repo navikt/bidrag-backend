@@ -1,0 +1,15 @@
+name: bidrag-dokument-produksjon-q2
+ingresses:
+  - https://bidrag-dokument-produksjon-q2.intern.dev.nav.no
+azure_access_inbound:
+  - application: bidrag-frontend-q2
+  - application: bidrag-localauth
+  - application: bidrag-behandling-q2
+  - application: bidrag-dokument-bestilling
+outbound-access-apps:
+  - bidrag-dokumentmal-q2
+  - bidrag-pdfgen-q2
+env:
+  PDFGEN_VERSION: V2
+  BIDRAG_DOKUMENTMAL_URL: http://bidrag-dokumentmal-q2
+  BIDRAG_PDFGEN_URL: http://bidrag-pdfgen-q2

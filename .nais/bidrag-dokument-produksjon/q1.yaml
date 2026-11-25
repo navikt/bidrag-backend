@@ -1,3 +1,4 @@
+name: bidrag-dokument-produksjon
 ingresses:
   - https://bidrag-dokument-produksjon.intern.dev.nav.no
 azure_access_inbound:

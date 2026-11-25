@@ -37,6 +37,12 @@ import java.time.LocalDateTime
 import no.nav.bidrag.transport.behandling.felles.grunnlag.Person as PersonGrunnlag
 
 val særbidragDirekteAvslagskoderSomKreverBeregning = listOf(Resultatkode.GODKJENT_BELØP_ER_LAVERE_ENN_FORSKUDDSSATS)
+val resultatkoderSomErManuellVedtak = listOf(
+    Resultatkode.INNVILGET_VEDTAK,
+    Resultatkode.VEDTAK_INNKREVING_AV_SÆRBIDRAG,
+    Resultatkode.UTENLANDSK_AVGJORELSE,
+    Resultatkode.STADSFESTELSE,
+)
 val særbidragDirekteAvslagskoderSomInneholderUtgifter =
     listOf(Resultatkode.GODKJENT_BELØP_ER_LAVERE_ENN_FORSKUDDSSATS, Resultatkode.ALLE_UTGIFTER_ER_FORELDET)
 val grunnlagstyperSomIkkeTrengerÅBekreftes =
