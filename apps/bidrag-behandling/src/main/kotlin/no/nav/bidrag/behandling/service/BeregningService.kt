@@ -57,6 +57,7 @@ import no.nav.bidrag.beregn.core.exception.BegrensetRevurderingLikEllerLavereEnn
 import no.nav.bidrag.beregn.core.exception.BegrensetRevurderingLøpendeForskuddManglerException
 import no.nav.bidrag.beregn.core.exception.BidragsberegningFeiletTekniskException
 import no.nav.bidrag.beregn.core.exception.IkkeFullBidragsevneOgUfullstendigeGrunnlagException
+import no.nav.bidrag.beregn.core.exception.UgyldigInputException
 import no.nav.bidrag.beregn.core.service.mapper.CoreMapper
 import no.nav.bidrag.beregn.forskudd.BeregnForskuddApi
 import no.nav.bidrag.beregn.særbidrag.BeregnSærbidragApi
@@ -197,8 +198,8 @@ class BeregningService(
 
     /**
      * Beregner BPs andel uten saksbehandlers vurdering av om det er rimelig å innvilge særbidrag, for å finne ut om barnets inntekt er
-     * lik eller høyere enn 100 ganger forskuddssats. Henter ikke løpende bidrag. Gir false hvis beregningen ikke kan gjøres, for
-     * eksempel fordi grunnlaget ikke er komplett.
+     * lik eller høyere enn 100 ganger forskuddssats. Henter ikke løpende bidrag. Gir false hvis grunnlaget ikke er komplett.
+     * Tekniske feil, for eksempel når sjablonene ikke kan hentes, kastes videre, slik at de ikke ser ut som en inntekt under grensen.
      */
     fun barnetsInntektErOverGrensenForSelvforsørget(behandling: Behandling): Boolean = try {
         if (mapper.validering.run { behandling.erDirekteAvslagUtenBeregning() }) {
@@ -214,8 +215,20 @@ class BeregningService(
             )
         }
     } catch (e: Exception) {
+        if (!e.erUfullstendigGrunnlag()) throw e
         LOGGER.debug(e) { "Kunne ikke beregne om barnets inntekt er over grensen for selvforsørget: ${e.message}" }
         false
+    }
+
+    // Feil fra mappingen av behandlingen og fra beregningen når grunnlaget mangler eller er ugyldig
+    private fun Exception.erUfullstendigGrunnlag(): Boolean = when (this) {
+        is HttpClientErrorException -> statusCode == HttpStatus.BAD_REQUEST
+
+        is UgyldigInputException, is IllegalArgumentException, is IllegalStateException, is NoSuchElementException,
+        is NullPointerException,
+        -> true
+
+        else -> false
     }
 
     fun beregneBidrag(

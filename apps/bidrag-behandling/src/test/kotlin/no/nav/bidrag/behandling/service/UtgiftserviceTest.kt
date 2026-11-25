@@ -600,16 +600,43 @@ class UtgiftserviceTest : TestContainerRunner() {
         behandling.søknadsbarn.forEach { it.avslag = Resultatkode.PRIVAT_AVTALE }
         testdataManager.lagreBehandlingNewTransaction(behandling)
 
+        val response =
+            utgiftService.oppdatereUtgift(
+                behandling.id!!,
+                OppdatereUtgiftRequest(
+                    rimeligÅInnvilge = RimeligÅInnvilgeDto(rimeligÅInnvilge = true, begrunnelse = "Særlige forhold"),
+                ),
+            )
+
+        val behandlingEtter = testdataManager.hentBehandling(behandling.id!!)!!
+        behandlingEtter.avslag shouldBe Resultatkode.PRIVAT_AVTALE
+        behandlingEtter.søknadsbarn.forEach { it.avslag shouldBe Resultatkode.PRIVAT_AVTALE }
+        assertSoftly(response.rimeligÅInnvilge!!) {
+            barnetsInntektErOverGrensen shouldBe false
+            rimeligÅInnvilge shouldBe true
+            begrunnelse shouldBe "Særlige forhold"
+        }
+    }
+
+    @Test
+    @Transactional
+    fun `skal lagre avslag som er satt i forespørsel med vurdering av om det er rimelig å innvilge særbidrag`() {
+        val behandling = oppretteBehandlingForSærbidrag()
+        behandling.utgift = Utgift(behandling = behandling)
+        testdataManager.lagreBehandlingNewTransaction(behandling)
+
         utgiftService.oppdatereUtgift(
             behandling.id!!,
             OppdatereUtgiftRequest(
-                rimeligÅInnvilge = RimeligÅInnvilgeDto(rimeligÅInnvilge = true, begrunnelse = "Særlige forhold"),
+                avslag = Resultatkode.PRIVAT_AVTALE,
+                rimeligÅInnvilge = RimeligÅInnvilgeDto(rimeligÅInnvilge = false, begrunnelse = "Ikke rimelig"),
             ),
         )
 
         val behandlingEtter = testdataManager.hentBehandling(behandling.id!!)!!
         behandlingEtter.avslag shouldBe Resultatkode.PRIVAT_AVTALE
         behandlingEtter.søknadsbarn.forEach { it.avslag shouldBe Resultatkode.PRIVAT_AVTALE }
+        behandlingEtter.utgift!!.rimeligÅInnvilgeBegrunnelse shouldBe "Ikke rimelig"
     }
 
     @Test

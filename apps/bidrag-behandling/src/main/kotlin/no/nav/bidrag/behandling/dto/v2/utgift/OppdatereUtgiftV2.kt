@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.PastOrPresent
 import jakarta.validation.constraints.PositiveOrZero
 import no.nav.bidrag.behandling.dto.v2.behandling.OppdatereBegrunnelse
+import no.nav.bidrag.behandling.dto.v2.behandling.SærbidragRimeligÅInnvilgeDto
 import no.nav.bidrag.behandling.dto.v2.behandling.TotalBeregningUtgifterDto
 import no.nav.bidrag.behandling.dto.v2.behandling.UtgiftBeregningDto
 import no.nav.bidrag.behandling.dto.v2.behandling.UtgiftspostDto
@@ -66,7 +67,12 @@ data class OppdatereUtgiftResponse(
     val begrunnelse: String? = null,
     val beregning: UtgiftBeregningDto? = null,
     val maksGodkjentBeløp: MaksGodkjentBeløpDto? = null,
-    val rimeligÅInnvilge: RimeligÅInnvilgeDto? = null,
+    @get:Schema(
+        description =
+        "Vurderingen av om det er rimelig å innvilge særbidrag, og om barnets inntekt er over grensen etter oppdateringen. " +
+            "Avslag og utgifter påvirker om grensen beregnes",
+    )
+    val rimeligÅInnvilge: SærbidragRimeligÅInnvilgeDto? = null,
     val avslag: Resultatkode? = null,
     val valideringsfeil: UtgiftValideringsfeilDto?,
     val totalBeregning: List<TotalBeregningUtgifterDto> = emptyList(),

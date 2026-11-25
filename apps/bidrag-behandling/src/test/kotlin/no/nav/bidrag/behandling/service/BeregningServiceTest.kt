@@ -2,6 +2,7 @@ package no.nav.bidrag.behandling.service
 
 import com.ninjasquad.springmockk.MockkBean
 import io.kotest.assertions.assertSoftly
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.comparables.shouldBeLessThan
@@ -13,6 +14,7 @@ import io.mockk.every
 import io.mockk.mockkClass
 import io.mockk.mockkConstructor
 import io.mockk.mockkObject
+import io.mockk.unmockkConstructor
 import io.mockk.unmockkObject
 import io.mockk.verify
 import no.nav.bidrag.behandling.config.UnleashFeatures
@@ -98,6 +100,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.http.HttpStatus
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.web.client.HttpClientErrorException
+import org.springframework.web.client.HttpServerErrorException
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.YearMonth
@@ -824,6 +827,33 @@ class BeregningServiceTest {
         beregningService.barnetsInntektErOverGrensenForSelvforsørget(opprettSærbidragBehandlingMedInntektBarn(BigDecimal(10000))) shouldBe false
 
         verify(exactly = 0) { evnevurderingService.hentLøpendeBidragForBehandling(any()) }
+    }
+
+    @Test
+    fun `skal gi at barnets inntekt ikke er over grensen for selvforsørget når grunnlaget ikke er komplett`() {
+        val beregningService =
+            BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator)
+        val behandling = opprettSærbidragBehandlingMedInntektBarn(BigDecimal(1000000))
+        behandling.inntekter.clear()
+
+        beregningService.barnetsInntektErOverGrensenForSelvforsørget(behandling) shouldBe false
+    }
+
+    @Test
+    fun `skal kaste teknisk feil videre når det ikke kan beregnes om barnets inntekt er over grensen for selvforsørget`() {
+        mockkConstructor(BeregnSærbidragApi::class)
+        every { BeregnSærbidragApi().barnetsInntektErOverGrensenForSelvforsørget(any(), any()) } throws
+            HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE)
+        val beregningService =
+            BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator)
+        val behandling = opprettSærbidragBehandlingMedInntektBarn(BigDecimal(1000000))
+        try {
+            shouldThrow<HttpServerErrorException> {
+                beregningService.barnetsInntektErOverGrensenForSelvforsørget(behandling)
+            }
+        } finally {
+            unmockkConstructor(BeregnSærbidragApi::class)
+        }
     }
 
     private fun opprettSærbidragBehandlingMedInntektBarn(

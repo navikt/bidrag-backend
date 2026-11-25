@@ -58,8 +58,10 @@ class UtgiftService(
                 behandling.bidragsmottaker!!,
             )
         }
-        // En forespørsel med bare vurderingen av om det er rimelig å innvilge særbidrag inneholder ikke avslag
-        if (request.oppdatereBegrunnelse == null && request.rimeligÅInnvilge == null) {
+        // En forespørsel med begrunnelse eller vurderingen av om det er rimelig å innvilge særbidrag fjerner ikke et avslag som
+        // mangler i forespørselen, men et avslag som er satt i forespørselen, lagres alltid
+        val oppdatererAnnetEnnAvslag = request.oppdatereBegrunnelse != null || request.rimeligÅInnvilge != null
+        if (!oppdatererAnnetEnnAvslag || request.avslag != null) {
             behandling.avslag = request.avslag
             behandling.søknadsbarn.forEach {
                 it.avslag = request.avslag

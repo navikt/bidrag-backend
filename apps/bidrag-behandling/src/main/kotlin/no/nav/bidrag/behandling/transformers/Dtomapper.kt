@@ -127,7 +127,6 @@ import no.nav.bidrag.behandling.transformers.utgift.hentValideringsfeil
 import no.nav.bidrag.behandling.transformers.utgift.tilBeregningDto
 import no.nav.bidrag.behandling.transformers.utgift.tilDto
 import no.nav.bidrag.behandling.transformers.utgift.tilMaksGodkjentBeløpDto
-import no.nav.bidrag.behandling.transformers.utgift.tilRimeligÅInnvilgeDto
 import no.nav.bidrag.behandling.transformers.utgift.tilSærbidragKategoriDto
 import no.nav.bidrag.behandling.transformers.utgift.tilTotalBeregningDto
 import no.nav.bidrag.behandling.transformers.vedtak.hentPersonNyesteIdent
@@ -453,6 +452,7 @@ class Dtomapper(
     fun Utgift.tilOppdaterUtgiftResponse(utgiftspostId: Long? = null) = if (behandling.avslag != null) {
         OppdatereUtgiftResponse(
             avslag = behandling.avslag,
+            rimeligÅInnvilge = behandling.tilSærbidragRimeligÅInnvilgeDto(),
             begrunnelse = henteNotatinnhold(behandling, NotatType.UTGIFTER),
             valideringsfeil = behandling.utgift.hentValideringsfeil(),
         )
@@ -462,7 +462,7 @@ class Dtomapper(
             oppdatertUtgiftspost = utgiftsposter.find { it.id == utgiftspostId }?.tilDto(),
             utgiftposter = utgiftsposter.sorter().map { it.tilDto() },
             maksGodkjentBeløp = tilMaksGodkjentBeløpDto(),
-            rimeligÅInnvilge = tilRimeligÅInnvilgeDto(),
+            rimeligÅInnvilge = behandling.tilSærbidragRimeligÅInnvilgeDto(),
             begrunnelse = henteNotatinnhold(behandling, NotatType.UTGIFTER),
             beregning = tilBeregningDto(),
             valideringsfeil = behandling.utgift.hentValideringsfeil(),

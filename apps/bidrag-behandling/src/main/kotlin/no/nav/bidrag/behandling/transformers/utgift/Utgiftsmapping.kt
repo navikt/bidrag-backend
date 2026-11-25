@@ -10,7 +10,6 @@ import no.nav.bidrag.behandling.dto.v2.behandling.UtgiftBeregningDto
 import no.nav.bidrag.behandling.dto.v2.behandling.UtgiftspostDto
 import no.nav.bidrag.behandling.dto.v2.utgift.MaksGodkjentBeløpDto
 import no.nav.bidrag.behandling.dto.v2.utgift.OppdatereUtgift
-import no.nav.bidrag.behandling.dto.v2.utgift.RimeligÅInnvilgeDto
 import no.nav.bidrag.behandling.dto.v2.validering.MaksGodkjentBeløpValideringsfeil
 import no.nav.bidrag.behandling.dto.v2.validering.UtgiftValideringsfeilDto
 import no.nav.bidrag.behandling.transformers.erDatoForUtgiftForeldet
@@ -79,11 +78,6 @@ fun Utgift.tilTotalBeregningDto() = utgiftsposter
             utgifter.sumOf { it.godkjentBeløp },
         )
     }.sorterBeregnetUtgifter()
-
-fun Utgift.tilRimeligÅInnvilgeDto() = RimeligÅInnvilgeDto(
-    rimeligÅInnvilge = rimeligÅInnvilge,
-    begrunnelse = rimeligÅInnvilgeBegrunnelse,
-)
 
 fun Utgift.tilMaksGodkjentBeløpDto() = MaksGodkjentBeløpDto(
     taMed = maksGodkjentBeløpTaMed,
