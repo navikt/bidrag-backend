@@ -29,12 +29,7 @@ class BehandleSakHendelseService(
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     fun behandleHendelse(hendelse: SakHendelse) {
         val saksnummer = hendelse.saksnummer.verdi
-        val sak = sakConsumer.hentSakUtenCache(saksnummer)
-        if (sak.begrensetTilgang) {
-            LOGGER.warn { "Flytter ikke oppgaver fordi sakstilgangen er begrenset" }
-            return
-        }
-        val eierfogd = sak.eierfogd.verdi
+        val eierfogd = sakConsumer.hentSakUtenCache(saksnummer).eierfogd.verdi
         if (UnleashFeatures.FLYTT_OPPGAVER_VED_ENHETSBYTTE.isEnabled) {
             flyttOppgaverTilEierfogd(saksnummer, eierfogd)
         } else {

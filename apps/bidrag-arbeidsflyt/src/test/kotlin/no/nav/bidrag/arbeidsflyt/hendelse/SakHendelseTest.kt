@@ -303,15 +303,6 @@ internal class SakHendelseTest : AbstractBehandleHendelseTest() {
     }
 
     @Test
-    fun `skal ikke flytte oppgaver uten sakstilgang`() {
-        stubHentSak(sak.copy(begrensetTilgang = true, avsluttet = true))
-
-        service.behandleHendelse(hendelse)
-
-        verify(0, getRequestedFor(urlPathEqualTo("/oppgave/api/v1/oppgaver/")))
-    }
-
-    @Test
     fun `skal kaste feil når oppdatering av oppgave feiler`() {
         stubFor(patch("/oppgave/api/v1/oppgaver/1001").willReturn(aResponse().withStatus(500)))
 
