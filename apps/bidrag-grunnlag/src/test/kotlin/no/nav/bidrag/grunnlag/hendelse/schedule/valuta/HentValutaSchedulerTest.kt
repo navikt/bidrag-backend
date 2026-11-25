@@ -43,7 +43,7 @@ class HentValutaSchedulerTest {
     private val valutakursgrunnlagService = Mockito.mock(ValutakursgrunnlagService::class.java)
     private val slackService = Mockito.mock(SlackService::class.java)
     private val clientId = "dev-gcp:bidrag:bidrag-grunnlag"
-    private val scheduler = HentValutaScheduler(hentValutakursService, valutakursgrunnlagService, slackService, clientId)
+    private val scheduler = HentValutaScheduler(hentValutakursService, valutakursgrunnlagService, slackService, clientId, "dev-gcp")
 
     @Test
     fun `jobben kjøres 1 januar og 1 juli i Oslo-tid`() {
@@ -141,7 +141,7 @@ class HentValutaSchedulerTest {
                 "• *Startdato:* 01.01.2026\n" +
                 "• *Kjøring:* Planlagt\n" +
                 "• *Applikasjon:* $clientId\n" +
-                "• *Opprettet grunnlag:* 0\n" +
+                "• *Opprettet valutakursgrunnlag:* 0\n" +
                 "• *Manglende kurser:* $manglendeKurser",
         )
     }
@@ -203,7 +203,7 @@ class HentValutaSchedulerTest {
                 "• *Startdato:* 01.01.2026\n" +
                 "• *Kjøring:* Planlagt\n" +
                 "• *Applikasjon:* $clientId\n" +
-                "• *Opprettet grunnlag:* ${resultater.size}\n" +
+                "• *Opprettet valutakursgrunnlag:* ${resultater.size}\n" +
                 "• *Manglende kurser:* EUR, USD",
         )
         Mockito.verifyNoMoreInteractions(slackService)
@@ -224,7 +224,7 @@ class HentValutaSchedulerTest {
                 "• *Startdato:* 01.07.2025\n" +
                 "• *Kjøring:* Planlagt\n" +
                 "• *Applikasjon:* $clientId\n" +
-                "• *Opprettet grunnlag:* ${resultater.size}\n" +
+                "• *Opprettet valutakursgrunnlag:* ${resultater.size}\n" +
                 "• *Manglende kurser:* Ingen",
         )
         Mockito.verifyNoMoreInteractions(slackService)

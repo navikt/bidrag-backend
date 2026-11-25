@@ -40,7 +40,7 @@ class HentValutaScheduler(
     private val valutakursgrunnlagService: ValutakursgrunnlagService,
     private val slackService: SlackService,
     @param:Value($$"${NAIS_CLIENT_ID:bidrag-grunnlag-local}") private val clientId: String,
-    @param:Value($$"${NAIS_CLUSTER_NAME:dev-gcp}") private val clusterName: String = "dev-gcp",
+    @param:Value($$"${NAIS_CLUSTER_NAME:dev-gcp}") private val clusterName: String,
 ) {
     @Scheduled(cron = $$"${VALUTAKURS_HENT_CRON:0 0 5 1 1,7 *}", zone = "Europe/Oslo")
     @SchedulerLock(name = "hentValutakursgrunnlag", lockAtLeastFor = "PT15M")
@@ -61,12 +61,11 @@ class HentValutaScheduler(
         val sisteBrukFra = valutakursgrunnlagService.hentSisteBrukFra()
         if (sisteBrukFra != forventetBrukFra) {
             val nyesteGrunnlag = sisteBrukFra?.format(SLACK_DATOFORMAT) ?: "ingen"
-            slackService.sendMelding(
-                "*Valutakursgrunnlag mangler*\n" +
-                    "• *Forventet startdato:* ${forventetBrukFra.format(SLACK_DATOFORMAT)}\n" +
-                    "• *Nyeste startdato:* $nyesteGrunnlag\n" +
-                    applikasjonslinje(),
-            )
+            val melding = "*Valutakursgrunnlag mangler*\n" +
+                "• *Forventet startdato:* ${forventetBrukFra.format(SLACK_DATOFORMAT)}\n" +
+                "• *Nyeste startdato:* $nyesteGrunnlag\n" +
+                applikasjonslinje()
+            slackService.sendMelding(melding.trimEnd())
         }
     }
 
@@ -118,10 +117,5 @@ class HentValutaScheduler(
 
     internal fun lagGyldighetsperiode(dato: LocalDate): Periode<LocalDate> = Datoperiode(dato, dato.plusMonths(6))
 
-    private fun applikasjonslinje(): String =
-        if (clusterName.startsWith("prod-")) {
-            ""
-        } else {
-            "• *Applikasjon:* $clientId\n"
-        }
+    private fun applikasjonslinje(): String = if (clusterName.startsWith("prod-")) "" else "• *Applikasjon:* $clientId\n"
 }
