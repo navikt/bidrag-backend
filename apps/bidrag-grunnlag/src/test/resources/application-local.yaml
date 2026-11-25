@@ -10,6 +10,7 @@ AAREG_URL: http://localhost:${wiremock.server.port}/aareg
 EREG_URL: http://localhost:${wiremock.server.port}/ereg
 NORGESBANK_URL: https://data.norges-bank.no
 ECB_URL: https://data-api.ecb.europa.eu
+FRANKFURTER_URL: https://api.frankfurter.dev
 BIDRAG_ORGANISASJON_URL: http://localhost:${wiremock.server.port}/organisasjon
 TILLEGGSSTONADERSAK_URL: http://localhost:${wiremock.server.port}/tilleggsstonadersak
 NAIS_APP_NAME: bidrag-grunnlag

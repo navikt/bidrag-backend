@@ -4,6 +4,9 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.grunnlag.aop.DefaultExceptionHandler
 import no.nav.bidrag.grunnlag.bo.ValutakursgrunnlagBo
+import no.nav.bidrag.grunnlag.hendelse.schedule.valuta.HentValutaScheduler
+import no.nav.bidrag.grunnlag.hendelse.schedule.valuta.VALUTAKURS_TIDSSONE
+import no.nav.bidrag.grunnlag.hendelse.schedule.valuta.ValutakursKjøring
 import no.nav.bidrag.grunnlag.service.HentHistoriskeValutakurserService
 import no.nav.bidrag.grunnlag.service.Valutaberegning
 import no.nav.bidrag.grunnlag.service.ValutakursgrunnlagService
@@ -14,6 +17,8 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.Mockito
+import org.mockito.kotlin.argumentCaptor
+import org.mockito.kotlin.eq
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.http.HttpHeaders
@@ -38,7 +43,8 @@ import java.time.LocalDate
 class ValutakursgrunnlagControllerTest {
     private val service = Mockito.mock(ValutakursgrunnlagService::class.java)
     private val historiskeValutakurserService = Mockito.mock(HentHistoriskeValutakurserService::class.java)
-    private val controller = ValutakursgrunnlagController(service, historiskeValutakurserService, MockEnvironment())
+    private val hentValutaScheduler = Mockito.mock(HentValutaScheduler::class.java)
+    private val controller = ValutakursgrunnlagController(service, historiskeValutakurserService, hentValutaScheduler, MockEnvironment())
     private val mockMvc = MockMvcBuilders.standaloneSetup(controller)
         .setControllerAdvice(DefaultExceptionHandler())
         .build()
@@ -99,6 +105,69 @@ class ValutakursgrunnlagControllerTest {
     }
 
     @Test
+    fun `planlagt valutainnhenting bruker seneste halvår uten år og måned`() {
+        val datoFør = LocalDate.now(VALUTAKURS_TIDSSONE)
+
+        mockMvc.perform(post("/valutakursgrunnlag/planlagt-innhenting"))
+            .andExpect(status().isOk)
+
+        val dato = argumentCaptor<LocalDate>()
+        Mockito.verify(hentValutaScheduler).hentValutakurs(dato.capture(), eq(ValutakursKjøring.MANUELL))
+        assertEquals(
+            if (datoFør.monthValue >= 7) LocalDate.of(datoFør.year, 7, 1) else LocalDate.of(datoFør.year, 1, 1),
+            dato.firstValue,
+        )
+    }
+
+    @Test
+    fun `planlagt valutainnhenting bruker valgt halvår`() {
+        mockMvc.perform(
+            post("/valutakursgrunnlag/planlagt-innhenting")
+                .param("aar", "2025")
+                .param("maaned", "7"),
+        )
+            .andExpect(status().isOk)
+
+        Mockito.verify(hentValutaScheduler).hentValutakurs(LocalDate.of(2025, 7, 1), ValutakursKjøring.MANUELL)
+    }
+
+    @Test
+    fun `planlagt valutainnhenting avviser måned utenfor januar og juli`() {
+        mockMvc.perform(
+            post("/valutakursgrunnlag/planlagt-innhenting")
+                .param("aar", "2025")
+                .param("maaned", "6"),
+        )
+            .andExpect(status().isBadRequest)
+
+        Mockito.verifyNoInteractions(hentValutaScheduler)
+    }
+
+    @Test
+    fun `planlagt valutainnhenting avviser fremtidig halvårsstart`() {
+        val nesteÅr = LocalDate.now(VALUTAKURS_TIDSSONE).year + 1
+
+        mockMvc.perform(
+            post("/valutakursgrunnlag/planlagt-innhenting")
+                .param("aar", "$nesteÅr")
+                .param("maaned", "1"),
+        )
+            .andExpect(status().isBadRequest)
+
+        Mockito.verifyNoInteractions(hentValutaScheduler)
+    }
+
+    @Test
+    fun `planlagt valutainnhenting krever både år og måned`() {
+        listOf("aar" to "2025", "maaned" to "7").forEach { (parameter, verdi) ->
+            mockMvc.perform(post("/valutakursgrunnlag/planlagt-innhenting").param(parameter, verdi))
+                .andExpect(status().isBadRequest)
+        }
+
+        Mockito.verifyNoInteractions(hentValutaScheduler)
+    }
+
+    @Test
     fun `overstyring avvises inntil rettighet er avklart`() {
         val feil = assertThrows<ResponseStatusException> {
             controller.overstyr(1, OverstyrValutakursgrunnlagRequest(BigDecimal("10.5")))
@@ -109,7 +178,7 @@ class ValutakursgrunnlagControllerTest {
 
     @Test
     fun `testflagget alene gir ikke skrivetilgang uten local-profil`() {
-        val testController = ValutakursgrunnlagController(service, historiskeValutakurserService, MockEnvironment(), true)
+        val testController = ValutakursgrunnlagController(service, historiskeValutakurserService, hentValutaScheduler, MockEnvironment(), true)
 
         val feil = assertThrows<ResponseStatusException> {
             testController.overstyr(1, OverstyrValutakursgrunnlagRequest(BigDecimal("10.5")))
@@ -120,7 +189,13 @@ class ValutakursgrunnlagControllerTest {
 
     @Test
     fun `lokal innhenting og overstyring kan testes med eksplisitt aktivering`() {
-        val lokal = ValutakursgrunnlagController(service, historiskeValutakurserService, MockEnvironment().apply { setActiveProfiles("local") }, true)
+        val lokal = ValutakursgrunnlagController(
+            service,
+            historiskeValutakurserService,
+            hentValutaScheduler,
+            MockEnvironment().apply { setActiveProfiles("local") },
+            true,
+        )
         val request = InnhentValutakursgrunnlagRequest(Valutakode.USD, LocalDate.of(2025, 7, 1))
         val grunnlag = ValutakursgrunnlagBo(kurs = BigDecimal("10.5"), multiplikator = 0, basisvaluta = Valutakode.USD)
         Mockito.`when`(service.innhent(request.valutakode, request.gyldigFra)).thenReturn(grunnlag)
