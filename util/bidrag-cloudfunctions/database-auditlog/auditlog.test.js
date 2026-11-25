@@ -62,6 +62,20 @@ test('normalize kaster ved ugyldig base64-JSON', () => {
   assert.throws(() => a.normalize({ message: { data: Buffer.from('ikke json').toString('base64') } }), SyntaxError);
 });
 
+test('idempotencyKey bruker insertId og faller tilbake til Pub/Sub messageId', () => {
+  assert.equal(a.idempotencyKey(toPubSub(pgEntry), a.normalize(toPubSub(pgEntry))), 'insertId:pg-123');
+
+  const entryWithoutInsertId = { ...pgEntry, insertId: undefined };
+  assert.equal(
+    a.idempotencyKey(toPubSub(entryWithoutInsertId), a.normalize(toPubSub(entryWithoutInsertId))),
+    'messageId:1',
+  );
+});
+
+test('idempotencyKey er null uten stabil hendelses-ID', () => {
+  assert.equal(a.idempotencyKey({ incident: {} }, { insertId: '(mangler)' }), null);
+});
+
 test('fromLogEntry gir plassholdere når felter mangler', () => {
   const e = a.fromLogEntry({});
   assert.equal(e.user, '(ukjent)');
