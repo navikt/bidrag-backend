@@ -6,6 +6,8 @@ import no.nav.bidrag.grunnlag.consumer.ecb.ECBService
 import no.nav.bidrag.grunnlag.consumer.ecb.ECBServiceException
 import no.nav.bidrag.grunnlag.consumer.valutakurs.domene.Valutakurs
 import no.nav.bidrag.grunnlag.consumer.valutakurs.domene.norgesbank.Frekvens
+import no.nav.bidrag.grunnlag.consumer.valutakurser.FrankfurterConsumer
+import no.nav.bidrag.grunnlag.consumer.valutakurser.FrankfurterRate
 import no.nav.bidrag.grunnlag.consumer.valutakurser.NorgesBankConsumer
 import no.nav.bidrag.grunnlag.consumer.valutakurser.dto.HentValutakurs
 import no.nav.bidrag.grunnlag.consumer.valutakurser.dto.HentValutakursRequest
@@ -15,9 +17,11 @@ import no.nav.bidrag.grunnlag.exception.RestResponse
 import no.nav.bidrag.grunnlag.persistence.entity.ValutakursgrunnlagKilde
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito
+import org.mockito.kotlin.any
 import org.springframework.http.HttpStatus
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -25,9 +29,16 @@ import java.time.LocalDate
 class HentValutakursServiceMockTest {
     private val ecb = Mockito.mock(ECBService::class.java)
     private val norgesBank = Mockito.mock(NorgesBankConsumer::class.java)
-    private val service = HentValutakursService(ecb, norgesBank)
+    private val frankfurter = Mockito.mock(FrankfurterConsumer::class.java)
+    private val service = HentValutakursService(ecb, norgesBank, frankfurter)
     private val januar = LocalDate.of(2025, 1, 1)
     private val desember = LocalDate.of(2024, 12, 31)
+
+    @BeforeEach
+    fun `Frankfurter feiler som standard`() {
+        Mockito.`when`(frankfurter.hentMaanedskurs(any(), any()))
+            .thenReturn(RestResponse.Failure("Mangler kurs", HttpStatus.NOT_FOUND, IllegalStateException("Mangler kurs")))
+    }
 
     @Test
     fun `desembers ECB-kurs brukes fra januar med én enhet valuta`() {
@@ -54,6 +65,27 @@ class HentValutakursServiceMockTest {
         val kurs = assertInstanceOf(HentetValutakursResultat.HentetValutakurs::class.java, resultat)
         assertEquals(BigDecimal("10.75"), kurs.valutakursSnitt)
         assertEquals(ValutakursgrunnlagKilde.NORGES_BANK, kurs.kilde)
+        Mockito.verifyNoInteractions(frankfurter)
+    }
+
+    @Test
+    fun `Frankfurter brukes når ECB og Norges Bank mangler kurs`() {
+        Mockito.`when`(ecb.hentValutakurser(listOf("USD"), desember)).thenThrow(ECBServiceException("Mangler kurs"))
+        Mockito.`when`(norgesBank.hentValutakurs(Frekvens.MÅNEDLIG, "USD", desember))
+            .thenReturn(RestResponse.Failure("Mangler kurs", HttpStatus.NOT_FOUND, IllegalStateException("Mangler kurs")))
+        Mockito.`when`(frankfurter.hentMaanedskurs("USD", java.time.YearMonth.of(2024, 12)))
+            .thenReturn(
+                RestResponse.Success(
+                    listOf(FrankfurterRate(LocalDate.of(2024, 12, 1), "USD", "NOK", BigDecimal("10.80"))),
+                ),
+            )
+
+        val resultat = service.hentValutakurs(HentValutakursRequest(listOf(HentValutakurs(januar, Valutakode.USD))))
+            .hentetValutakursListe.single()
+
+        val kurs = assertInstanceOf(HentetValutakursResultat.HentetValutakurs::class.java, resultat)
+        assertEquals(BigDecimal("10.80"), kurs.valutakursSnitt)
+        assertEquals(ValutakursgrunnlagKilde.FRANKFURTER, kurs.kilde)
     }
 
     @Test
