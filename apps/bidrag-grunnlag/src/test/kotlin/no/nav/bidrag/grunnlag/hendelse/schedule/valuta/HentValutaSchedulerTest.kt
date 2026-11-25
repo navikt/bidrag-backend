@@ -83,7 +83,10 @@ class HentValutaSchedulerTest {
         scheduler.sjekkValutakursgrunnlag(LocalDate.of(2026, 7, 2))
 
         verify(slackService).sendMelding(
-            "Planlagt innhenting av valutakursgrunnlag for 2026-07-01 mangler i $clientId. Nyeste valutakursgrunnlag starter 2026-01-01.",
+            "*Valutakursgrunnlag mangler*\n" +
+                "• *Forventet startdato:* 2026-07-01\n" +
+                "• *Nyeste startdato:* 2026-01-01\n" +
+                "• *Applikasjon:* $clientId",
         )
     }
 
@@ -92,7 +95,10 @@ class HentValutaSchedulerTest {
         scheduler.sjekkValutakursgrunnlag(LocalDate.of(2026, 1, 2))
 
         verify(slackService).sendMelding(
-            "Planlagt innhenting av valutakursgrunnlag for 2026-01-01 mangler i $clientId. Nyeste valutakursgrunnlag starter ingen.",
+            "*Valutakursgrunnlag mangler*\n" +
+                "• *Forventet startdato:* 2026-01-01\n" +
+                "• *Nyeste startdato:* ingen\n" +
+                "• *Applikasjon:* $clientId",
         )
     }
 
@@ -131,8 +137,12 @@ class HentValutaSchedulerTest {
         assertEquals(LocalDate.of(2026, 7, 1), scheduler.lagGyldighetsperiode(dato).til)
         val manglendeKurser = forespørsel.firstValue.hentValutakursListe.joinToString(", ") { it.valutakode.name }
         verify(slackService).sendMelding(
-            "Planlagt innhenting av valutakursgrunnlag for $dato fullført i $clientId.\n" +
-                "0 valutakursgrunnlag opprettet.\nKurser som ikke ble innhentet: $manglendeKurser.",
+            "*Innhenting av valutakurser fullført*\n" +
+                "• *Startdato:* $dato\n" +
+                "• *Kjøring:* Planlagt\n" +
+                "• *Applikasjon:* $clientId\n" +
+                "• *Opprettet grunnlag:* 0\n" +
+                "• *Manglende kurser:* $manglendeKurser",
         )
     }
 
@@ -164,7 +174,12 @@ class HentValutaSchedulerTest {
         assertSame(feil, assertThrows<IllegalStateException> { scheduler.hentValutakurs(LocalDate.of(2026, 1, 1)) })
         Mockito.verifyNoInteractions(valutakursgrunnlagService)
         verify(slackService).sendMelding(
-            "Planlagt innhenting av valutakursgrunnlag for 2026-01-01 feilet i $clientId (IllegalStateException). Se applikasjonsloggene for detaljer.",
+            "*Innhenting av valutakurser feilet*\n" +
+                "• *Startdato:* 2026-01-01\n" +
+                "• *Kjøring:* Planlagt\n" +
+                "• *Applikasjon:* $clientId\n" +
+                "• *Feiltype:* IllegalStateException\n" +
+                "Se applikasjonsloggene for detaljer.",
         )
         Mockito.verifyNoMoreInteractions(slackService)
     }
@@ -184,8 +199,12 @@ class HentValutaSchedulerTest {
         val rekkefølge = inOrder(valutakursgrunnlagService, slackService)
         rekkefølge.verify(valutakursgrunnlagService).opprettValutakursgrunnlag(resultater, scheduler.lagGyldighetsperiode(dato))
         rekkefølge.verify(slackService).sendMelding(
-            "Planlagt innhenting av valutakursgrunnlag for $dato fullført i $clientId.\n" +
-                "${resultater.size} valutakursgrunnlag opprettet.\nKurser som ikke ble innhentet: EUR, USD.",
+            "*Innhenting av valutakurser fullført*\n" +
+                "• *Startdato:* $dato\n" +
+                "• *Kjøring:* Planlagt\n" +
+                "• *Applikasjon:* $clientId\n" +
+                "• *Opprettet grunnlag:* ${resultater.size}\n" +
+                "• *Manglende kurser:* EUR, USD",
         )
         Mockito.verifyNoMoreInteractions(slackService)
     }
@@ -201,8 +220,12 @@ class HentValutaSchedulerTest {
         scheduler.hentValutakurs(dato)
 
         verify(slackService).sendMelding(
-            "Planlagt innhenting av valutakursgrunnlag for $dato fullført i $clientId.\n" +
-                "${resultater.size} valutakursgrunnlag opprettet.\nKurser som ikke ble innhentet: Ingen.",
+            "*Innhenting av valutakurser fullført*\n" +
+                "• *Startdato:* $dato\n" +
+                "• *Kjøring:* Planlagt\n" +
+                "• *Applikasjon:* $clientId\n" +
+                "• *Opprettet grunnlag:* ${resultater.size}\n" +
+                "• *Manglende kurser:* Ingen",
         )
         Mockito.verifyNoMoreInteractions(slackService)
     }
@@ -219,9 +242,33 @@ class HentValutaSchedulerTest {
         assertSame(feil, assertThrows<IllegalStateException> { scheduler.hentValutakurs(dato) })
 
         verify(slackService).sendMelding(
-            "Planlagt innhenting av valutakursgrunnlag for $dato feilet i $clientId (IllegalStateException). Se applikasjonsloggene for detaljer.",
+            "*Innhenting av valutakurser feilet*\n" +
+                "• *Startdato:* $dato\n" +
+                "• *Kjøring:* Planlagt\n" +
+                "• *Applikasjon:* $clientId\n" +
+                "• *Feiltype:* IllegalStateException\n" +
+                "Se applikasjonsloggene for detaljer.",
         )
         Mockito.verifyNoMoreInteractions(slackService)
+    }
+
+    @Test
+    fun `manuell kjøring viser startdato og kjøretype i Slack`() {
+        val dato = LocalDate.of(2025, 7, 1)
+        Mockito.`when`(hentValutakursService.hentValutakurs(any()))
+            .thenReturn(HentValutakursResponse(emptyList()))
+
+        scheduler.hentValutakurs(dato, ValutakursKjøring.MANUELL)
+
+        val melding = argumentCaptor<String>()
+        verify(slackService).sendMelding(
+            melding.capture(),
+            anyOrNull(),
+            anyOrNull(),
+        )
+        assertTrue(melding.firstValue.startsWith("*Innhenting av valutakurser fullført*"))
+        assertTrue(melding.firstValue.contains("• *Startdato:* 2025-07-01"))
+        assertTrue(melding.firstValue.contains("• *Kjøring:* Manuell"))
     }
 
     @Test

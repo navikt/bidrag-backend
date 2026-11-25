@@ -11,6 +11,7 @@ import no.nav.bidrag.grunnlag.ISSUER
 import no.nav.bidrag.grunnlag.bo.ValutakursgrunnlagBo
 import no.nav.bidrag.grunnlag.hendelse.schedule.valuta.HentValutaScheduler
 import no.nav.bidrag.grunnlag.hendelse.schedule.valuta.VALUTAKURS_TIDSSONE
+import no.nav.bidrag.grunnlag.hendelse.schedule.valuta.ValutakursKjøring
 import no.nav.bidrag.grunnlag.service.HentHistoriskeValutakurserService
 import no.nav.bidrag.grunnlag.service.Valutaberegning
 import no.nav.bidrag.grunnlag.service.ValutakursgrunnlagService
@@ -152,29 +153,41 @@ class ValutakursgrunnlagController(
     @Operation(
         security = [SecurityRequirement(name = "bearer-key")],
         summary = "Kjør planlagt innhenting av valutakurser",
-        description = "Starter samme innhenting som den planlagte halvårskjøringen. Uten dato brukes siste 1. januar eller 1. juli som ikke ligger i fremtiden.",
+        description = "Starter samme innhenting som den planlagte halvårskjøringen. År og måned må oppgis sammen, og måned må være januar (1) eller juli (7). " +
+            "Uten år og måned brukes siste halvår som ikke ligger i fremtiden.",
     )
     @ApiResponses(
         value = [
             ApiResponse(responseCode = "200", description = "Planlagt innhenting fullført"),
-            ApiResponse(responseCode = "400", description = "Datoen er ikke 1. januar eller 1. juli, eller ligger i fremtiden"),
+            ApiResponse(responseCode = "400", description = "År og måned mangler en del, måneden er ikke 1 eller 7, eller perioden ligger i fremtiden"),
             ApiResponse(responseCode = "401", description = "Sikkerhetstoken mangler eller er ugyldig"),
         ],
     )
     fun innhentPlanlagteValutakurser(
-        @Parameter(description = "Halvår som skal hentes. 1. januar eller 1. juli. Seneste avsluttede halvår brukes når datoen utelates.", example = "2026-07-01")
-        @RequestParam(required = false) dato: LocalDate?,
+        @Parameter(description = "Året halvåret gjelder for. Må oppgis sammen med måned.", example = "2026")
+        @RequestParam(required = false) aar: Int?,
+        @Parameter(description = "Halvårets startmåned. Tillatte verdier er 1 og 7. Må oppgis sammen med år.", example = "7")
+        @RequestParam(required = false) maaned: Int?,
     ) {
         val dagensDato = LocalDate.now(VALUTAKURS_TIDSSONE)
-        val gyldigFra = dato ?: if (dagensDato.monthValue >= 7) {
+        if ((aar == null) != (maaned == null)) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Oppgi både år og måned, eller utelat begge")
+        }
+        if (maaned != null && maaned !in listOf(1, 7)) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Måned må være 1 eller 7")
+        }
+        val gyldigFra = if (aar != null && maaned != null) {
+            runCatching { LocalDate.of(aar, maaned, 1) }
+                .getOrElse { throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Oppgi et gyldig årstall") }
+        } else if (dagensDato.monthValue >= 7) {
             LocalDate.of(dagensDato.year, 7, 1)
         } else {
             LocalDate.of(dagensDato.year, 1, 1)
         }
-        if (gyldigFra.dayOfMonth != 1 || gyldigFra.monthValue !in listOf(1, 7) || gyldigFra.isAfter(dagensDato)) {
-            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Oppgi 1. januar eller 1. juli som ikke ligger i fremtiden")
+        if (gyldigFra.isAfter(dagensDato)) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Halvåret kan ikke ligge i fremtiden")
         }
-        hentValutaScheduler.hentValutakurs(gyldigFra)
+        hentValutaScheduler.hentValutakurs(gyldigFra, ValutakursKjøring.MANUELL)
     }
 
     @PostMapping("/valutakursgrunnlag/historisk")

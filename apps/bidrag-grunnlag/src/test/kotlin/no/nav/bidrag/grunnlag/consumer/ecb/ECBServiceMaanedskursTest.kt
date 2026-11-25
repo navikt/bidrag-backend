@@ -7,6 +7,7 @@ import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.grunnlag.consumer.valutakurs.domene.ecb.Frequency
 import no.nav.bidrag.grunnlag.consumer.valutakurs.domene.norgesbank.Frekvens
 import no.nav.bidrag.grunnlag.consumer.valutakurser.ECBConsumer
+import no.nav.bidrag.grunnlag.consumer.valutakurser.FrankfurterConsumer
 import no.nav.bidrag.grunnlag.consumer.valutakurser.NorgesBankConsumer
 import no.nav.bidrag.grunnlag.consumer.valutakurser.api.SdmxData
 import no.nav.bidrag.grunnlag.consumer.valutakurser.api.SdmxDataSet
@@ -116,7 +117,7 @@ class ECBServiceMaanedskursTest {
     @Test
     fun `skal bruke Norges Bank når ECB returnerer dagskurser i et månedssvar`() {
         val norgesBank = Mockito.mock(NorgesBankConsumer::class.java)
-        val hentValutakursService = HentValutakursService(service, norgesBank)
+        val hentValutakursService = HentValutakursService(service, norgesBank, Mockito.mock(FrankfurterConsumer::class.java))
         Mockito.`when`(klient.hentValutakurs(Frequency.Monthly, listOf("NOK", "USD"), sisteJuni))
             .thenReturn(respons("NOK" to "12", "USD" to "2", frekvens = Frequency.Daily))
         Mockito.`when`(norgesBank.hentValutakurs(Frekvens.MÅNEDLIG, "USD", sisteJuni))

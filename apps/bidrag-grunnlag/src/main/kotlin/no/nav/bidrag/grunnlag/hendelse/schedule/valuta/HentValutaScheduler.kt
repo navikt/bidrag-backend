@@ -23,6 +23,13 @@ import java.time.ZoneId
 private val LOGGER = KotlinLogging.logger { }
 internal val VALUTAKURS_TIDSSONE: ZoneId = ZoneId.of("Europe/Oslo")
 
+internal enum class ValutakursKjøring(
+    val beskrivelse: String,
+) {
+    PLANLAGT("Planlagt"),
+    MANUELL("Manuell"),
+}
+
 @Configuration
 @EnableScheduling
 @EnableSchedulerLock(defaultLockAtMostFor = "PT6H")
@@ -52,12 +59,18 @@ class HentValutaScheduler(
         if (sisteBrukFra != forventetBrukFra) {
             val nyesteGrunnlag = sisteBrukFra?.toString() ?: "ingen"
             slackService.sendMelding(
-                "Planlagt innhenting av valutakursgrunnlag for $forventetBrukFra mangler i $clientId. Nyeste valutakursgrunnlag starter $nyesteGrunnlag.",
+                "*Valutakursgrunnlag mangler*\n" +
+                    "• *Forventet startdato:* $forventetBrukFra\n" +
+                    "• *Nyeste startdato:* $nyesteGrunnlag\n" +
+                    "• *Applikasjon:* $clientId",
             )
         }
     }
 
-    internal fun hentValutakurs(dato: LocalDate) {
+    internal fun hentValutakurs(
+        dato: LocalDate,
+        kjøring: ValutakursKjøring = ValutakursKjøring.PLANLAGT,
+    ) {
         val melding = try {
             require(dato.dayOfMonth == 1 && dato.monthValue in listOf(1, 7)) { "Valutakursgrunnlag må starte 1. januar eller 1. juli" }
             LOGGER.info { "Henter valutakursgrunnlag for $dato" }
@@ -80,11 +93,20 @@ class HentValutaScheduler(
                 .map { it.basisvaluta }
                 .toSet()
             val manglendeKurser = valutakoder.filter { it !in innhentedeValutaer }.joinToString(", ") { it.name }.ifEmpty { "Ingen" }
-            "Planlagt innhenting av valutakursgrunnlag for $dato fullført i $clientId.\n" +
-                "${valutakursgrunnlag.size} valutakursgrunnlag opprettet.\nKurser som ikke ble innhentet: $manglendeKurser."
+            "*Innhenting av valutakurser fullført*\n" +
+                "• *Startdato:* $dato\n" +
+                "• *Kjøring:* ${kjøring.beskrivelse}\n" +
+                "• *Applikasjon:* $clientId\n" +
+                "• *Opprettet grunnlag:* ${valutakursgrunnlag.size}\n" +
+                "• *Manglende kurser:* $manglendeKurser"
         } catch (e: Exception) {
             slackService.sendMelding(
-                "Planlagt innhenting av valutakursgrunnlag for $dato feilet i $clientId (${e.javaClass.simpleName}). Se applikasjonsloggene for detaljer.",
+                "*Innhenting av valutakurser feilet*\n" +
+                    "• *Startdato:* $dato\n" +
+                    "• *Kjøring:* ${kjøring.beskrivelse}\n" +
+                    "• *Applikasjon:* $clientId\n" +
+                    "• *Feiltype:* ${e.javaClass.simpleName}\n" +
+                    "Se applikasjonsloggene for detaljer.",
             )
             throw e
         }
