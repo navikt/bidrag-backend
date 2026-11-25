@@ -27,12 +27,9 @@ import no.nav.bidrag.domene.enums.beregning.Resultatkode
 import no.nav.bidrag.domene.enums.vedtak.BeregnTil
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.enums.vedtak.VirkningstidspunktÅrsakstype
-import no.nav.bidrag.domene.sak.Stønadsid
 import no.nav.bidrag.transport.behandling.felles.grunnlag.ManuellVedtakGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.NotatGrunnlag
-import no.nav.bidrag.transport.behandling.vedtak.response.VedtakDto
 import no.nav.bidrag.transport.behandling.vedtak.response.VedtakPeriodeDto
-import no.nav.bidrag.transport.behandling.vedtak.response.finnStønadsendring
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -108,7 +105,7 @@ class VirkningstidspunktService(
                             grunnlagFraOmgjøringsvedtak = request.grunnlagFraOmgjøringsvedtak ?: false,
                             perioder = hentPerioderVedtak(behandling, request),
                             vedtakstidspunkt =
-                            request.vedtaksid?.let {
+                            request.vedtaksid.let {
                                 hentVedtak(it)?.vedtakstidspunkt
                             },
                         )
@@ -268,40 +265,31 @@ class VirkningstidspunktService(
             behandlingRepository
                 .findBehandlingById(behandlingsid)
                 .orElseThrow { behandlingNotFoundException(behandlingsid) }
-        behandling.let {
-            log.info { "Oppdaterer informasjon om virkningstidspunkt for behandling $behandlingsid" }
-            secureLogger.info { "Oppdaterer informasjon om virkningstidspunkt for behandling $behandlingsid, forespørsel=$request" }
-            request.valider(it)
-            oppdaterAvslagÅrsak(it, request)
-            val gjelderBarnRolle =
-                request.rolleId?.let { rolleId ->
-                    it.søknadsbarn.find { it.id == rolleId }
-                }
-            val stønadstype = gjelderBarnRolle?.stønadstype ?: it.stonadstype
-            if (stønadstype == Stønadstype.BIDRAG18AAR) {
-                request.oppdaterBegrunnelseVurderingAvSkolegang?.let { n ->
-                    if (gjelderBarnRolle == null) {
-                        // Det valideres at det finnes bare ett barn i behandlingen hvis rolleId i requesten er null og oppdaterBegrunnelseVurderingAvSkolegang oppdateres
-                        notatService.oppdatereNotat(
-                            it,
-                            NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG,
-                            n.nyBegrunnelse,
-                            it.finnSøknadsbarnForSak(request.saksnummer).first(),
-                        )
-                    } else {
-                        notatService.oppdatereNotat(
-                            it,
-                            NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG,
-                            n.nyBegrunnelse,
-                            gjelderBarnRolle,
-                        )
-                    }
-                }
-            }
-            oppdaterVirkningstidspunkt(request.rolleId, request.virkningstidspunkt, it, saksnummer = request.saksnummer)
-            forholdsmessigFordelingService.synkroniserSøknadsbarnOgRevurderingsbarnForFFBehandling(it, ignorerSynkTimer = true)
-        }
-        behandling
+        log.info { "Oppdaterer informasjon om virkningstidspunkt for behandling $behandlingsid" }
+        secureLogger.info { "Oppdaterer informasjon om virkningstidspunkt for behandling $behandlingsid, forespørsel=$request" }
+        request.valider(behandling)
+        oppdaterAvslagÅrsak(behandling, request)
+        oppdaterVurderingAvSkolegang(behandling, request)
+        oppdaterVirkningstidspunkt(request.rolleId, request.virkningstidspunkt, behandling, saksnummer = request.saksnummer)
+        forholdsmessigFordelingService.synkroniserSøknadsbarnOgRevurderingsbarnForFFBehandling(behandling, ignorerSynkTimer = true)
+    }
+
+    private fun oppdaterVurderingAvSkolegang(
+        behandling: Behandling,
+        request: OppdatereVirkningstidspunkt,
+    ) {
+        val begrunnelse = request.oppdaterBegrunnelseVurderingAvSkolegang ?: return
+        val valgtBarn = request.rolleId?.let { rolleId -> behandling.søknadsbarn.find { it.id == rolleId } }
+        val enesteBarnISak = behandling.finnSøknadsbarnForSak(request.saksnummer).singleOrNull()
+        val barn = valgtBarn ?: enesteBarnISak ?: return
+        if ((barn.stønadstype ?: behandling.stonadstype) != Stønadstype.BIDRAG18AAR) return
+
+        notatService.oppdatereNotat(
+            behandling,
+            NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG,
+            begrunnelse.nyBegrunnelse,
+            barn,
+        )
     }
 
     @Transactional
@@ -531,27 +519,10 @@ class VirkningstidspunktService(
         }
 
         if (erVirkningstidspunktEndret) {
-            if (gjelderBarn != null) {
-                val eldsteSøktFomDato =
-                    gjelderBarn.forholdsmessigFordeling
-                        ?.eldsteSøknad
-                        ?.søknadFomDato
-                        ?.withDayOfMonth(1)
-                        ?: behandling.søktFomDato.withDayOfMonth(1)
-                gjelderBarn.virkningstidspunkt =
-                    maxOf(eldsteSøktFomDato, nyVirkningstidspunkt ?: gjelderBarn.virkningstidspunkt ?: behandling.søktFomDato)
-            } else {
-                behandling.finnSøknadsbarnForSak(saksnummer)
-                    .forEach { gjelderBarn ->
-                        val eldsteSøktFomDato =
-                            gjelderBarn.forholdsmessigFordeling
-                                ?.eldsteSøknad
-                                ?.søknadFomDato
-                                ?.withDayOfMonth(1)
-                                ?: behandling.søktFomDato.withDayOfMonth(1)
-                        gjelderBarn.virkningstidspunkt =
-                            maxOf(eldsteSøktFomDato, nyVirkningstidspunkt ?: gjelderBarn.virkningstidspunkt ?: behandling.søktFomDato)
-                    }
+            val barnSomOppdateres = gjelderBarn?.let { listOf(it) } ?: behandling.finnSøknadsbarnForSak(saksnummer)
+            barnSomOppdateres.forEach { barn ->
+                barn.virkningstidspunkt =
+                    maxOf(barn.tidligsteVirkningstidspunkt, nyVirkningstidspunkt ?: barn.virkningstidspunkt ?: behandling.søktFomDato)
             }
 
             behandling.virkningstidspunkt = behandling.eldsteVirkningstidspunkt
