@@ -11,11 +11,13 @@ import no.nav.bidrag.grunnlag.service.Valutaberegning
 import no.nav.bidrag.grunnlag.service.ValutakursgrunnlagService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.Mockito
+import org.mockito.kotlin.argumentCaptor
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.http.HttpHeaders
@@ -102,15 +104,34 @@ class ValutakursgrunnlagControllerTest {
     }
 
     @Test
-    fun `planlagt valutainnhenting kan startes via API med dagens dato i Oslo`() {
+    fun `planlagt valutainnhenting bruker seneste halvår uten dato`() {
         val datoFør = LocalDate.now(VALUTAKURS_TIDSSONE)
 
         mockMvc.perform(post("/valutakursgrunnlag/planlagt-innhenting"))
             .andExpect(status().isOk)
 
-        Mockito.verify(hentValutaScheduler).hentValutakurs(Mockito.argThat { dato ->
-            dato >= datoFør && dato <= LocalDate.now(VALUTAKURS_TIDSSONE)
-        })
+        val dato = argumentCaptor<LocalDate>()
+        Mockito.verify(hentValutaScheduler).hentValutakurs(dato.capture())
+        assertEquals(
+            if (datoFør.monthValue >= 7) LocalDate.of(datoFør.year, 7, 1) else LocalDate.of(datoFør.year, 1, 1),
+            dato.firstValue,
+        )
+    }
+
+    @Test
+    fun `planlagt valutainnhenting bruker valgt halvår`() {
+        mockMvc.perform(post("/valutakursgrunnlag/planlagt-innhenting").param("dato", "2025-07-01"))
+            .andExpect(status().isOk)
+
+        Mockito.verify(hentValutaScheduler).hentValutakurs(LocalDate.of(2025, 7, 1))
+    }
+
+    @Test
+    fun `planlagt valutainnhenting avviser ugyldig halvårsstart`() {
+        mockMvc.perform(post("/valutakursgrunnlag/planlagt-innhenting").param("dato", "2025-07-02"))
+            .andExpect(status().isBadRequest)
+
+        Mockito.verifyNoInteractions(hentValutaScheduler)
     }
 
     @Test

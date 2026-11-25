@@ -152,16 +152,29 @@ class ValutakursgrunnlagController(
     @Operation(
         security = [SecurityRequirement(name = "bearer-key")],
         summary = "Kjør planlagt innhenting av valutakurser",
-        description = "Starter samme innhenting som den planlagte halvårskjøringen for dagens dato i Oslo-tid.",
+        description = "Starter samme innhenting som den planlagte halvårskjøringen. Uten dato brukes siste 1. januar eller 1. juli som ikke ligger i fremtiden.",
     )
     @ApiResponses(
         value = [
             ApiResponse(responseCode = "200", description = "Planlagt innhenting fullført"),
+            ApiResponse(responseCode = "400", description = "Datoen er ikke 1. januar eller 1. juli, eller ligger i fremtiden"),
             ApiResponse(responseCode = "401", description = "Sikkerhetstoken mangler eller er ugyldig"),
         ],
     )
-    fun innhentPlanlagteValutakurser() {
-        hentValutaScheduler.hentValutakurs(LocalDate.now(VALUTAKURS_TIDSSONE))
+    fun innhentPlanlagteValutakurser(
+        @Parameter(description = "Halvår som skal hentes. 1. januar eller 1. juli. Seneste avsluttede halvår brukes når datoen utelates.", example = "2026-07-01")
+        @RequestParam(required = false) dato: LocalDate?,
+    ) {
+        val dagensDato = LocalDate.now(VALUTAKURS_TIDSSONE)
+        val gyldigFra = dato ?: if (dagensDato.monthValue >= 7) {
+            LocalDate.of(dagensDato.year, 7, 1)
+        } else {
+            LocalDate.of(dagensDato.year, 1, 1)
+        }
+        if (gyldigFra.dayOfMonth != 1 || gyldigFra.monthValue !in listOf(1, 7) || gyldigFra.isAfter(dagensDato)) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Oppgi 1. januar eller 1. juli som ikke ligger i fremtiden")
+        }
+        hentValutaScheduler.hentValutakurs(gyldigFra)
     }
 
     @PostMapping("/valutakursgrunnlag/historisk")
