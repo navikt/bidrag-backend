@@ -12,6 +12,21 @@ function timestampMillis(value) {
   return new Date(value).getTime();
 }
 
+class IdempotencyInProgressError extends Error {
+  constructor(key) {
+    super(`Auditlog event is already being processed: ${key}`);
+    this.name = 'IdempotencyInProgressError';
+  }
+}
+
+class IdempotencyCompletionError extends Error {
+  constructor(key, cause) {
+    super(`Slack delivery succeeded, but the idempotency state could not be completed: ${key}`, { cause });
+    this.name = 'IdempotencyCompletionError';
+    this.retainDelivery = true;
+  }
+}
+
 class IdempotencyStore {
   constructor({
     firestore,
@@ -35,15 +50,21 @@ class IdempotencyStore {
   }
 
   async runOnce(key, operation) {
+    const localResult = await this.fallbackStore.runOnce(key, () => this.runPersistentOnce(key, operation));
+    return localResult.executed ? localResult.value : { executed: false };
+  }
+
+  async runPersistentOnce(key, operation) {
     const ownerId = this.createOwnerId();
     let claim;
     try {
       claim = await this.claim(key, ownerId);
     } catch (error) {
       this.onFallback(error);
-      return this.fallbackStore.runOnce(key, operation);
+      return { executed: true, value: await operation() };
     }
 
+    if (claim.inProgress) throw new IdempotencyInProgressError(key);
     if (!claim.claimed) return { executed: false };
 
     let value;
@@ -58,7 +79,12 @@ class IdempotencyStore {
       throw error;
     }
 
-    await this.complete(key, ownerId);
+    try {
+      await this.complete(key, ownerId);
+    } catch (error) {
+      throw new IdempotencyCompletionError(key, error);
+    }
+
     return { executed: true, value };
   }
 
@@ -75,9 +101,9 @@ class IdempotencyStore {
       const snapshot = await transaction.get(reference);
       const data = snapshot.exists ? snapshot.data() : null;
 
-      if (data?.status === 'completed') return { claimed: false };
+      if (data?.status === 'completed') return { claimed: false, inProgress: false };
       if (data?.status === 'processing' && timestampMillis(data.leaseUntil) > now) {
-        return { claimed: false };
+        return { claimed: false, inProgress: true };
       }
 
       const expiresAt = new Date(now + this.ttlMs);
@@ -174,7 +200,7 @@ class MemoryIdempotencyStore {
         return value;
       })
       .catch(error => {
-        if (this.entries.get(key) === entry) this.entries.delete(key);
+        if (!error.retainDelivery && this.entries.get(key) === entry) this.entries.delete(key);
         throw error;
       });
     this.entries.set(key, entry);
@@ -196,6 +222,8 @@ module.exports = {
   DEFAULT_FALLBACK_TTL_MS,
   DEFAULT_LEASE_MS,
   DEFAULT_TTL_MS,
+  IdempotencyCompletionError,
+  IdempotencyInProgressError,
   IdempotencyStore,
   MemoryIdempotencyStore,
 };
