@@ -1,5 +1,5 @@
 name: bidrag-grunnlag
-slackChannelId: CGVH3MV47
+slackChannelId: C0ATAUAJ38Q
 ingresses:
   - https://bidrag-grunnlag.intern.nav.no
 azure:
@@ -35,6 +35,7 @@ azure:
     ereg_url: ereg-services.prod-fss-pub.nais.io
     norgesbank_url: data.norges-bank.no
     ecb_url: data-api.ecb.europa.eu
+    frankfurter_url: api.frankfurter.dev
 dbname: bidrag-grunnlag-prod-4
 dbinstancename: bidrag-grunnlag-prod-4
 dbauditlog: "on"

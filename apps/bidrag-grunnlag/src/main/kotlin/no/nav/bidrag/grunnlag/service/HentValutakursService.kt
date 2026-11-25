@@ -11,6 +11,7 @@ import no.nav.bidrag.grunnlag.consumer.valutakurs.exception.IngenValutakursExcep
 import no.nav.bidrag.grunnlag.consumer.valutakurs.exception.NorgesBankValutakursMappingException
 import no.nav.bidrag.grunnlag.consumer.valutakurs.exception.ValutakursClientException
 import no.nav.bidrag.grunnlag.consumer.valutakurs.exception.ValutakursException
+import no.nav.bidrag.grunnlag.consumer.valutakurser.FrankfurterConsumer
 import no.nav.bidrag.grunnlag.consumer.valutakurser.NorgesBankConsumer
 import no.nav.bidrag.grunnlag.consumer.valutakurser.api.tilValutakurs
 import no.nav.bidrag.grunnlag.consumer.valutakurser.dto.HentValutakursRequest
@@ -29,6 +30,7 @@ private val LOGGER = KotlinLogging.logger {}
 class HentValutakursService(
     private val ecbService: ECBService,
     private val norgesBankConsumer: NorgesBankConsumer,
+    private val frankfurterConsumer: FrankfurterConsumer,
 ) {
     fun hentValutakurs(request: HentValutakursRequest): HentValutakursResponse {
         require(request.hentValutakursListe.isNotEmpty()) { "Minst én valuta må oppgis" }
@@ -72,7 +74,7 @@ class HentValutakursService(
             )
         }
         LOGGER.warn { "ECB-kurs mangler for $utenlandskValutakode i $observasjonsmåned. Prøver Norges Bank" }
-        return try {
+        try {
             val respons = norgesBankConsumer.hentValutakurs(Frekvens.MÅNEDLIG, utenlandskValutakode.name, observasjonsmåned.atEndOfMonth())
             val valutakurs = when (respons) {
                 is RestResponse.Success -> respons.body.tilValutakurs(utenlandskValutakode.name, Frekvens.MÅNEDLIG, observasjonsmåned.atEndOfMonth())
@@ -81,12 +83,48 @@ class HentValutakursService(
             if (valutakurs.kurs.signum() <= 0 || YearMonth.from(valutakurs.kursDato) != observasjonsmåned || valutakurs.valuta != utenlandskValutakode.name) {
                 throw IngenValutakursException("Ugyldig kurs fra Norges Bank", null)
             }
-            HentetValutakursResultat.HentetValutakurs(periode, valutakurs.kurs, 0, utenlandskValutakode, Valutakode.NOK, LocalDateTime.now(), ValutakursgrunnlagKilde.NORGES_BANK)
+            return HentetValutakursResultat.HentetValutakurs(
+                periode,
+                valutakurs.kurs,
+                0,
+                utenlandskValutakode,
+                Valutakode.NOK,
+                LocalDateTime.now(),
+                ValutakursgrunnlagKilde.NORGES_BANK,
+            )
         } catch (e: ValutakursClientException) {
-            LOGGER.error { "Ingen lagringsbar kurs fra ECB eller Norges Bank for $utenlandskValutakode i $observasjonsmåned: ${e.message}" }
-            HentetValutakursResultat.FeiledValutakurs(periode, utenlandskValutakode, Valutakode.NOK)
+            LOGGER.warn { "Norges Bank manglet kurs for $utenlandskValutakode i $observasjonsmåned: ${e.message}. Prøver Frankfurter" }
         } catch (e: NorgesBankValutakursMappingException) {
-            LOGGER.error { "Ugyldig svar fra Norges Bank for $utenlandskValutakode i $observasjonsmåned: ${e.message}" }
+            LOGGER.warn { "Ugyldig svar fra Norges Bank for $utenlandskValutakode i $observasjonsmåned: ${e.message}. Prøver Frankfurter" }
+        }
+
+        return try {
+            val respons = frankfurterConsumer.hentMaanedskurs(utenlandskValutakode.name, observasjonsmåned)
+            val rates = when (respons) {
+                is RestResponse.Success -> respons.body
+
+                is RestResponse.Failure -> throw ValutakursException(
+                    "Frankfurter svarte med status ${respons.statusCode.value()}: ${respons.message}",
+                    respons.restClientException,
+                )
+            }
+            val rate = rates.singleOrNull {
+                it.base == utenlandskValutakode.name &&
+                    it.quote == Valutakode.NOK.name &&
+                    YearMonth.from(it.date) == observasjonsmåned &&
+                    it.rate.signum() > 0
+            } ?: throw IngenValutakursException("Ugyldig kurs fra Frankfurter", null)
+            HentetValutakursResultat.HentetValutakurs(
+                periode,
+                rate.rate,
+                0,
+                utenlandskValutakode,
+                Valutakode.NOK,
+                LocalDateTime.now(),
+                ValutakursgrunnlagKilde.FRANKFURTER,
+            )
+        } catch (e: ValutakursClientException) {
+            LOGGER.error { "Ingen lagringsbar kurs fra ECB, Norges Bank eller Frankfurter for $utenlandskValutakode i $observasjonsmåned: ${e.message}" }
             HentetValutakursResultat.FeiledValutakurs(periode, utenlandskValutakode, Valutakode.NOK)
         }
     }
