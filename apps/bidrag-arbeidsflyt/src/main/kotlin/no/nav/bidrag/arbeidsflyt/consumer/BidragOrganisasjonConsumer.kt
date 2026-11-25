@@ -126,9 +126,16 @@ class BidragOrganisasjonConsumer(
                         "Enhetsoppslaget returnerte tomt svar uten status 204"
                     }
                 }
-            }
+            } ?: emptyList()
         } catch (_: HttpClientErrorException.NotFound) {
-            null
-        } ?: emptyList()
+            emptyList()
+        } catch (e: Exception) {
+            // URI-en og feilmeldingen inneholder NAV-identen. Logg den bare til secure log,
+            // og kast en ny exception uten cause så identen ikke havner i vanlig logg.
+            secureLogger.error(e) { "Feil ved henting av enheter for saksbehandler $saksbehandlerIdent" }
+            throw HentSaksbehandlerEnheterFeiletException()
+        }
     }
 }
+
+class HentSaksbehandlerEnheterFeiletException : RuntimeException("Feil ved henting av enheter for saksbehandler")

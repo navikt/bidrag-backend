@@ -16,6 +16,7 @@ import com.github.tomakehurst.wiremock.client.WireMock.verify
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import no.nav.bidrag.arbeidsflyt.UnleashFeatures
+import no.nav.bidrag.arbeidsflyt.consumer.HentSaksbehandlerEnheterFeiletException
 import no.nav.bidrag.arbeidsflyt.dto.MappeDto
 import no.nav.bidrag.arbeidsflyt.dto.MapperResponse
 import no.nav.bidrag.arbeidsflyt.dto.OppgaveData
@@ -239,8 +240,21 @@ internal class SakHendelseTest : AbstractBehandleHendelseTest() {
         fun `skal ikke tolke ugyldig tomt enhetssvar som manglende medlemskap`() {
             stubEnhetsliste(aResponse().withStatus(200))
 
-            shouldThrow<RuntimeException> { service.behandleHendelse(hendelse) }
+            val feil = shouldThrow<HentSaksbehandlerEnheterFeiletException> { service.behandleHendelse(hendelse) }
 
+            feil.cause shouldBe null
+            feil.message!!.contains("Z123456") shouldBe false
+            verify(0, patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1001")))
+        }
+
+        @Test
+        fun `skal ikke lekke saksbehandlerident når enhetsoppslaget feiler`() {
+            stubEnhetsliste(aResponse().withStatus(500))
+
+            val feil = shouldThrow<HentSaksbehandlerEnheterFeiletException> { service.behandleHendelse(hendelse) }
+
+            feil.cause shouldBe null
+            feil.message!!.contains("Z123456") shouldBe false
             verify(0, patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1001")))
         }
     }
