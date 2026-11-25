@@ -881,10 +881,9 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
         }
 
         @Test
-        fun `skal lagre vurdering av skolegang på eneste barn i angitt sak`() {
+        fun `skal lagre vurdering av skolegang på 18-årsbarn i angitt sak når behandlingen gjelder bidrag`() {
             val (behandling, barn1, barn2) = opprettBehandlingMedBarnIToSaker()
-            behandling.stonadstype = Stønadstype.BIDRAG18AAR
-            behandling.søknadsbarn.forEach { it.stønadstype = Stønadstype.BIDRAG18AAR }
+            barn2.stønadstype = Stønadstype.BIDRAG18AAR
 
             virkningstidspunktService.oppdatereVirkningstidspunkt(
                 behandling.id!!,
