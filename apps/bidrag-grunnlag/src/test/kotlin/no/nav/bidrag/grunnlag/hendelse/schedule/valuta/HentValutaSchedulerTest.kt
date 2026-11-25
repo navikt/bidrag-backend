@@ -84,8 +84,8 @@ class HentValutaSchedulerTest {
 
         verify(slackService).sendMelding(
             "*Valutakursgrunnlag mangler*\n" +
-                "• *Forventet startdato:* 2026-07-01\n" +
-                "• *Nyeste startdato:* 2026-01-01\n" +
+                "• *Forventet startdato:* 01.07.2026\n" +
+                "• *Nyeste startdato:* 01.01.2026\n" +
                 "• *Applikasjon:* $clientId",
         )
     }
@@ -96,7 +96,7 @@ class HentValutaSchedulerTest {
 
         verify(slackService).sendMelding(
             "*Valutakursgrunnlag mangler*\n" +
-                "• *Forventet startdato:* 2026-01-01\n" +
+                "• *Forventet startdato:* 01.01.2026\n" +
                 "• *Nyeste startdato:* ingen\n" +
                 "• *Applikasjon:* $clientId",
         )
@@ -138,7 +138,7 @@ class HentValutaSchedulerTest {
         val manglendeKurser = forespørsel.firstValue.hentValutakursListe.joinToString(", ") { it.valutakode.name }
         verify(slackService).sendMelding(
             "*Innhenting av valutakurser fullført*\n" +
-                "• *Startdato:* $dato\n" +
+                "• *Startdato:* 01.01.2026\n" +
                 "• *Kjøring:* Planlagt\n" +
                 "• *Applikasjon:* $clientId\n" +
                 "• *Opprettet grunnlag:* 0\n" +
@@ -175,7 +175,7 @@ class HentValutaSchedulerTest {
         Mockito.verifyNoInteractions(valutakursgrunnlagService)
         verify(slackService).sendMelding(
             "*Innhenting av valutakurser feilet*\n" +
-                "• *Startdato:* 2026-01-01\n" +
+                "• *Startdato:* 01.01.2026\n" +
                 "• *Kjøring:* Planlagt\n" +
                 "• *Applikasjon:* $clientId\n" +
                 "• *Feiltype:* IllegalStateException\n" +
@@ -200,7 +200,7 @@ class HentValutaSchedulerTest {
         rekkefølge.verify(valutakursgrunnlagService).opprettValutakursgrunnlag(resultater, scheduler.lagGyldighetsperiode(dato))
         rekkefølge.verify(slackService).sendMelding(
             "*Innhenting av valutakurser fullført*\n" +
-                "• *Startdato:* $dato\n" +
+                "• *Startdato:* 01.01.2026\n" +
                 "• *Kjøring:* Planlagt\n" +
                 "• *Applikasjon:* $clientId\n" +
                 "• *Opprettet grunnlag:* ${resultater.size}\n" +
@@ -221,7 +221,7 @@ class HentValutaSchedulerTest {
 
         verify(slackService).sendMelding(
             "*Innhenting av valutakurser fullført*\n" +
-                "• *Startdato:* $dato\n" +
+                "• *Startdato:* 01.07.2025\n" +
                 "• *Kjøring:* Planlagt\n" +
                 "• *Applikasjon:* $clientId\n" +
                 "• *Opprettet grunnlag:* ${resultater.size}\n" +
@@ -243,7 +243,7 @@ class HentValutaSchedulerTest {
 
         verify(slackService).sendMelding(
             "*Innhenting av valutakurser feilet*\n" +
-                "• *Startdato:* $dato\n" +
+                "• *Startdato:* 01.01.2026\n" +
                 "• *Kjøring:* Planlagt\n" +
                 "• *Applikasjon:* $clientId\n" +
                 "• *Feiltype:* IllegalStateException\n" +
@@ -267,8 +267,28 @@ class HentValutaSchedulerTest {
             anyOrNull(),
         )
         assertTrue(melding.firstValue.startsWith("*Innhenting av valutakurser fullført*"))
-        assertTrue(melding.firstValue.contains("• *Startdato:* 2025-07-01"))
+        assertTrue(melding.firstValue.contains("• *Startdato:* 01.07.2025"))
         assertTrue(melding.firstValue.contains("• *Kjøring:* Manuell"))
+    }
+
+    @Test
+    fun `Slack-melding skjuler applikasjonsnavn i prod`() {
+        val prodScheduler = HentValutaScheduler(
+            hentValutakursService,
+            valutakursgrunnlagService,
+            slackService,
+            clientId,
+            "prod-gcp",
+        )
+        Mockito.`when`(hentValutakursService.hentValutakurs(any()))
+            .thenReturn(HentValutakursResponse(emptyList()))
+
+        prodScheduler.hentValutakurs(LocalDate.of(2025, 7, 1))
+
+        val melding = argumentCaptor<String>()
+        verify(slackService).sendMelding(melding.capture(), anyOrNull(), anyOrNull())
+        assertFalse(melding.firstValue.contains("Applikasjon:"))
+        assertTrue(melding.firstValue.contains("• *Startdato:* 01.07.2025"))
     }
 
     @Test

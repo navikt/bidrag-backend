@@ -19,9 +19,11 @@ import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.scheduling.annotation.Scheduled
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 private val LOGGER = KotlinLogging.logger { }
 internal val VALUTAKURS_TIDSSONE: ZoneId = ZoneId.of("Europe/Oslo")
+private val SLACK_DATOFORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy")
 
 internal enum class ValutakursKjøring(
     val beskrivelse: String,
@@ -38,6 +40,7 @@ class HentValutaScheduler(
     private val valutakursgrunnlagService: ValutakursgrunnlagService,
     private val slackService: SlackService,
     @param:Value($$"${NAIS_CLIENT_ID:bidrag-grunnlag-local}") private val clientId: String,
+    @param:Value($$"${NAIS_CLUSTER_NAME:dev-gcp}") private val clusterName: String = "dev-gcp",
 ) {
     @Scheduled(cron = $$"${VALUTAKURS_HENT_CRON:0 0 5 1 1,7 *}", zone = "Europe/Oslo")
     @SchedulerLock(name = "hentValutakursgrunnlag", lockAtLeastFor = "PT15M")
@@ -57,12 +60,12 @@ class HentValutaScheduler(
         val forventetBrukFra = LocalDate.of(dato.year, if (dato.monthValue >= 7) 7 else 1, 1)
         val sisteBrukFra = valutakursgrunnlagService.hentSisteBrukFra()
         if (sisteBrukFra != forventetBrukFra) {
-            val nyesteGrunnlag = sisteBrukFra?.toString() ?: "ingen"
+            val nyesteGrunnlag = sisteBrukFra?.format(SLACK_DATOFORMAT) ?: "ingen"
             slackService.sendMelding(
                 "*Valutakursgrunnlag mangler*\n" +
-                    "• *Forventet startdato:* $forventetBrukFra\n" +
+                    "• *Forventet startdato:* ${forventetBrukFra.format(SLACK_DATOFORMAT)}\n" +
                     "• *Nyeste startdato:* $nyesteGrunnlag\n" +
-                    "• *Applikasjon:* $clientId",
+                    applikasjonslinje(),
             )
         }
     }
@@ -94,17 +97,17 @@ class HentValutaScheduler(
                 .toSet()
             val manglendeKurser = valutakoder.filter { it !in innhentedeValutaer }.joinToString(", ") { it.name }.ifEmpty { "Ingen" }
             "*Innhenting av valutakurser fullført*\n" +
-                "• *Startdato:* $dato\n" +
+                "• *Startdato:* ${dato.format(SLACK_DATOFORMAT)}\n" +
                 "• *Kjøring:* ${kjøring.beskrivelse}\n" +
-                "• *Applikasjon:* $clientId\n" +
-                "• *Opprettet grunnlag:* ${valutakursgrunnlag.size}\n" +
+                applikasjonslinje() +
+                "• *Opprettet valutakursgrunnlag:* ${valutakursgrunnlag.size}\n" +
                 "• *Manglende kurser:* $manglendeKurser"
         } catch (e: Exception) {
             slackService.sendMelding(
                 "*Innhenting av valutakurser feilet*\n" +
-                    "• *Startdato:* $dato\n" +
+                    "• *Startdato:* ${dato.format(SLACK_DATOFORMAT)}\n" +
                     "• *Kjøring:* ${kjøring.beskrivelse}\n" +
-                    "• *Applikasjon:* $clientId\n" +
+                    applikasjonslinje() +
                     "• *Feiltype:* ${e.javaClass.simpleName}\n" +
                     "Se applikasjonsloggene for detaljer.",
             )
@@ -114,4 +117,11 @@ class HentValutaScheduler(
     }
 
     internal fun lagGyldighetsperiode(dato: LocalDate): Periode<LocalDate> = Datoperiode(dato, dato.plusMonths(6))
+
+    private fun applikasjonslinje(): String =
+        if (clusterName.startsWith("prod-")) {
+            ""
+        } else {
+            "• *Applikasjon:* $clientId\n"
+        }
 }
