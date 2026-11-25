@@ -160,6 +160,7 @@ class ValutakursgrunnlagController(
             ApiResponse(responseCode = "200", description = "Planlagt innhenting fullført"),
             ApiResponse(responseCode = "400", description = "År og måned mangler en del, måneden er ikke 1 eller 7, eller perioden ligger i fremtiden"),
             ApiResponse(responseCode = "401", description = "Sikkerhetstoken mangler eller er ugyldig"),
+            ApiResponse(responseCode = "503", description = "Kunne ikke hente brukertilganger"),
         ],
     )
     fun innhentPlanlagteValutakurser(
@@ -168,6 +169,7 @@ class ValutakursgrunnlagController(
         @Parameter(description = "Halvårets startmåned. Tillatte verdier er 1 og 7. Må oppgis sammen med år.", example = "7")
         @RequestParam(required = false) maaned: Int?,
     ) {
+        tilgangskontrollConsumer.krevAdministrasjonstilgang()
         val dagensDato = LocalDate.now(VALUTAKURS_TIDSSONE)
         if ((aar == null) != (maaned == null)) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Oppgi både år og måned, eller utelat begge")

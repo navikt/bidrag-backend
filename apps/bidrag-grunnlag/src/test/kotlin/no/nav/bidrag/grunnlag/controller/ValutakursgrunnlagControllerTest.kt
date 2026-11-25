@@ -133,7 +133,36 @@ class ValutakursgrunnlagControllerTest {
         )
             .andExpect(status().isOk)
 
-        Mockito.verify(hentValutaScheduler).hentValutakurs(LocalDate.of(2025, 7, 1), ValutakursKjøring.MANUELL)
+        val rekkefølge = Mockito.inOrder(tilgangskontrollConsumer, hentValutaScheduler)
+        rekkefølge.verify(tilgangskontrollConsumer).krevAdministrasjonstilgang()
+        rekkefølge.verify(hentValutaScheduler).hentValutakurs(LocalDate.of(2025, 7, 1), ValutakursKjøring.MANUELL)
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = [403, 503])
+    fun `skal stoppe planlagt innhenting uten periode ved avslag eller feil i tilgangskontroll`(statuskode: Int) {
+        Mockito.doThrow(ResponseStatusException(HttpStatus.valueOf(statuskode), "Kunne ikke godkjenne tilgang"))
+            .`when`(tilgangskontrollConsumer).krevAdministrasjonstilgang()
+
+        mockMvc.perform(post("/valutakursgrunnlag/planlagt-innhenting"))
+            .andExpect(status().`is`(statuskode))
+
+        Mockito.verifyNoInteractions(hentValutaScheduler, service, historiskeValutakurserService)
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = [403, 503])
+    fun `skal stoppe planlagt innhenting med valgt periode ved avslag eller feil i tilgangskontroll`(statuskode: Int) {
+        Mockito.doThrow(ResponseStatusException(HttpStatus.valueOf(statuskode), "Kunne ikke godkjenne tilgang"))
+            .`when`(tilgangskontrollConsumer).krevAdministrasjonstilgang()
+
+        mockMvc.perform(
+            post("/valutakursgrunnlag/planlagt-innhenting")
+                .param("aar", "2025")
+                .param("maaned", "7"),
+        ).andExpect(status().`is`(statuskode))
+
+        Mockito.verifyNoInteractions(hentValutaScheduler, service, historiskeValutakurserService)
     }
 
     @Test
