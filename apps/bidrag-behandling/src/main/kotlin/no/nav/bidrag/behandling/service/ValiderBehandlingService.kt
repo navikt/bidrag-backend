@@ -66,7 +66,7 @@ class ValiderBehandlingService(
             løpendeBidrag.bidragssakerListe.all {
                 it.valutakode == Valutakode.NOK
             }
-        return if (!harLøpendeBidragUtenlandskValuta) "Bidragspliktig har løpende bidrag i utenlandsk valuta" else null
+        return if (!harLøpendeBidragUtenlandskValuta && !UnleashFeatures.FATTE_VEDTAK_SÆRBIDRAG_UTENLANDSK_VALUTA.isEnabled) "Bidragspliktig har løpende bidrag i utenlandsk valuta" else null
     }
 
     private fun kanBidragBehandlesINyLøsning(request: KanBehandlesINyLøsningRequest): String? = kanBidragV1BehandlesINyLøsning(request)
