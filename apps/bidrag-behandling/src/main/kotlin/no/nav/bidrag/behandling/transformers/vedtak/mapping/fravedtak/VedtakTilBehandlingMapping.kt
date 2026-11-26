@@ -484,9 +484,17 @@ class VedtakTilBehandlingMapping(
     fun VedtakDto.tilBeregningResultatSærbidrag(): ResultatSærbidragsberegningDto? = engangsbeløpListe.firstOrNull()?.let { engangsbeløp ->
         val behandling =
             tilBehandling(1, innkrevingstype = engangsbeløp.innkreving)
+        // For vedtak som ble fattet i Bisys så ble beløp i engangsbeløp satt til å være beregning minus beløpDirekteBetaltAvBp
+        // I ny løsning så settes beløp til å være resultat fra beregningen og det som er direkte betalt blir satt til betaltBeløp i engangsbeløp objektet
+        // Dette blir trukket fra resultat i bidrag-regnskap før det innkreves. Dette er en justering for å få riktig resultat i visningen
+        val beløpResultat = if (behandling.utgift != null && behandling.utgift!!.beløpDirekteBetaltAvBp > BigDecimal.ZERO && engangsbeløp.betaltBeløp == null) {
+            (engangsbeløp.beløp ?: BigDecimal.ZERO) + behandling.utgift!!.beløpDirekteBetaltAvBp
+        } else {
+            engangsbeløp.beløp
+        }
         grunnlagListe.byggResultatSærbidragsberegning(
             behandling.virkningstidspunkt!!,
-            engangsbeløp.beløp,
+            beløpResultat,
             Resultatkode.fraKode(engangsbeløp.resultatkode)!!,
             engangsbeløp.grunnlagReferanseListe,
             behandling.utgift?.tilBeregningDto() ?: UtgiftBeregningDto(),
@@ -504,7 +512,8 @@ class VedtakTilBehandlingMapping(
         lesemodus: Boolean,
     ): Utgift? {
         if (behandling.tilType() !== TypeBehandling.SÆRBIDRAG ||
-            validerBeregning.run { behandling.tilSærbidragAvslagskode() }?.erAvslagSomInneholderUtgifter() == false
+            // TODO: Unntak for bisys her for at det skal være mulig å se utgifter i bisys vedtak for å verifisere overføring.
+            (!behandling.erBisysVedtak && validerBeregning.run { behandling.tilSærbidragAvslagskode() }?.erAvslagSomInneholderUtgifter() == false)
         ) {
             return null
         }
