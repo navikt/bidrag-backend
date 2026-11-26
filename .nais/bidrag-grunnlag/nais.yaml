@@ -33,6 +33,7 @@ spec:
       {{/each}}
     outbound:
       external:
+        - host: {{ azure.unsecure.frankfurter_url }}
         - host: {{ azure.familiebasak_url }}
         - host: {{ azure.familieefsak_url }}
         - host: {{ azure.bidragperson_base_url }}
@@ -92,6 +93,10 @@ spec:
   envFrom:
     - secret: bidrag-bot-slack-oauth-token
   env:
+    - name: VALUTAKURS_HENT_CRON
+      value: "0 0 5 1 1,7 *"
+    - name: VALUTAKURS_SJEKK_CRON
+      value: "0 0 6 * * *"
     - name: SLACK_CHANNEL_ID
       value: {{ slackChannelId }}
     - name: FAMILIEBASAK_URL
@@ -140,6 +145,8 @@ spec:
       value: https://{{ azure.unsecure.norgesbank_url }}
     - name: ECB_URL
       value: https://{{ azure.unsecure.ecb_url }}
+    - name: FRANKFURTER_URL
+      value: https://{{ azure.unsecure.frankfurter_url }}
   gcp:
     sqlInstances:
       - name: {{ dbinstancename }}

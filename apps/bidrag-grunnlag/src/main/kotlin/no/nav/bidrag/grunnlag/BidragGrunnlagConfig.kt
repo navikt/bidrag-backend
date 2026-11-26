@@ -78,4 +78,12 @@ class BidragGrunnlagConfig {
             setReadTimeout(Duration.ofSeconds(10))
         },
     )
+
+    @Bean("frankfurterRestTemplate")
+    fun frankfurterRestTemplate(): RestTemplate = RestTemplate(
+        SimpleClientHttpRequestFactory().apply {
+            setConnectTimeout(Duration.ofSeconds(5))
+            setReadTimeout(Duration.ofSeconds(10))
+        },
+    )
 }

@@ -1291,7 +1291,9 @@ fun List<GrunnlagDto>.finnDelberegningBPsBeregnedeTotalbidrag(
         finnGrunnlagSomErReferertAv(Grunnlagstype.DELBEREGNING_BIDRAGSPLIKTIGES_BEREGNEDE_TOTALBIDRAG, sluttberegning)
             .firstOrNull() ?: return null
     val delberegningObjekt = delberegning.innholdTilObjekt<DelberegningBidragspliktigesBeregnedeTotalbidrag>()
-
+    val valutakurs =
+        finnGrunnlagSomErReferertAv(Grunnlagstype.VALUTAKURS_GRUNNLAG, delberegning).firstOrNull()
+    val valutaGrunnlag = valutakurs?.innholdTilObjekt<ValutakursGrunnlag>()?.valutakursListe
     return DelberegningBidragspliktigesBeregnedeTotalbidragDto(
         bidragspliktigesBeregnedeTotalbidrag = delberegningObjekt.bidragspliktigesBeregnedeTotalbidrag,
         periode = delberegningObjekt.periode,
@@ -1299,6 +1301,7 @@ fun List<GrunnlagDto>.finnDelberegningBPsBeregnedeTotalbidrag(
         delberegningObjekt.beregnetBidragPerBarnListe.map {
             DelberegningBidragspliktigesBeregnedeTotalbidragDto.BeregnetBidragPerBarnDto(
                 beregnetBidragPerBarn = it,
+                valutakurs = valutaGrunnlag?.find { v -> v.valutakode1 == it.valutakode }?.valutakurs,
                 personidentBarn = hentPersonMedReferanse(it.gjelderBarn)?.personIdent!!,
             )
         },
