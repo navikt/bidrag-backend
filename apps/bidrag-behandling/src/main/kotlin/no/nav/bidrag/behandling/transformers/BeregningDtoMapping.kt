@@ -1860,7 +1860,7 @@ private fun List<GrunnlagDto>.byggForholdsmessigFordelingBeregningSumFordeling(
         sumBidragTilFordelingIkkeSøknadsbarn =
         bidragTilFordelingAlle
             .filter {
-                !it.erSøknadsbarn && it.beregnetBidrag != null && !it.privatAvtale
+                !it.erSøknadsbarn && it.beregnetBidrag != null && !it.privatAvtale && !it.erBidragSomIkkeKanFordeles
             }.sumOf { it.beregnetBidrag!!.beregnetBidrag },
         sumBidragTilFordelingPrivatAvtale =
         bidragTilFordelingAlle
@@ -2218,7 +2218,7 @@ fun List<GrunnlagDto>.mapTilBeregnetBidragDto(
                     ident = barn.ident,
                     fødselsdato = barn.fødselsdato,
                     navn = barn.navn,
-                    erRevurderingsbarn = !barn.delAvOpprinneligBehandling,
+                    erRevurderingsbarn = false,
                     stønadstype = barn.stønadstype,
                 )
             } else {
