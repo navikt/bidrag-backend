@@ -246,7 +246,7 @@ class RolleService(
             eksisterendeRolle.apply {
                 mottagerErVerge = verge
             }
-            nåværendeRm?.mottagerErVerge = verge
+            nåværendeRm.mottagerErVerge = verge
             return listOf(eksisterendeRolle)
         }
 

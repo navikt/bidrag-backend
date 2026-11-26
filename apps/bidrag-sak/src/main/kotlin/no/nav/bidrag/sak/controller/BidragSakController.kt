@@ -1,6 +1,5 @@
 package no.nav.bidrag.sak.controller
 
-import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
@@ -42,8 +41,6 @@ import org.springframework.web.bind.annotation.RestController
 class BidragSakController(
     private val bidragSakService: BidragSakService,
 ) {
-    private val logger = KotlinLogging.logger {}
-
     @GetMapping("/bidrag-sak$SAK_SOK/{saksnummer}")
     @Operation(
         description = "Finn metadata for en bidragssak",

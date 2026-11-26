@@ -15,7 +15,6 @@ import no.nav.bidrag.domene.enums.sak.Sakskategori
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.ident.ReellMottaker
 import no.nav.bidrag.domene.land.Landkode
-import no.nav.bidrag.domene.organisasjon.Enhetsnummer
 import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.generer.testdata.person.genererPersonident
 import no.nav.bidrag.sak.SpringTestRunner
