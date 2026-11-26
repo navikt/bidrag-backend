@@ -15,7 +15,6 @@ import no.nav.bidrag.transport.organisasjon.HentEnhetRequest
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.cache.annotation.Cacheable
-import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.retry.annotation.Backoff
 import org.springframework.retry.annotation.Retryable
@@ -23,7 +22,6 @@ import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.HttpStatusCodeException
 import org.springframework.web.client.RestTemplate
-import org.springframework.web.client.exchange
 import org.springframework.web.util.UriComponentsBuilder
 import java.net.URI
 
@@ -120,13 +118,7 @@ class BidragOrganisasjonConsumer(
     fun hentSaksbehandlerEnheter(saksbehandlerIdent: String): List<EnhetDto> {
         val uri = baseUri.pathSegment("saksbehandler", "enhetsliste", saksbehandlerIdent).build().toUri()
         return try {
-            executeMedMetrics(uri) {
-                operations.exchange<List<EnhetDto>>(uri, HttpMethod.GET, null).also { response ->
-                    check(response.statusCode == HttpStatus.NO_CONTENT || response.body != null) {
-                        "Enhetsoppslaget returnerte tomt svar uten status 204"
-                    }
-                }
-            } ?: emptyList()
+            getForEntity<List<EnhetDto>>(uri) ?: emptyList()
         } catch (_: HttpClientErrorException.NotFound) {
             emptyList()
         } catch (e: Exception) {

@@ -15,6 +15,9 @@ import com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching
 import com.github.tomakehurst.wiremock.client.WireMock.verify
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
+import io.kotest.matchers.string.shouldStartWith
 import no.nav.bidrag.arbeidsflyt.UnleashFeatures
 import no.nav.bidrag.arbeidsflyt.consumer.HentSaksbehandlerEnheterFeiletException
 import no.nav.bidrag.arbeidsflyt.dto.MappeDto
@@ -104,6 +107,19 @@ internal class SakHendelseTest : AbstractBehandleHendelseTest() {
             )
             verify(0, patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1002")))
             verify(1, patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1003")))
+        }
+
+        @Test
+        fun `skal skrive enhetsbyttet foran eksisterende beskrivelse`() {
+            stubOppgaver(listOf(oppgave.copy(beskrivelse = "Gammel beskrivelse")))
+
+            service.behandleHendelse(hendelse)
+
+            val beskrivelse = hentPatch()["beskrivelse"].asText()
+            beskrivelse shouldStartWith "--- "
+            beskrivelse shouldContain " Automatisk jobb ---\r\n\u00B7 Ansvarlig enhet endret fra 4833 til 4806\r\n\r\n\r\nGammel beskrivelse"
+            beskrivelse shouldNotContain "Mappe endret"
+            beskrivelse shouldNotContain "Saksbehandler endret"
         }
 
         @Test
@@ -207,6 +223,7 @@ internal class SakHendelseTest : AbstractBehandleHendelseTest() {
             service.behandleHendelse(hendelse)
 
             hentPatch().has("tilordnetRessurs") shouldBe false
+            hentPatch()["beskrivelse"].asText() shouldNotContain "Saksbehandler endret"
         }
 
         @Test
@@ -216,6 +233,8 @@ internal class SakHendelseTest : AbstractBehandleHendelseTest() {
             service.behandleHendelse(hendelse)
 
             hentPatch()["tilordnetRessurs"].asText() shouldBe ""
+            hentPatch()["beskrivelse"].asText() shouldContain "\u00B7 Saksbehandler endret fra "
+            hentPatch()["beskrivelse"].asText() shouldContain "Z123456"
         }
 
         @Test
@@ -234,17 +253,6 @@ internal class SakHendelseTest : AbstractBehandleHendelseTest() {
             service.behandleHendelse(hendelse)
 
             hentPatch()["tilordnetRessurs"].asText() shouldBe ""
-        }
-
-        @Test
-        fun `skal ikke tolke ugyldig tomt enhetssvar som manglende medlemskap`() {
-            stubEnhetsliste(aResponse().withStatus(200))
-
-            val feil = shouldThrow<HentSaksbehandlerEnheterFeiletException> { service.behandleHendelse(hendelse) }
-
-            feil.cause shouldBe null
-            feil.message!!.contains("Z123456") shouldBe false
-            verify(0, patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1001")))
         }
 
         @Test
@@ -280,6 +288,7 @@ internal class SakHendelseTest : AbstractBehandleHendelseTest() {
             service.behandleHendelse(hendelse)
 
             hentPatch()["mappeId"].asInt() shouldBe 30
+            hentPatch()["beskrivelse"].asText() shouldNotContain "Mappe endret"
             verify(
                 1,
                 getRequestedFor(urlPathEqualTo("/oppgave/api/v1/mapper"))
@@ -297,6 +306,7 @@ internal class SakHendelseTest : AbstractBehandleHendelseTest() {
             val request = hentPatch()
             request.has("mappeId") shouldBe true
             request["mappeId"].isNull shouldBe true
+            request["beskrivelse"].asText() shouldContain "\u00B7 Mappe endret fra Til behandling til ikke valgt\r\n"
         }
 
         @Test

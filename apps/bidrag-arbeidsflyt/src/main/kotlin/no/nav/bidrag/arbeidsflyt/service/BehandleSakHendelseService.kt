@@ -46,7 +46,7 @@ class BehandleSakHendelseService(
         oppgaveConsumer.hentÅpneOppgaverForSak(saksnummer)
             .filter { it.tildeltEnhetsnr in flytterFraEierfogder }
             .distinctBy { it.id }
-            .forEach { flytt(it, eierfogd) }
+            .forEach { flytt(saksnummer, it, eierfogd) }
         lagre(sak.copy(flytterFraEierfogder = emptySet()))
     }
 
@@ -68,20 +68,26 @@ class BehandleSakHendelseService(
 
     private fun lagre(sak: Sak): Sak = sakRepository.save(sak.copy(endretTidspunkt = LocalDateTime.now()))
 
-    private fun flytt(oppgave: OppgaveData, nyEnhet: String) {
+    private fun flytt(saksnummer: String, oppgave: OppgaveData, nyEnhet: String) {
+        val mappeNavn = oppgave.mappeId?.let { requireNotNull(oppgaveConsumer.hentMappe(it).navn) { "Mappen mangler navn" } }
         oppgaveConsumer.endreOppgave(
-            FlyttOppgaveVedEnhetsbytteRequest(oppgave, nyEnhet, saksbehandlerTilhørerEnhet(oppgave, nyEnhet), tilsvarendeMappe(oppgave, nyEnhet)),
+            FlyttOppgaveVedEnhetsbytteRequest(
+                oppgave = oppgave,
+                nyEnhet = nyEnhet,
+                beholdSaksbehandler = saksbehandlerTilhørerEnhet(oppgave, nyEnhet),
+                mappeNavn = mappeNavn,
+                nyMappeId = mappeNavn?.let { tilsvarendeMappe(oppgave, nyEnhet, it) },
+            ),
         )
-        LOGGER.info { "Flyttet oppgave ${oppgave.id} til enhet $nyEnhet" }
+        LOGGER.info { "Flyttet oppgave ${oppgave.id} i sak $saksnummer fra enhet ${oppgave.tildeltEnhetsnr} til $nyEnhet" }
     }
 
     private fun saksbehandlerTilhørerEnhet(oppgave: OppgaveData, enhet: String): Boolean = oppgave.tilordnetRessurs
         ?.takeIf(String::isNotBlank)
         ?.let { ident -> organisasjonConsumer.hentSaksbehandlerEnheter(ident).any { it.nummer.verdi == enhet } } == true
 
-    private fun tilsvarendeMappe(oppgave: OppgaveData, enhet: String): Long? = oppgave.mappeId?.let { mappeId ->
-        val navn = requireNotNull(oppgaveConsumer.hentMappe(mappeId).navn) { "Mappen mangler navn" }
+    private fun tilsvarendeMappe(oppgave: OppgaveData, enhet: String, mappeNavn: String): Long? {
         val tema = requireNotNull(oppgave.tema) { "Oppgaven mangler tema" }
-        oppgaveConsumer.hentMapper(enhet, tema).firstOrNull { it.navn == navn }?.id
+        return oppgaveConsumer.hentMapper(enhet, tema).firstOrNull { it.navn == mappeNavn }?.id
     }
 }

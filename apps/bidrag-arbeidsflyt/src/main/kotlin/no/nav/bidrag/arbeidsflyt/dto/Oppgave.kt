@@ -19,6 +19,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 private val NORSK_TIDSSTEMPEL_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
+private const val AUTOMATISK_JOBB = "Automatisk jobb"
 private val NORSK_DATO_FORMAT = DateTimeFormatter.ofPattern("dd.MM.uuuu")
 
 const val METADATA_NØKKEL_BEHANDLING_ID = "BEHANDLING_ID"
@@ -461,6 +462,7 @@ class FlyttOppgaveVedEnhetsbytteRequest(
     oppgave: OppgaveData,
     nyEnhet: String,
     beholdSaksbehandler: Boolean,
+    mappeNavn: String?,
     nyMappeId: Long?,
 ) : PatchOppgaveRequest(
     id = oppgave.id,
@@ -472,6 +474,16 @@ class FlyttOppgaveVedEnhetsbytteRequest(
 ) {
     init {
         nullstillMappe = oppgave.mappeId != null && nyMappeId == null
+        val endringer = buildString {
+            append("\u00B7 Ansvarlig enhet endret fra ${oppgave.tildeltEnhetsnr} til $nyEnhet\r\n")
+            if (nullstillMappe) {
+                append("\u00B7 Mappe endret fra $mappeNavn til ikke valgt\r\n")
+            }
+            if (!beholdSaksbehandler && !oppgave.tilordnetRessurs.isNullOrEmpty()) {
+                append("\u00B7 Saksbehandler endret fra ${lagSaksbehandlerInfo(oppgave.tilordnetRessurs)} til ikke valgt\r\n")
+            }
+        }
+        beskrivelse = lagBeskrivelseHeader(AUTOMATISK_JOBB) + "$endringer\r\n\r\n" + (oppgave.beskrivelse ?: "")
     }
 }
 
@@ -479,7 +491,7 @@ class OppdaterOppgave() : PatchOppgaveRequest() {
     @Suppress("ktlint:standard:backing-property-naming")
     private var _hasChanged: Boolean = false
     private var eksisterendeMappeNavn: String? = null
-    private var saksbehandlerInfo: String = "Automatisk jobb"
+    private var saksbehandlerInfo: String = AUTOMATISK_JOBB
     private var oppgaveDataForHendelse: OppgaveData? = null
 
     constructor(oppgaveDataForHendelse: OppgaveData, saksbehandlersInfo: String? = null) : this() {
