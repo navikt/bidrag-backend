@@ -149,7 +149,7 @@ class OppgaveService(
             )
         val revurderForskuddOppgave = oppgaver.oppgaver.find { it.beskrivelse!!.contains(revurderForskuddBeskrivelse) }
         if (revurderForskuddOppgave != null) {
-            log.info { "Fant revurder forskudd oppgave for sak $saksnummer og bidragsmottaker $mottaker. Oppretter ikke ny oppgave" }
+            log.info { "Fant revurder forskudd oppgave for sak $saksnummer. Oppretter ikke ny oppgave" }
             secureLogger.info {
                 "Fant revurder forskudd oppgave $revurderForskuddOppgave for sak $saksnummer og bidragsmottaker $mottaker. Oppretter ikke ny oppgave"
             }

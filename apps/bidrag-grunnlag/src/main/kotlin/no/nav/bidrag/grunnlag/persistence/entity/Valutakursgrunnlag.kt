@@ -101,6 +101,7 @@ enum class ValutakursgrunnlagStatus {
 enum class ValutakursgrunnlagKilde {
     ECB,
     NORGES_BANK,
+    FRANKFURTER,
     MANUELL,
 }
 

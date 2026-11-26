@@ -1,8 +1,9 @@
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { dark } from "react-syntax-highlighter/dist/esm/styles/prism";
+
 const CustomTable = ({ children }) => (
     <div className="overflow-x-auto pb-4 ">
-      <table className="markdown-table border-collapse border border-gray-300 w-full">{children}</table>
+        <table className="markdown-table border-collapse border border-gray-300 w-full">{children}</table>
     </div>
 );
 const CustomTableRow = ({ children }) => <tr className="bg-gray-100 border-b border-gray-300">{children}</tr>;
@@ -22,7 +23,7 @@ const CustomStrong = ({ children }) => <strong className="text-black not-italic"
 
 const CustomLink = ({ href, children }) => (
     <a href={href} className="text-green-500 underline" target="_blank" rel="noopener noreferrer">
-      {children}
+        {children}
     </a>
 );
 const CustomH2 = ({ children }) => <h2 className="text-2xl font-bold">{children}</h2>;
@@ -38,37 +39,33 @@ const CustomH1 = ({ children }) => <h1 className="text-3xl font-bold mb-4">{chil
 const CustomUl = ({ children }) => <ul className="list-disc pl-8">{children}</ul>;
 
 export const MarkdownComponents = {
-  code(props) {
-    const { children, className, node, ...rest } = props;
-    const match = /language-(\w+)/.exec(className || "");
-    return match ? (
-        <SyntaxHighlighter
-            {...rest}
-            PreTag="div"
-            children={String(children).replace(/\n$/, "")}
-            language={match[1]}
-            style={dark}
-        />
-    ) : (
-        <code {...rest} className={className}>
-          {children}
-        </code>
-    );
-  },
-  table: CustomTable,
-  tr: CustomTableRow,
-  td: CustomTableCell,
-  th: CustomTableHeader,
-  blockquote: CustomBlockQuote,
-  p: CustomParagraph,
-  em: CustomEmphasis,
-  strong: CustomStrong,
-  a: CustomLink,
-  h2: CustomH2,
-  h3: CustomH3,
-  h4: CustomH4,
-  h5: CustomH5,
-  h6: CustomH6,
-  h1: CustomH1,
-  ul: CustomUl,
+    code(props) {
+        const { children, className, node, ...rest } = props;
+        const match = /language-(\w+)/.exec(className || "");
+        return match ? (
+            <SyntaxHighlighter {...rest} PreTag="div" language={match[1]} style={dark}>
+                {String(children).replace(/\n$/, "")}
+            </SyntaxHighlighter>
+        ) : (
+            <code {...rest} className={className}>
+                {children}
+            </code>
+        );
+    },
+    table: CustomTable,
+    tr: CustomTableRow,
+    td: CustomTableCell,
+    th: CustomTableHeader,
+    blockquote: CustomBlockQuote,
+    p: CustomParagraph,
+    em: CustomEmphasis,
+    strong: CustomStrong,
+    a: CustomLink,
+    h2: CustomH2,
+    h3: CustomH3,
+    h4: CustomH4,
+    h5: CustomH5,
+    h6: CustomH6,
+    h1: CustomH1,
+    ul: CustomUl,
 };

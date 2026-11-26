@@ -98,6 +98,25 @@ Pub/Sub bruker denne kontoen til å signere et OIDC-token på hver melding. Tjen
 
 - Tjenesten `postgres-auditlog` må være åpen for kall (**Security → Authentication: Allow unauthenticated invocations**). Autentiseringen skjer i koden.
 - Cloud Build setter miljøvariablene `PUBSUB_AUDIENCE` og `PUBSUB_SERVICE_ACCOUNT` (se `cloudbuild.yaml`). De må stemme med **Audience** og **Service account** i abonnementet.
+- Opprett Firestore-databasen i Native mode hvis prosjektet ikke allerede har en:
+
+  ```bash
+  gcloud firestore databases create \
+    --database=database-auditlog \
+    --location=europe-north1 \
+    --type=firestore-native
+  ```
+
+- Cloud Run-revisjonens runtime-tjenestekonto trenger rollen **Cloud Datastore User** (`roles/datastore.user`) for å reservere hendelser i collection `database-auditlog-deliveries`.
+- Hvis Firestore midlertidig ikke kan reservere en hendelse, bruker tjenesten en begrenset idempotenscache i minnet. Denne fallbacken beskytter bare mot duplikater i samme Cloud Run-instans.
+- Aktiver Firestore TTL for idempotensdokumentene:
+
+  ```bash
+  gcloud firestore fields ttls update expiresAt \
+    --database=database-auditlog \
+    --collection-group=database-auditlog-deliveries \
+    --enable-ttl
+  ```
 
 ### 6. Verifisering
 

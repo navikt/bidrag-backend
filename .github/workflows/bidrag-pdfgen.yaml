@@ -9,6 +9,7 @@ on:
         options:
           - prod
           - q1
+          - q2
   push:
     branches:
       - 'main'
@@ -93,4 +94,35 @@ jobs:
           CLUSTER: dev-gcp
           RESOURCE: .nais/bidrag-pdfgen/nais.yaml
           VARS: .nais/bidrag-pdfgen/q1.yaml
+          IMAGE: ${{ steps.docker-push.outputs.image }}
+
+  deploy_q2:
+    needs: detect_changes
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'q2'
+    name: "Build and deploy to Q2"
+    concurrency:
+      group: deploy-pdfgen-q2-${{ github.ref }}
+      cancel-in-progress: true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: "read"
+      id-token: "write"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: nais/docker-build-push@d3a1f7e259ecc381a50435e1d4add9059429ebd7 # v0
+        id: docker-push
+        with:
+          team: bidrag
+          identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
+          project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
+          image_suffix: bidrag-pdfgen
+          tag: bidrag-pdfgen
+          docker_context: ./apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/bidrag-pdfgen
+          dockerfile: ./apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/bidrag-pdfgen/DockerfileWeasyprint
+      - name: Deploy to dev-gcp
+        uses: nais/deploy/actions/deploy@6a9dcd6df697ec2d38edc78cadb0b9acd1232f50 # v3
+        env:
+          CLUSTER: dev-gcp
+          RESOURCE: .nais/bidrag-pdfgen/nais.yaml
+          VARS: .nais/bidrag-pdfgen/q2.yaml
           IMAGE: ${{ steps.docker-push.outputs.image }}

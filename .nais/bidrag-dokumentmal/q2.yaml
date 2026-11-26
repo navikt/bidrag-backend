@@ -1,0 +1,5 @@
+name: bidrag-dokumentmal-q2
+ingresses:
+  - https://bidrag-dokumentmal-q2.intern.dev.nav.no
+azure_access_inbound:
+  - application: bidrag-dokument-produksjon-q2

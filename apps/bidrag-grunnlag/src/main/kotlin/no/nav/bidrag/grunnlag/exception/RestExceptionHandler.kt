@@ -132,4 +132,6 @@ fun <T : Any> RestTemplate.tryExchange(
     RestResponse.Failure("Message: ${e.message}", e.statusCode, e)
 } catch (e: HttpServerErrorException) {
     RestResponse.Failure("Message: ${e.message}", e.statusCode, e)
+} catch (e: Exception) {
+    RestResponse.Failure("Message: ${e.message}", HttpStatus.INTERNAL_SERVER_ERROR, e)
 }

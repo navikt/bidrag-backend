@@ -1,2 +1,3 @@
+name: bidrag-pdfgen
 azure_access_inbound:
   - application: bidrag-dokument-produksjon

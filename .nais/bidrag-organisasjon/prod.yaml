@@ -26,9 +26,6 @@ azure:
       - application: bidrag-arbeidsflyt
         namespace: bidrag
         cluster: prod-gcp
-      - application: bidrag-ui
-        namespace: bidrag
-        cluster: prod-fss
       - application: bidrag-sak
         namespace: bidrag
         cluster: prod-fss
