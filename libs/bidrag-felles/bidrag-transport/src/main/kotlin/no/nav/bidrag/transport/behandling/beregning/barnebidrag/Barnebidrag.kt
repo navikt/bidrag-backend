@@ -138,7 +138,9 @@ data class BidragsberegningResultatBarnV2(
     val beregningsfeil: Exception? = null,
     val fatteVedtakAnbefalt: Boolean = false,
     val avvistRevurderingsbarn: Boolean = false,
-)
+) {
+    val harTomPeriodeliste get() = resultatVedtakListe.isEmpty() || resultatVedtakListe.all { p -> p.periodeListe.isEmpty() }
+}
 
 data class ResultatVedtakV2(
     var periodeListe: List<ResultatPeriode> = emptyList(),

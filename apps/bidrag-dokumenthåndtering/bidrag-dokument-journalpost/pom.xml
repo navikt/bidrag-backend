@@ -19,7 +19,7 @@
     <description>Backend NAIS for bidrag-dokument-journalpost, henter metadata fra midlertidig brevlager (bisys)</description>
 
     <properties>
-        <nav-token-support.version>7.0.1</nav-token-support.version>
+        <nav-token-support.version>7.1.0</nav-token-support.version>
         <springdoc-openapi-ui.version>3.2.0</springdoc-openapi-ui.version>
         <okhttp.version>5.5.1</okhttp.version>
         <jakarta.xml.ws-api.version>4.0.3</jakarta.xml.ws-api.version>
@@ -28,14 +28,14 @@
         <ibm-mq-jakarta-client.version>10.0.1.0</ibm-mq-jakarta-client.version>
         <wiremock-spring-boot.version>4.4.3</wiremock-spring-boot.version>
         <springmockk.version>5.0.1</springmockk.version>
-        <mockk.version>1.14.11</mockk.version>
-        <kotest.version>6.2.6</kotest.version>
+        <mockk.version>1.14.12</mockk.version>
+        <kotest.version>6.2.7</kotest.version>
         <swagger-annotations.version>2.2.55</swagger-annotations.version>
         <!-- Egne versjoner for avhengigheter som ikke finnes i root-pom -->
         <artemis.version>2.57.0</artemis.version>
         <commons-io.version>2.22.0</commons-io.version>
         <cxf-spring-boot-starter-jaxws.version>4.2.4</cxf-spring-boot-starter-jaxws.version>
-        <bouncycastle.version>1.86</bouncycastle.version>
+        <bouncycastle.version>1.87</bouncycastle.version>
     </properties>
 
     <!-- com.ibm.mq.jakarta.client trekker inn Bouncy Castle 1.84, som er sårbar for

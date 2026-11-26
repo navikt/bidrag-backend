@@ -8,9 +8,6 @@ azure:
       - application: bidrag-cucumber-onprem
         namespace: bidrag
         cluster: dev-fss
-      - application: bidrag-ui
-        namespace: bidrag
-        cluster: dev-fss
       - application: bidrag-frontend-q2
         namespace: bidrag
         cluster: dev-gcp

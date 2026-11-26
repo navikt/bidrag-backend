@@ -43,13 +43,13 @@ class HentValutaSchedulerTest {
     private val valutakursgrunnlagService = Mockito.mock(ValutakursgrunnlagService::class.java)
     private val slackService = Mockito.mock(SlackService::class.java)
     private val clientId = "dev-gcp:bidrag:bidrag-grunnlag"
-    private val scheduler = HentValutaScheduler(hentValutakursService, valutakursgrunnlagService, slackService, clientId)
+    private val scheduler = HentValutaScheduler(hentValutakursService, valutakursgrunnlagService, slackService, clientId, "dev-gcp")
 
     @Test
     fun `jobben kjøres 1 januar og 1 juli i Oslo-tid`() {
         val plan = HentValutaScheduler::class.java.getMethod("hentValutakurs").getAnnotation(Scheduled::class.java)
 
-        assertEquals("0 0 5 1 1,7 *", plan.cron)
+        assertEquals($$"${VALUTAKURS_HENT_CRON:0 0 5 1 1,7 *}", plan.cron)
         assertEquals("Europe/Oslo", plan.zone)
         val lås = HentValutaScheduler::class.java.getMethod("hentValutakurs").getAnnotation(SchedulerLock::class.java)
         assertEquals("hentValutakursgrunnlag", lås.name)
@@ -60,7 +60,7 @@ class HentValutaSchedulerTest {
     fun `kontrolljobben kjører daglig etter valutakursjobben i Oslo-tid`() {
         val plan = HentValutaScheduler::class.java.getMethod("sjekkValutakursgrunnlag").getAnnotation(Scheduled::class.java)
 
-        assertEquals("0 0 6 * * *", plan.cron)
+        assertEquals($$"${VALUTAKURS_SJEKK_CRON:0 0 6 * * *}", plan.cron)
         assertEquals("Europe/Oslo", plan.zone)
         val lås = HentValutaScheduler::class.java.getMethod("sjekkValutakursgrunnlag").getAnnotation(SchedulerLock::class.java)
         assertEquals("sjekkValutakursgrunnlag", lås.name)
@@ -83,7 +83,10 @@ class HentValutaSchedulerTest {
         scheduler.sjekkValutakursgrunnlag(LocalDate.of(2026, 7, 2))
 
         verify(slackService).sendMelding(
-            "Planlagt innhenting av valutakursgrunnlag for 2026-07-01 mangler i $clientId. Nyeste valutakursgrunnlag starter 2026-01-01.",
+            "*Valutakursgrunnlag mangler*\n" +
+                "• *Forventet startdato:* 01.07.2026\n" +
+                "• *Nyeste startdato:* 01.01.2026\n" +
+                "• *Applikasjon:* $clientId",
         )
     }
 
@@ -92,7 +95,10 @@ class HentValutaSchedulerTest {
         scheduler.sjekkValutakursgrunnlag(LocalDate.of(2026, 1, 2))
 
         verify(slackService).sendMelding(
-            "Planlagt innhenting av valutakursgrunnlag for 2026-01-01 mangler i $clientId. Nyeste valutakursgrunnlag starter ingen.",
+            "*Valutakursgrunnlag mangler*\n" +
+                "• *Forventet startdato:* 01.01.2026\n" +
+                "• *Nyeste startdato:* ingen\n" +
+                "• *Applikasjon:* $clientId",
         )
     }
 
@@ -131,8 +137,12 @@ class HentValutaSchedulerTest {
         assertEquals(LocalDate.of(2026, 7, 1), scheduler.lagGyldighetsperiode(dato).til)
         val manglendeKurser = forespørsel.firstValue.hentValutakursListe.joinToString(", ") { it.valutakode.name }
         verify(slackService).sendMelding(
-            "Planlagt innhenting av valutakursgrunnlag for $dato fullført i $clientId.\n" +
-                "0 valutakursgrunnlag opprettet.\nKurser som ikke ble innhentet: $manglendeKurser.",
+            "*Innhenting av valutakurser fullført*\n" +
+                "• *Startdato:* 01.01.2026\n" +
+                "• *Kjøring:* Planlagt\n" +
+                "• *Applikasjon:* $clientId\n" +
+                "• *Opprettet valutakursgrunnlag:* 0\n" +
+                "• *Manglende kurser:* $manglendeKurser",
         )
     }
 
@@ -164,7 +174,12 @@ class HentValutaSchedulerTest {
         assertSame(feil, assertThrows<IllegalStateException> { scheduler.hentValutakurs(LocalDate.of(2026, 1, 1)) })
         Mockito.verifyNoInteractions(valutakursgrunnlagService)
         verify(slackService).sendMelding(
-            "Planlagt innhenting av valutakursgrunnlag for 2026-01-01 feilet i $clientId (IllegalStateException). Se applikasjonsloggene for detaljer.",
+            "*Innhenting av valutakurser feilet*\n" +
+                "• *Startdato:* 01.01.2026\n" +
+                "• *Kjøring:* Planlagt\n" +
+                "• *Applikasjon:* $clientId\n" +
+                "• *Feiltype:* IllegalStateException\n" +
+                "Se applikasjonsloggene for detaljer.",
         )
         Mockito.verifyNoMoreInteractions(slackService)
     }
@@ -184,8 +199,12 @@ class HentValutaSchedulerTest {
         val rekkefølge = inOrder(valutakursgrunnlagService, slackService)
         rekkefølge.verify(valutakursgrunnlagService).opprettValutakursgrunnlag(resultater, scheduler.lagGyldighetsperiode(dato))
         rekkefølge.verify(slackService).sendMelding(
-            "Planlagt innhenting av valutakursgrunnlag for $dato fullført i $clientId.\n" +
-                "${resultater.size} valutakursgrunnlag opprettet.\nKurser som ikke ble innhentet: EUR, USD.",
+            "*Innhenting av valutakurser fullført*\n" +
+                "• *Startdato:* 01.01.2026\n" +
+                "• *Kjøring:* Planlagt\n" +
+                "• *Applikasjon:* $clientId\n" +
+                "• *Opprettet valutakursgrunnlag:* ${resultater.size}\n" +
+                "• *Manglende kurser:* EUR, USD",
         )
         Mockito.verifyNoMoreInteractions(slackService)
     }
@@ -201,8 +220,12 @@ class HentValutaSchedulerTest {
         scheduler.hentValutakurs(dato)
 
         verify(slackService).sendMelding(
-            "Planlagt innhenting av valutakursgrunnlag for $dato fullført i $clientId.\n" +
-                "${resultater.size} valutakursgrunnlag opprettet.\nKurser som ikke ble innhentet: Ingen.",
+            "*Innhenting av valutakurser fullført*\n" +
+                "• *Startdato:* 01.07.2025\n" +
+                "• *Kjøring:* Planlagt\n" +
+                "• *Applikasjon:* $clientId\n" +
+                "• *Opprettet valutakursgrunnlag:* ${resultater.size}\n" +
+                "• *Manglende kurser:* Ingen",
         )
         Mockito.verifyNoMoreInteractions(slackService)
     }
@@ -219,9 +242,53 @@ class HentValutaSchedulerTest {
         assertSame(feil, assertThrows<IllegalStateException> { scheduler.hentValutakurs(dato) })
 
         verify(slackService).sendMelding(
-            "Planlagt innhenting av valutakursgrunnlag for $dato feilet i $clientId (IllegalStateException). Se applikasjonsloggene for detaljer.",
+            "*Innhenting av valutakurser feilet*\n" +
+                "• *Startdato:* 01.01.2026\n" +
+                "• *Kjøring:* Planlagt\n" +
+                "• *Applikasjon:* $clientId\n" +
+                "• *Feiltype:* IllegalStateException\n" +
+                "Se applikasjonsloggene for detaljer.",
         )
         Mockito.verifyNoMoreInteractions(slackService)
+    }
+
+    @Test
+    fun `manuell kjøring viser startdato og kjøretype i Slack`() {
+        val dato = LocalDate.of(2025, 7, 1)
+        Mockito.`when`(hentValutakursService.hentValutakurs(any()))
+            .thenReturn(HentValutakursResponse(emptyList()))
+
+        scheduler.hentValutakurs(dato, ValutakursKjøring.MANUELL)
+
+        val melding = argumentCaptor<String>()
+        verify(slackService).sendMelding(
+            melding.capture(),
+            anyOrNull(),
+            anyOrNull(),
+        )
+        assertTrue(melding.firstValue.startsWith("*Innhenting av valutakurser fullført*"))
+        assertTrue(melding.firstValue.contains("• *Startdato:* 01.07.2025"))
+        assertTrue(melding.firstValue.contains("• *Kjøring:* Manuell"))
+    }
+
+    @Test
+    fun `Slack-melding skjuler applikasjonsnavn i prod`() {
+        val prodScheduler = HentValutaScheduler(
+            hentValutakursService,
+            valutakursgrunnlagService,
+            slackService,
+            clientId,
+            "prod-gcp",
+        )
+        Mockito.`when`(hentValutakursService.hentValutakurs(any()))
+            .thenReturn(HentValutakursResponse(emptyList()))
+
+        prodScheduler.hentValutakurs(LocalDate.of(2025, 7, 1))
+
+        val melding = argumentCaptor<String>()
+        verify(slackService).sendMelding(melding.capture(), anyOrNull(), anyOrNull())
+        assertFalse(melding.firstValue.contains("Applikasjon:"))
+        assertTrue(melding.firstValue.contains("• *Startdato:* 01.07.2025"))
     }
 
     @Test
