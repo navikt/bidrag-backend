@@ -33,7 +33,7 @@ data class RolleDto(
             "Erstattes av 'reellMottaker'.",
         deprecated = true,
     )
-    @Deprecated("Bruk heller reellMottaker", replaceWith = ReplaceWith("reellMottaker"))
+    @Deprecated("Bruk heller reellMottaker. Fjernes når det gamle opprett-skjemaet i bidrag-frontend er fjernet.", replaceWith = ReplaceWith("reellMottaker"))
     val reellMottager: ReellMottaker? = null,
     @field:Schema(
         description =
@@ -45,8 +45,10 @@ data class RolleDto(
     @field:Schema(
         description =
         "Angir om mottaker samtidig er verge for barnet. " +
-            "Settes til true dersom mottaker også er verge.",
+            "Brukes bare når reellMottaker mangler. Bruk heller reellMottaker.verge.",
+        deprecated = true,
     )
+    @Deprecated("Bruk reellMottaker.verge. Fjernes når bidrag-frontend ikke sender eller leser feltet.", ReplaceWith("reellMottaker?.verge"))
     val mottagerErVerge: Boolean = false,
     @field:Schema(
         description = "Tidligere brukt felt for fødselsnummer. Erstattes av 'fødselsnummer'.",
@@ -85,6 +87,10 @@ data class RolleDto(
         rmFødselsnummer()?.verdi,
         rmSamhandlerId()?.verdi,
     ).any { !it.isNullOrBlank() }
+
+    /** Verge for barnet. `reellMottaker.verge` bestemmer når reell mottaker er satt, ellers `mottagerErVerge`. */
+    @Suppress("DEPRECATION")
+    fun erVerge(): Boolean = reellMottaker?.verge ?: mottagerErVerge
 }
 
 enum class ReellMottakerType {
@@ -94,6 +100,9 @@ enum class ReellMottakerType {
 
 data class ReellMottakerDto(
     val ident: ReellMottaker,
+    @field:Schema(
+        description = "Om reell mottaker er verge for barnet.",
+    )
     val verge: Boolean = false,
     @field:Schema(
         description = "Om reell mottaker er en person eller en samhandler. Settes alltid i respons. Hvis den mangler i request, tolkes identen.",

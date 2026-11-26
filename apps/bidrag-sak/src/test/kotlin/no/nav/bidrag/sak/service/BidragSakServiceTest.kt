@@ -16,6 +16,7 @@ import io.mockk.verify
 import io.mockk.verifyOrder
 import no.nav.bidrag.commons.security.utils.TokenUtils
 import no.nav.bidrag.commons.service.AppContext
+import no.nav.bidrag.commons.unleash.UnleashFeaturesProvider
 import no.nav.bidrag.commons.util.IdentConsumer
 import no.nav.bidrag.domene.enums.behandling.HendelseType
 import no.nav.bidrag.domene.enums.behandling.SøknadGruppeKombinasjon
@@ -30,6 +31,7 @@ import no.nav.bidrag.domene.land.Landkode
 import no.nav.bidrag.domene.organisasjon.Enhetsnummer
 import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.generer.testdata.person.genererPersonident
+import no.nav.bidrag.sak.config.UnleashFeatures
 import no.nav.bidrag.sak.domain.Bidragssak
 import no.nav.bidrag.sak.domain.Hendelse
 import no.nav.bidrag.sak.domain.Søknad
@@ -116,11 +118,20 @@ internal class BidragSakServiceTest {
                 bidragssakValidator = bidragssakValidator,
                 bbmConsumer = bbmConsumerMock,
             )
+        mockkObject(UnleashFeaturesProvider)
+        settArbeidsfordelingVedRolleendring(true)
+    }
+
+    private fun settArbeidsfordelingVedRolleendring(på: Boolean) {
+        every {
+            UnleashFeaturesProvider.isEnabled(feature = eq(UnleashFeatures.ARBEIDSFORDELING_VED_ROLLEENDRING.featureName), defaultValue = any())
+        } returns på
     }
 
     @AfterEach
     fun tearDown() {
         unmockkObject(AppContext)
+        unmockkObject(UnleashFeaturesProvider)
     }
 
     @Nested
@@ -128,7 +139,6 @@ internal class BidragSakServiceTest {
         @Test
         fun `returnerer eksisterende sak uten å kreve ny arbeidsfordeling`() {
             val request = OpprettSakRequest(
-                eierfogd = Enhetsnummer("1701"),
                 roller = setOf(
                     RolleDto(genererPersonident(), Rolletype.BIDRAGSMOTTAKER),
                     RolleDto(genererPersonident(), Rolletype.BIDRAGSPLIKTIG),
@@ -149,7 +159,6 @@ internal class BidragSakServiceTest {
         @Test
         fun `avviser eksisterende sak uten sakstilgang uten å vise eierfogd`() {
             val request = OpprettSakRequest(
-                eierfogd = Enhetsnummer("1701"),
                 roller = setOf(
                     RolleDto(genererPersonident(), Rolletype.BIDRAGSMOTTAKER),
                     RolleDto(genererPersonident(), Rolletype.BIDRAGSPLIKTIG),
@@ -170,7 +179,6 @@ internal class BidragSakServiceTest {
         fun `skal opprette sak med gyldig landkode om request kommer med det`() {
             val opprettSakRequest =
                 OpprettSakRequest(
-                    eierfogd = Enhetsnummer("1701"),
                     land = Landkode("NOR"),
                     roller =
                     setOf(
@@ -188,7 +196,6 @@ internal class BidragSakServiceTest {
         fun `skal overføre til skjermet enhet ved behov før saken lagres`() {
             val opprettSakRequest =
                 OpprettSakRequest(
-                    eierfogd = Enhetsnummer("1701"),
                     roller =
                     setOf(
                         RolleDto(Personident(FnrGenerator.generer()), Rolletype.BIDRAGSMOTTAKER),
@@ -213,10 +220,7 @@ internal class BidragSakServiceTest {
 
             val opprettSakRequest =
                 OpprettSakRequest(
-                    eierfogd = Enhetsnummer("1701"),
                     kategori = Sakskategori.NASJONAL,
-                    ansatt = true,
-                    inhabilitet = false,
                     levdeAdskilt = true,
                     konvensjon = Konvensjon.US,
                     konvensjonsdato = LocalDate.now(),
@@ -237,10 +241,10 @@ internal class BidragSakServiceTest {
 
             bidragSakService.opprettSak(opprettSakRequest)
 
-            saveSakSlot.captured.eierfogd shouldBe opprettSakRequest.eierfogd.verdi
+            saveSakSlot.captured.eierfogd shouldBe "1701"
             saveSakSlot.captured.kategori shouldBe opprettSakRequest.kategori
-            saveSakSlot.captured.ansatt shouldBe opprettSakRequest.ansatt
-            saveSakSlot.captured.inhabilitet shouldBe opprettSakRequest.inhabilitet
+            saveSakSlot.captured.ansatt shouldBe false // ansatt fra klienten ignoreres
+            saveSakSlot.captured.inhabilitet shouldBe false
             saveSakSlot.captured.levdeAdskilt shouldBe opprettSakRequest.levdeAdskilt
             saveSakSlot.captured.konvensjon shouldBe opprettSakRequest.konvensjon
             saveSakSlot.captured.konvensjonsdato shouldBe opprettSakRequest.konvensjonsdato
@@ -295,6 +299,7 @@ internal class BidragSakServiceTest {
 
         @BeforeEach
         fun stubSakFinnes() {
+            every { tilgangClientMock.harTilgangSaksnummer(Saksnummer(saksnr)) } returns true
             // Sørg for at findByIdOrThrow (top-level ext) finner noe via findByIdOrNull
             every { bidragssakRepositoryMock.findByIdOrNull(saksnr) } returns
                 Bidragssak(
@@ -344,6 +349,19 @@ internal class BidragSakServiceTest {
                 arbeidsfordelingService.utførArbeidsfordeling(any())
                 bidragssakRepositoryMock.save(any())
             }
+        }
+
+        @Test
+        fun `kjører ikke arbeidsfordeling ved rolleendring når toggelen er av, men oppdaterer ansatt`() {
+            settArbeidsfordelingVedRolleendring(false)
+            val req = OppdaterRollerISakRequest(saksnummer = Saksnummer(saksnr), roller = setOf(baMedFnr(barnUnder18)))
+            every { rolleService.oppdaterRoller(any(), req.roller, any()) } answers { firstArg<Bidragssak>().roller }
+            every { rolleService.oppdaterRollerMedReelleMottager(any(), any()) } answers { firstArg() }
+
+            bidragSakService.oppdaterRollerISak(req)
+
+            verify(exactly = 0) { arbeidsfordelingService.utførArbeidsfordeling(any()) }
+            verify(exactly = 1) { arbeidsfordelingService.oppdaterAnsatt(any()) }
         }
 
         @Test

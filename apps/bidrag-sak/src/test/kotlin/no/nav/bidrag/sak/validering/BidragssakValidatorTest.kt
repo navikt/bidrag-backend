@@ -13,6 +13,7 @@ import no.nav.bidrag.sak.domain.Rolle
 import no.nav.bidrag.sak.util.FnrGenerator
 import no.nav.bidrag.transport.sak.OpprettSakRequest
 import no.nav.bidrag.transport.sak.ReellMottakerDto
+import no.nav.bidrag.transport.sak.ReellMottakerType
 import no.nav.bidrag.transport.sak.RolleDto
 import org.assertj.core.api.Assertions.assertThatCode
 import org.junit.jupiter.api.Nested
@@ -26,7 +27,7 @@ class BidragssakValidatorTest {
     inner class MinstÉnKjentRolle {
         @Test
         fun `krever minst en kjent BP BM eller BA`() {
-            val req = OpprettSakRequest(eierfogd = Enhetsnummer("1701"), roller = emptySet())
+            val req = OpprettSakRequest(roller = emptySet())
             shouldThrowMessage("Minst én person må ha en kjent rolle i saken.") {
                 validator.valider(req, grunnlagFor(req))
             }
@@ -38,7 +39,7 @@ class BidragssakValidatorTest {
         @Test
         fun `avviser samme person i to ulike roller`() {
             val ident = genererPersonident()
-            val req = OpprettSakRequest(eierfogd = Enhetsnummer("1701"), roller = setOf(rolleBp(ident), rolleBm(ident)))
+            val req = OpprettSakRequest(roller = setOf(rolleBp(ident), rolleBm(ident)))
 
             shouldThrowMessage("En person kan bare ha én rolle i saken, unntatt RM og FR.") {
                 validator.valider(req, grunnlagFor(req))
@@ -49,7 +50,7 @@ class BidragssakValidatorTest {
         fun `avviser to roller for historisk og gjeldende ident for samme person`() {
             val gammelIdent = genererPersonident()
             val nyIdent = genererPersonident()
-            val req = OpprettSakRequest(eierfogd = Enhetsnummer("1701"), roller = setOf(rolleBp(gammelIdent), rolleBm(nyIdent)))
+            val req = OpprettSakRequest(roller = setOf(rolleBp(gammelIdent), rolleBm(nyIdent)))
 
             shouldThrowMessage("En person kan bare ha én rolle i saken, unntatt RM og FR.") {
                 validator.valider(req, grunnlagFor(req).medSammePerson(gammelIdent, nyIdent))
@@ -106,7 +107,7 @@ class BidragssakValidatorTest {
                 type = Rolletype.BARN,
                 reellMottaker = ReellMottakerDto(ReellMottaker(barn.verdi)),
             )
-            val req = OpprettSakRequest(eierfogd = Enhetsnummer("1701"), roller = setOf(rolle))
+            val req = OpprettSakRequest(roller = setOf(rolle))
 
             assertThatCode {
                 validator.valider(req, grunnlagFor(req).medFødselsdato(barn, LocalDate.now().minusYears(18)))
@@ -228,7 +229,6 @@ class BidragssakValidatorTest {
         fun `skal kaste feil hvis request har ugyldig landkode`() {
             val req =
                 OpprettSakRequest(
-                    eierfogd = Enhetsnummer("1701"),
                     land = Landkode("XRY"),
                     roller = setOf(rolleBm(), rolleBarnUtenRm()),
                 )
@@ -242,7 +242,6 @@ class BidragssakValidatorTest {
         fun `skal godta gyldig landkode`() {
             val req =
                 OpprettSakRequest(
-                    eierfogd = Enhetsnummer("1701"),
                     land = Landkode("NOR"),
                     roller = setOf(rolleBm(), rolleBarnUtenRm()),
                 )
@@ -257,7 +256,6 @@ class BidragssakValidatorTest {
         fun `skal kaste feil når BM har tomt fødselsnummer`() {
             val req =
                 OpprettSakRequest(
-                    eierfogd = Enhetsnummer("1701"),
                     roller =
                     setOf(
                         RolleDto(type = Rolletype.BIDRAGSMOTTAKER, fødselsnummer = Personident("")),
@@ -273,7 +271,7 @@ class BidragssakValidatorTest {
         @Test
         fun `skal godta barn under 18 uten RM når BM mangler`() {
             val barn = genererPersonident()
-            val req = OpprettSakRequest(eierfogd = Enhetsnummer("1701"), roller = setOf(rolleBp(), rolleBarnUtenRm(barn)))
+            val req = OpprettSakRequest(roller = setOf(rolleBp(), rolleBarnUtenRm(barn)))
 
             assertThatCode {
                 validator.valider(req, grunnlagFor(req).medFødselsdato(barn, LocalDate.now().minusYears(10)))
@@ -284,7 +282,6 @@ class BidragssakValidatorTest {
         fun `skal godta ukjent BM, kjent BP, og alle barn har RM`() {
             val req =
                 OpprettSakRequest(
-                    eierfogd = Enhetsnummer("1701"),
                     roller =
                     setOf(
                         RolleDto(fødselsnummer = Personident(FnrGenerator.generer()), type = Rolletype.BIDRAGSPLIKTIG),
@@ -302,7 +299,6 @@ class BidragssakValidatorTest {
         fun `skal godta at BP mangler`() {
             val req =
                 OpprettSakRequest(
-                    eierfogd = Enhetsnummer("1701"),
                     roller =
                     setOf(
                         RolleDto(fødselsnummer = Personident(FnrGenerator.generer()), type = Rolletype.BIDRAGSMOTTAKER),
@@ -317,7 +313,6 @@ class BidragssakValidatorTest {
         fun `skal kaste feil når BP har tomt fødselsnummer`() {
             val req =
                 OpprettSakRequest(
-                    eierfogd = Enhetsnummer("1701"),
                     roller =
                     setOf(
                         RolleDto(type = Rolletype.BIDRAGSPLIKTIG, fødselsnummer = Personident("")),
@@ -353,7 +348,6 @@ class BidragssakValidatorTest {
         fun `avviser RM som egen rolle ved opprettelse`() {
             val req =
                 OpprettSakRequest(
-                    eierfogd = Enhetsnummer("1701"),
                     roller = setOf(rolleBm(), RolleDto(type = Rolletype.REELMOTTAKER, fødselsnummer = genererPersonident())),
                 )
 
@@ -375,7 +369,7 @@ class BidragssakValidatorTest {
         @Test
         fun `skal godta når BM finnes selv om barn under 18 mangler RM`() {
             val barn = genererPersonident()
-            val req = OpprettSakRequest(eierfogd = Enhetsnummer("1701"), roller = setOf(rolleBm(), rolleBarnUtenRm(barn)))
+            val req = OpprettSakRequest(roller = setOf(rolleBm(), rolleBarnUtenRm(barn)))
 
             assertThatCode {
                 validator.valider(req, grunnlagFor(req).medFødselsdato(barn, LocalDate.now().minusYears(10)))
@@ -386,7 +380,6 @@ class BidragssakValidatorTest {
         fun `skal kaste feil når RM settes på ikke-barn rolle`() {
             val req =
                 OpprettSakRequest(
-                    eierfogd = Enhetsnummer("1701"),
                     roller =
                     setOf(
                         RolleDto(
@@ -407,7 +400,7 @@ class BidragssakValidatorTest {
         @Test
         fun `skal kaste feil når barn er myndig og RM mangler`() {
             val barn = genererPersonident()
-            val req = OpprettSakRequest(eierfogd = Enhetsnummer("1701"), roller = setOf(rolleBm(), rolleBarnUtenRm(barn)))
+            val req = OpprettSakRequest(roller = setOf(rolleBm(), rolleBarnUtenRm(barn)))
 
             shouldThrowMessage("Hvis barnet er myndig, må reell mottaker (RM) være satt.") {
                 validator.valider(req, grunnlagFor(req).medFødselsdato(barn, LocalDate.now().minusYears(18).minusDays(1)))
@@ -417,7 +410,7 @@ class BidragssakValidatorTest {
         @Test
         fun `skal godta når barn er myndig og RM er satt`() {
             val barn = genererPersonident()
-            val req = OpprettSakRequest(eierfogd = Enhetsnummer("1701"), roller = setOf(rolleBarnMedRm(barn)))
+            val req = OpprettSakRequest(roller = setOf(rolleBarnMedRm(barn)))
 
             assertThatCode {
                 validator.valider(req, grunnlagFor(req).medFødselsdato(barn, LocalDate.now().minusYears(19)))
@@ -426,30 +419,72 @@ class BidragssakValidatorTest {
 
         @Test
         fun `skal ikke kreve RM når fødselsdato er ukjent`() {
-            val req = OpprettSakRequest(eierfogd = Enhetsnummer("1701"), roller = setOf(rolleBm(), rolleBarnUtenRm()))
+            val req = OpprettSakRequest(roller = setOf(rolleBm(), rolleBarnUtenRm()))
 
             assertThatCode { validator.valider(req, grunnlagFor(req)) }.doesNotThrowAnyException()
         }
 
         @Test
-        fun `skal regne RM med tomt fødselsnummer som ikke satt`() {
+        fun `skal avvise RM med tom ident for myndig barn`() {
             val barn = genererPersonident()
             val rolle = RolleDto(
                 type = Rolletype.BARN,
                 fødselsnummer = barn,
                 reellMottaker = ReellMottakerDto(ident = ReellMottaker(""), verge = false),
             )
-            val req = OpprettSakRequest(eierfogd = Enhetsnummer("1701"), roller = setOf(rolleBm(), rolle))
+            val req = OpprettSakRequest(roller = setOf(rolleBm(), rolle))
 
-            shouldThrowMessage("Hvis barnet er myndig, må reell mottaker (RM) være satt.") {
+            shouldThrowMessage("Reell mottaker må ha en ident.") {
                 validator.valider(req, grunnlagFor(req).medFødselsdato(barn, LocalDate.now().minusYears(19)))
+            }
+        }
+
+        @Test
+        fun `skal avvise RM med tom ident for barn under 18 år`() {
+            val barn = genererPersonident()
+            val rolle = RolleDto(
+                type = Rolletype.BARN,
+                fødselsnummer = barn,
+                reellMottaker = ReellMottakerDto(ident = ReellMottaker(" "), verge = false),
+            )
+            val req = OpprettSakRequest(roller = setOf(rolleBm(), rolle))
+
+            shouldThrowMessage("Reell mottaker må ha en ident.") {
+                validator.valider(req, grunnlagFor(req).medFødselsdato(barn, LocalDate.now().minusYears(10)))
+            }
+        }
+
+        @Test
+        @Suppress("DEPRECATION")
+        fun `skal avvise verge uten reell mottaker`() {
+            val barn = genererPersonident()
+            val rolle = RolleDto(type = Rolletype.BARN, fødselsnummer = barn, mottagerErVerge = true)
+            val req = OpprettSakRequest(roller = setOf(rolleBm(), rolle))
+
+            shouldThrowMessage("Verge krever reell mottaker.") {
+                validator.valider(req, grunnlagFor(req).medFødselsdato(barn, LocalDate.now().minusYears(10)))
+            }
+        }
+
+        @Test
+        fun `skal avvise verge når reell mottaker er samhandler`() {
+            val barn = genererPersonident()
+            val rolle = RolleDto(
+                type = Rolletype.BARN,
+                fødselsnummer = barn,
+                reellMottaker = ReellMottakerDto(ident = ReellMottaker("80000123456"), verge = true, type = ReellMottakerType.SAMHANDLER),
+            )
+            val req = OpprettSakRequest(roller = setOf(rolleBm(), rolle))
+
+            shouldThrowMessage("Verge må være en person.") {
+                validator.valider(req, grunnlagFor(req).medFødselsdato(barn, LocalDate.now().minusYears(10)))
             }
         }
 
         @Test
         fun `skal godta når RM har gyldig nummer`() {
             val barn = genererPersonident()
-            val req = OpprettSakRequest(eierfogd = Enhetsnummer("1701"), roller = setOf(rolleBm(), rolleBarnMedRm(barn)))
+            val req = OpprettSakRequest(roller = setOf(rolleBm(), rolleBarnMedRm(barn)))
 
             assertThatCode {
                 validator.valider(req, grunnlagFor(req).medFødselsdato(barn, LocalDate.now().minusYears(19)))
@@ -460,7 +495,7 @@ class BidragssakValidatorTest {
         fun `skal regne RM null som ikke satt og kaste feil for myndig barn`() {
             val barn = genererPersonident()
             val rolle = RolleDto(type = Rolletype.BARN, fødselsnummer = barn, reellMottaker = null)
-            val req = OpprettSakRequest(eierfogd = Enhetsnummer("1701"), roller = setOf(rolleBm(), rolle))
+            val req = OpprettSakRequest(roller = setOf(rolleBm(), rolle))
 
             shouldThrowMessage("Hvis barnet er myndig, må reell mottaker (RM) være satt.") {
                 validator.valider(req, grunnlagFor(req).medFødselsdato(barn, LocalDate.now().minusYears(19)))
@@ -474,7 +509,6 @@ class BidragssakValidatorTest {
         fun `skal godta når BM og BP er oppgitt og ingen barn`() {
             val req =
                 OpprettSakRequest(
-                    eierfogd = Enhetsnummer("1701"),
                     roller = setOf(rolleBm(), rolleBp()),
                     arbeidsfordeling = Arbeidsfordeling.EKTEFELLLESAK,
                 )
@@ -487,7 +521,7 @@ class BidragssakValidatorTest {
     inner class AntallRoller {
         @Test
         fun `skal kaste feil hvis request har flere enn én BM`() {
-            val req = OpprettSakRequest(eierfogd = Enhetsnummer("1701"), roller = setOf(rolleBm(), rolleBm(), rolleBarnUtenRm()))
+            val req = OpprettSakRequest(roller = setOf(rolleBm(), rolleBm(), rolleBarnUtenRm()))
 
             shouldThrowMessage("Kan ikke ha flere enn én bidragsmottaker (BM).") {
                 validator.valider(req, grunnlagFor(req))
@@ -496,7 +530,7 @@ class BidragssakValidatorTest {
 
         @Test
         fun `skal kaste feil hvis request har flere enn én BP`() {
-            val req = OpprettSakRequest(eierfogd = Enhetsnummer("1701"), roller = setOf(rolleBp(), rolleBp(), rolleBarnUtenRm()))
+            val req = OpprettSakRequest(roller = setOf(rolleBp(), rolleBp(), rolleBarnUtenRm()))
 
             shouldThrowMessage("Kan ikke ha flere enn én bidragspliktig (BP).") {
                 validator.valider(req, grunnlagFor(req))
@@ -507,7 +541,6 @@ class BidragssakValidatorTest {
         fun `skal godta når BM og BP er oppgitt og ingen barn`() {
             val req =
                 OpprettSakRequest(
-                    eierfogd = Enhetsnummer("1701"),
                     roller = setOf(rolleBm(), rolleBp(), rolleBarnUtenRm()),
                     arbeidsfordeling = Arbeidsfordeling.EKTEFELLLESAK,
                 )
@@ -521,7 +554,7 @@ class BidragssakValidatorTest {
         @Test
         fun `skal kaste feil når person ikke finnes for en rolle`() {
             val bm = genererPersonident()
-            val req = OpprettSakRequest(eierfogd = Enhetsnummer("1701"), roller = setOf(rolleBm(bm), rolleBarnUtenRm()))
+            val req = OpprettSakRequest(roller = setOf(rolleBm(bm), rolleBarnUtenRm()))
 
             shouldThrowMessage("Person finnes ikke for rolle av type BIDRAGSMOTTAKER.") {
                 validator.valider(req, grunnlagFor(req).utenPerson(bm))
@@ -531,7 +564,7 @@ class BidragssakValidatorTest {
         @Test
         fun `skal kaste feil hvis person ikke finnes for barn`() {
             val barn = genererPersonident()
-            val req = OpprettSakRequest(eierfogd = Enhetsnummer("1701"), roller = setOf(rolleBm(), rolleBarnMedRm(barn)))
+            val req = OpprettSakRequest(roller = setOf(rolleBm(), rolleBarnMedRm(barn)))
 
             shouldThrowMessage("Person finnes ikke for rolle av type BARN.") {
                 validator.valider(req, grunnlagFor(req).utenPerson(barn))

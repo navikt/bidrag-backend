@@ -71,7 +71,7 @@ internal class RolleServiceTest {
 
         val result = rolleService.oppdaterRoller(bidragssak, rolleDtoer, fødselsdatoer)
         result shouldHaveSize 3
-        result.first { it.fødselsnummer == fødselsnummerBarn1 }.mottagerErVerge shouldBe true
+        result.first { it.fødselsnummer == fødselsnummerBarn1 }.mottagerErVerge shouldBe false // verge uten reell mottaker lagres ikke
         result.first { it.fødselsnummer == fødselsnummerBarn1 }.rolleType shouldBe Rolletype.BARN
         result.first { it.fødselsnummer == fødselsnummerBp }.rolleType shouldBe Rolletype.BIDRAGSPLIKTIG
         result.first { it.fødselsnummer == fødselsnummerBarn2 }.rolleType shouldBe Rolletype.BARN

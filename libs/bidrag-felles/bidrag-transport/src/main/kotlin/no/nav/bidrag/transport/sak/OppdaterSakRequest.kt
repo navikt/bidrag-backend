@@ -19,8 +19,6 @@ data class OppdaterRollerISakRequest(
 data class OppdaterSakRequest(
     val saksnummer: Saksnummer,
     val status: Bidragssakstatus? = null,
-    val ansatt: Boolean? = null,
-    val inhabilitet: Boolean? = null,
     val levdeAdskilt: Boolean? = null,
     val sanertDato: LocalDate? = null,
     val arbeidsfordeling: Arbeidsfordeling? = null,

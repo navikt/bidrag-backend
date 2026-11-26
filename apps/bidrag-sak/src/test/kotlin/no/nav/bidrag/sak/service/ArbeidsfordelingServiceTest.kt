@@ -16,13 +16,16 @@ import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.ident.ReellMottaker
 import no.nav.bidrag.domene.organisasjon.Enhetsnummer
 import no.nav.bidrag.generer.testdata.person.genererPersonident
+import no.nav.bidrag.sak.config.BidragPersonTestConfig
 import no.nav.bidrag.sak.domain.Bidragssak
 import no.nav.bidrag.sak.domain.Rolle
 import no.nav.bidrag.sak.domain.Rollehistorikk
 import no.nav.bidrag.sak.domain.Tilgang
 import no.nav.bidrag.sak.integration.organisasjon.BidragOrganisasjonClient
+import no.nav.bidrag.sak.integration.person.BidragPersonClient
 import no.nav.bidrag.transport.organisasjon.EnhetDto
 import no.nav.bidrag.transport.organisasjon.HentEnhetRequest
+import no.nav.bidrag.transport.person.Graderingsinfo
 import no.nav.bidrag.transport.sak.ReellMottakerDto
 import no.nav.bidrag.transport.sak.ReellMottakerType
 import no.nav.bidrag.transport.sak.RolleDto
@@ -31,7 +34,10 @@ import java.time.LocalDate
 
 internal class ArbeidsfordelingServiceTest {
     private val organisasjonClient: BidragOrganisasjonClient = mockk()
-    private val arbeidsfordelingService = ArbeidsfordelingService(organisasjonClient)
+    private val personClient: BidragPersonClient = mockk {
+        every { hentGraderingsinfo(any()) } answers { BidragPersonTestConfig.ingenSkjermet(firstArg()) }
+    }
+    private val arbeidsfordelingService = ArbeidsfordelingService(organisasjonClient, personClient)
 
     private val bm = genererPersonident()
     private val barn = genererPersonident(LocalDate.now().minusYears(10))
@@ -190,5 +196,73 @@ internal class ArbeidsfordelingServiceTest {
         request.captured.ident shouldBe barn
         request.captured.alleIdenter.shouldContainExactlyInAnyOrder(barn, mottaker)
         request.captured.arbeidsfordeling shouldBe Arbeidsfordeling.SETTEKONTOR
+    }
+
+    private fun skjermet(vararg skjermede: Personident) {
+        every { personClient.hentGraderingsinfo(any()) } answers {
+            val identer = firstArg<Set<Personident>>()
+            Graderingsinfo(identer.associateWith { null }, identer.associateWith { it in skjermede })
+        }
+    }
+
+    @Test
+    fun `setter ansatt når en part er skjermet`() {
+        skjermet(barn)
+        val sak = sakHosEnhet("1701", rolle(Rolletype.BIDRAGSMOTTAKER, bm), rolle(Rolletype.BARN, barn))
+
+        arbeidsfordelingService.oppdaterAnsatt(sak)
+
+        sak.ansatt shouldBe true
+        verify(exactly = 1) { personClient.hentGraderingsinfo(setOf(bm, barn)) }
+    }
+
+    @Test
+    fun `fjerner ansatt når ingen part lenger er skjermet`() {
+        val sak = sakHosEnhet("4883", rolle(Rolletype.BIDRAGSMOTTAKER, bm), rolle(Rolletype.BARN, barn)).apply { ansatt = true }
+
+        arbeidsfordelingService.oppdaterAnsatt(sak)
+
+        sak.ansatt shouldBe false
+    }
+
+    @Test
+    fun `setter ansatt når en tidligere part er skjermet`() {
+        val tidligereRm = genererPersonident()
+        skjermet(tidligereRm)
+        val barnerolle = rolle(Rolletype.BARN, barn)
+        val sak = sakHosEnhet("1701", rolle(Rolletype.BIDRAGSMOTTAKER, bm), barnerolle)
+        barnerolle.rollehistorikk.add(
+            Rollehistorikk(
+                saksnummer = sak.saksnummer,
+                rolleFødselsnummer = barn.verdi,
+                rmRolleFødselsnummer = tidligereRm.verdi,
+                opprettetAv = "Z999999",
+                rolle = barnerolle,
+            ),
+        )
+
+        arbeidsfordelingService.oppdaterAnsatt(sak)
+
+        sak.ansatt shouldBe true
+    }
+
+    @Test
+    fun `kaller ikke bidrag-person når saken ikke har kjente personer`() {
+        val sak = sakHosEnhet("1701", rolle(Rolletype.BIDRAGSMOTTAKER, ukjentPart = UkjentPart.UK)).apply { ansatt = true }
+
+        arbeidsfordelingService.oppdaterAnsatt(sak)
+
+        sak.ansatt shouldBe false
+        verify(exactly = 0) { personClient.hentGraderingsinfo(any()) }
+    }
+
+    @Test
+    fun `feil fra bidrag-person kastes videre uten å endre ansatt`() {
+        every { personClient.hentGraderingsinfo(any()) } throws IllegalStateException("bidrag-person er nede")
+        val sak = sakHosEnhet("1701", rolle(Rolletype.BIDRAGSMOTTAKER, bm))
+
+        shouldThrow<IllegalStateException> { arbeidsfordelingService.oppdaterAnsatt(sak) }
+
+        sak.ansatt shouldBe false
     }
 }

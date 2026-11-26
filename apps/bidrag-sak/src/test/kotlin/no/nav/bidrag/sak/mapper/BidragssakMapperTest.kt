@@ -170,7 +170,6 @@ class BidragssakMapperTest {
         fun `toBidragssak oppretter sak med tilganger og mapper barn+RM korrekt`() {
             val request =
                 OpprettSakRequest(
-                    eierfogd = Enhetsnummer("2990"),
                     roller =
                     setOf(
                         RolleDto(type = Rolletype.BIDRAGSPLIKTIG, fødselsnummer = Personident("23917599432")),
@@ -194,7 +193,7 @@ class BidragssakMapperTest {
             val sak =
                 request.let { req ->
                     BidragssakMapper.run {
-                        req.toBidragssak(saksnr, fødselsdatoer)
+                        req.toBidragssak(saksnr, fødselsdatoer, Enhetsnummer("2990"))
                     }
                 }
 

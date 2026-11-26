@@ -18,29 +18,25 @@ import no.nav.bidrag.sak.domain.Tilgang
 import no.nav.bidrag.sak.mapper.RollehistorikkMapper.toRollehistorikkDto
 import no.nav.bidrag.sak.mapper.model.RolleMedFødselsdato
 import no.nav.bidrag.transport.sak.BarnISak
-import no.nav.bidrag.transport.sak.OpprettSakMedRollerRequest
 import no.nav.bidrag.transport.sak.OpprettSakRequest
 import no.nav.bidrag.transport.sak.OpprettSakResponse
 import no.nav.bidrag.transport.sak.ReellMottakerDto
 import no.nav.bidrag.transport.sak.ReellMottakerType
 import no.nav.bidrag.transport.sak.RolleDto
 import no.nav.bidrag.transport.sak.RollehistorikkDto
-import no.nav.bidrag.transport.sak.SaksrolleRequest
 import java.time.LocalDate
 
 object BidragssakMapper {
     fun OpprettSakRequest.toBidragssak(
         saksnummer: Saksnummer,
         fødselsdatoer: Map<Personident, LocalDate?>,
-        eierfogd: Enhetsnummer = this.eierfogd,
+        eierfogd: Enhetsnummer,
     ): Bidragssak {
         val sak =
             Bidragssak(
                 saksnummer = saksnummer.verdi,
                 eierfogd = eierfogd.verdi,
                 kategori = this.kategori,
-                ansatt = this.ansatt,
-                inhabilitet = this.inhabilitet,
                 levdeAdskilt = this.levdeAdskilt,
                 konvensjon = this.konvensjon,
                 konvensjonsdato = this.konvensjonsdato,
@@ -73,7 +69,7 @@ object BidragssakMapper {
             objektnummer = forelderrolle.objektnummer,
             rolleType = forelderrolle.rolletype,
             ukjentPart = if (rolleDto?.fødselsnummer?.verdi.isNullOrBlank()) UkjentPart.UK else null,
-            mottagerErVerge = rolleDto?.mottagerErVerge ?: false,
+            mottagerErVerge = rolleDto?.erVerge() ?: false,
             fødselsdato = fødselsdatoer[rolleDto?.fødselsnummer],
         )
     }
@@ -89,7 +85,7 @@ object BidragssakMapper {
                 rolleType = forelderrolle.rolletype,
                 objektnummer = forelderrolle.objektnummer,
                 ukjentPart = if (dto.fødselsnummer == null) UkjentPart.UK else null,
-                mottagerErVerge = dto.mottagerErVerge,
+                mottagerErVerge = dto.erVerge(),
                 fødselsdato = fødselsdatoer[dto.fødselsnummer],
                 bidragssak = bidragssak,
             )
@@ -105,13 +101,14 @@ object BidragssakMapper {
             val objektnummer = "%02d".format(index + førsteLedigeObjektnummer)
             val rmFnr = dto.rmFødselsnummer()
             val rmSamhandler = dto.rmSamhandlerId()
+            val verge = dto.harRM() && dto.erVerge()
 
             val barn =
                 Rolle(
                     fødselsnummer = dto.fødselsnummer?.verdi,
                     objektnummer = objektnummer,
                     rolleType = dto.type,
-                    mottagerErVerge = dto.mottagerErVerge,
+                    mottagerErVerge = verge,
                     fødselsdato = fødselsdatoer[dto.fødselsnummer],
                     bidragssak = bidragssak,
                 )
@@ -123,6 +120,7 @@ object BidragssakMapper {
                         samhandlerIdent = rmSamhandler?.verdi,
                         rolleType = Rolletype.REELMOTTAKER,
                         fødselsdato = rmFnr?.let { fødselsdatoer[it] },
+                        mottagerErVerge = verge,
                         bidragssak = bidragssak,
                     )
                 listOf(barn, rm)
@@ -130,29 +128,6 @@ object BidragssakMapper {
                 listOf(barn)
             }
         }
-
-    fun SaksrolleRequest.tilRolleDto(): RolleDto {
-        val mottaker = reellMottaker
-        require(mottaker == null || mottaker.ident.verdi.isNotBlank()) { "Reell mottaker må ha en ident." }
-        return RolleDto(
-            fødselsnummer = fødselsnummer,
-            type = type,
-            reellMottaker = reellMottaker?.let { ReellMottakerDto(ident = it.ident, type = it.type, verge = it.verge) },
-            mottagerErVerge = reellMottaker?.verge ?: false,
-        )
-    }
-
-    fun OpprettSakMedRollerRequest.tilOpprettSakRequest(enhet: Enhetsnummer, roller: Set<RolleDto>) = OpprettSakRequest(
-        eierfogd = enhet,
-        kategori = kategori,
-        arbeidsfordeling = arbeidsfordeling,
-        roller = roller,
-        levdeAdskilt = levdeAdskilt ?: false,
-        konvensjon = konvensjon,
-        konvensjonsdato = konvensjonsdato,
-        ffuReferansenr = ffuReferansenr,
-        land = land,
-    )
 
     fun Bidragssak.toOpprettSakResponse() = OpprettSakResponse(saksnummer = Saksnummer(saksnummer), eierfogd = Enhetsnummer(eierfogd))
 }
@@ -165,6 +140,7 @@ object RolleMapper {
             val reellMottaker =
                 it.rmRolleId
                     ?.let { rolleId -> this.find { rolle -> rolle.rolleId == rolleId } }
+            val verge = it.mottagerErVerge || reellMottaker?.mottagerErVerge == true
 
             val rmFnr = reellMottaker?.fødselsnummer
             val rmSamhandler = reellMottaker?.samhandlerIdent
@@ -182,10 +158,10 @@ object RolleMapper {
                 reellMottaker =
                 when {
                     !rmFnr.isNullOrBlank() ->
-                        ReellMottakerDto(ReellMottaker(rmFnr), it.mottagerErVerge, ReellMottakerType.PERSON)
+                        ReellMottakerDto(ReellMottaker(rmFnr), verge, ReellMottakerType.PERSON)
 
                     !rmSamhandler.isNullOrBlank() ->
-                        ReellMottakerDto(ReellMottaker(rmSamhandler), it.mottagerErVerge, ReellMottakerType.SAMHANDLER)
+                        ReellMottakerDto(ReellMottaker(rmSamhandler), verge, ReellMottakerType.SAMHANDLER)
 
                     else -> null
                 },
@@ -210,7 +186,8 @@ object RollehistorikkMapper {
     private fun Rollehistorikk.tilReellMottakerDto(roller: Set<Rolle>): ReellMottakerDto? {
         val rmRolleId = rmRolleId ?: return null
         val rmRolle = roller.find { it.rolleId == rmRolleId }
-        val verge = rolle?.mottagerErVerge ?: false
+        // Bisys lagrer verge på RM-rollen, ny løsning på begge. Se [RolleService.oppdaterBarnRolle].
+        val verge = rolle?.mottagerErVerge == true || rmRolle?.mottagerErVerge == true
         val fødselsnummer = rmRolleFødselsnummer
         val samhandlerIdent = rmRolle?.samhandlerIdent
         return when {

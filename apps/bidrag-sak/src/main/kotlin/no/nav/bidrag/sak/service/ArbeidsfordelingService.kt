@@ -1,5 +1,6 @@
 package no.nav.bidrag.sak.service
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.domene.enums.sak.Arbeidsfordeling
 import no.nav.bidrag.domene.enums.sak.Fogdårsak
 import no.nav.bidrag.domene.enums.sak.Sakskategori
@@ -11,15 +12,19 @@ import no.nav.bidrag.sak.domain.Rolle
 import no.nav.bidrag.sak.domain.Tilgang
 import no.nav.bidrag.sak.domain.finnPrimærrolle
 import no.nav.bidrag.sak.integration.organisasjon.BidragOrganisasjonClient
+import no.nav.bidrag.sak.integration.person.BidragPersonClient
 import no.nav.bidrag.transport.organisasjon.EnhetDto
 import no.nav.bidrag.transport.organisasjon.HentEnhetRequest
 import no.nav.bidrag.transport.sak.RolleDto
 import org.springframework.stereotype.Service
 import java.time.LocalDate
 
+private val LOGGER = KotlinLogging.logger {}
+
 @Service
 class ArbeidsfordelingService(
     private val bidragOrganisasjonClient: BidragOrganisasjonClient,
+    private val bidragPersonClient: BidragPersonClient,
 ) {
     /**
      * Setter eierfogd til enheten arbeidsfordelingen i Norg gir for saken, ut fra primærrollens geografi
@@ -28,6 +33,19 @@ class ArbeidsfordelingService(
      */
     fun utførArbeidsfordeling(sak: Bidragssak) {
         oppdaterAktivEierfogd(sak, hentEnhet(sak))
+    }
+
+    /**
+     * 🔴 Bisys krever utvidede rettigheter for saker med ansatt = true.
+     * Flagget er true når minst én av personene arbeidsfordelingen bruker, er skjermet i skjermingsregisteret.
+     * Verdien klienten sender, brukes ikke.
+     */
+    fun oppdaterAnsatt(sak: Bidragssak) {
+        val identer = sak.personidenter()
+        val ansatt = identer.isNotEmpty() && bidragPersonClient.hentGraderingsinfo(identer).identerTilSkjerming.values.any { it }
+        if (sak.ansatt == ansatt) return
+        LOGGER.info { "Endrer ansatt-flagget på sak ${sak.saksnummer} fra ${sak.ansatt} til $ansatt." }
+        sak.ansatt = ansatt
     }
 
     private fun oppdaterAktivEierfogd(

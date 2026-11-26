@@ -58,6 +58,9 @@ class BidragssakValidator {
         rolle.fødselsnummer?.let { fnr ->
             require(fnr.verdi.isNotBlank()) { "Fødselsnummer kan ikke være tom streng." }
         }
+        require(rolle.reellMottaker?.ident?.verdi?.isNotBlank() ?: true) { "Reell mottaker må ha en ident." }
+        require(!rolle.erVerge() || rolle.harRM()) { "Verge krever reell mottaker." }
+        require(!rolle.erVerge() || rolle.rmSamhandlerId() == null) { "Verge må være en person." }
 
         require(rolle.type != Rolletype.REELMOTTAKER) {
             "Reell mottaker (RM) kan kun registreres på barn (BA)."

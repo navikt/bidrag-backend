@@ -26,8 +26,6 @@ import no.nav.bidrag.sak.dto.SakshendelseDto
 import no.nav.bidrag.sak.dto.tilFogdhistorikkDto
 import no.nav.bidrag.sak.integration.BidragBBMConsumer
 import no.nav.bidrag.sak.integration.FinnSammenknytningerHovedsøknadResponse
-import no.nav.bidrag.sak.mapper.BidragssakMapper.tilOpprettSakRequest
-import no.nav.bidrag.sak.mapper.BidragssakMapper.tilRolleDto
 import no.nav.bidrag.sak.mapper.BidragssakMapper.toBidragssak
 import no.nav.bidrag.sak.mapper.BidragssakMapper.toOpprettSakResponse
 import no.nav.bidrag.sak.mapper.RolleMapper.toRolleDto
@@ -52,9 +50,7 @@ import no.nav.bidrag.transport.sak.FjernMidlertidligTilgangRequest
 import no.nav.bidrag.transport.sak.OppdaterRollerISakRequest
 import no.nav.bidrag.transport.sak.OppdaterSakRequest
 import no.nav.bidrag.transport.sak.OppdaterSakResponse
-import no.nav.bidrag.transport.sak.OppdaterSaksrollerRequest
 import no.nav.bidrag.transport.sak.OpprettMidlertidligTilgangRequest
-import no.nav.bidrag.transport.sak.OpprettSakMedRollerRequest
 import no.nav.bidrag.transport.sak.OpprettSakRequest
 import no.nav.bidrag.transport.sak.OpprettSakResponse
 import no.nav.bidrag.transport.sak.RolleDto
@@ -212,17 +208,6 @@ class BidragSakService(
         return opprettValidertSak(opprettSakRequest, grunnlag, enhet.nummer)
     }
 
-    @Transactional
-    fun opprettSak(request: OpprettSakMedRollerRequest): OpprettSakResponse {
-        val roller = rolleService.brukGjeldendeIdent(request.roller.map { it.tilRolleDto() }.toSet())
-        val grunnlag = valideringsgrunnlagService.hentForOpprettelse(roller, request.land)
-        bidragssakValidator.valider(roller, request.land, request.arbeidsfordeling, grunnlag)
-        rolleService.validerRoller(roller, grunnlag.fødselsdatoer)
-        finnEksisterendeSak(roller)?.let { return it.toOpprettSakResponse() }
-        val enhet = arbeidsfordelingService.hentEnhetForNySak(roller, grunnlag.fødselsdatoer, request.arbeidsfordeling, request.kategori)
-        return opprettValidertSak(request.tilOpprettSakRequest(enhet.nummer, roller), grunnlag, enhet.nummer)
-    }
-
     private fun finnEksisterendeSak(roller: Set<RolleDto>): Bidragssak? {
         val bidragspliktig = roller.firstOrNull { it.type == Rolletype.BIDRAGSPLIKTIG }?.fødselsnummer?.verdi ?: return null
         val bidragsmottaker = roller.firstOrNull { it.type == Rolletype.BIDRAGSMOTTAKER }?.fødselsnummer?.verdi ?: return null
@@ -247,6 +232,7 @@ class BidragSakService(
     private fun opprettValidertSak(opprettSakRequest: OpprettSakRequest, grunnlag: Valideringsgrunnlag, eierfogd: Enhetsnummer): OpprettSakResponse {
         val saksnummer = hentNyttSaksnummerFraDatabase()
         val bidragssak = opprettSakRequest.toBidragssak(saksnummer, grunnlag.fødselsdatoer, eierfogd)
+        arbeidsfordelingService.oppdaterAnsatt(bidragssak)
         val opprettetBidragssak = bidragssakRepository.save(bidragssak)
 
         val rollerFørOppdatering = opprettetBidragssak.roller.toRolleDto(true)
@@ -326,15 +312,8 @@ class BidragSakService(
     }
 
     @Transactional
-    fun oppdaterSaksroller(saksnummer: Saksnummer, request: OppdaterSaksrollerRequest): OppdaterSakResponse {
-        krevSakstilgang(saksnummer)
-        return oppdaterRollerISak(
-            OppdaterRollerISakRequest(saksnummer = saksnummer, roller = request.roller.map { it.tilRolleDto() }.toSet()),
-        )
-    }
-
-    @Transactional
     fun oppdaterRollerISak(oppdaterSakRequest: OppdaterRollerISakRequest): OppdaterSakResponse {
+        krevSakstilgang(oppdaterSakRequest.saksnummer)
         val sak = bidragssakRepository.findByIdOrThrow(oppdaterSakRequest.saksnummer.verdi)
         rolleService.oppdaterTilGjeldendeIdent(sak.roller)
         val rollerFørOppdatering = sak.roller.toRolleDto(true)
@@ -346,13 +325,16 @@ class BidragSakService(
             roller = rolleService.oppdaterRoller(sak, rollerTilOppdatering, grunnlag.fødselsdatoer).toMutableSet()
         }
         bidragssakValidator.validerRolleendring(saksrollerFør, sak.roller, grunnlag)
-        arbeidsfordelingService.utførArbeidsfordeling(sak)
-        // TODO: Send forrigeEierfogd til lagreOgPubliser etter rebase på #501, slik at arbeidsflyt flytter oppgavene ved enhetsbytte.
+        if (UnleashFeatures.ARBEIDSFORDELING_VED_ROLLEENDRING.isEnabled) {
+            arbeidsfordelingService.utførArbeidsfordeling(sak)
+        }
+        arbeidsfordelingService.oppdaterAnsatt(sak)
         return lagreOgPubliser(sak, rollerFørOppdatering, rollerTilOppdatering)
     }
 
     @Transactional
     fun oppdaterSak(oppdaterSakRequest: OppdaterSakRequest): OppdaterSakResponse {
+        krevSakstilgang(oppdaterSakRequest.saksnummer)
         val sak = bidragssakRepository.findByIdOrThrow(oppdaterSakRequest.saksnummer.verdi)
         rolleService.oppdaterTilGjeldendeIdent(sak.roller)
         val rollerFørOppdatering = sak.roller.toRolleDto(true)
@@ -367,14 +349,13 @@ class BidragSakService(
         }
         bidragssakValidator.validerRolleendring(saksrollerFør, sak.roller, grunnlag)
         arbeidsfordelingService.utførArbeidsfordeling(sak)
+        arbeidsfordelingService.oppdaterAnsatt(sak)
         return lagreOgPubliser(sak, rollerFørOppdatering, rollerTilOppdatering)
     }
 
     private fun oppdaterSaksopplysninger(sak: Bidragssak, oppdaterSakRequest: OppdaterSakRequest) {
         sak.apply {
             status = oppdaterSakRequest.status ?: sak.status
-            ansatt = oppdaterSakRequest.ansatt ?: sak.ansatt
-            inhabilitet = oppdaterSakRequest.inhabilitet ?: sak.inhabilitet
             levdeAdskilt = oppdaterSakRequest.levdeAdskilt ?: sak.levdeAdskilt
             sanertDato = oppdaterSakRequest.sanertDato ?: sak.sanertDato
             arbeidsfordeling = oppdaterSakRequest.arbeidsfordeling ?: sak.arbeidsfordeling

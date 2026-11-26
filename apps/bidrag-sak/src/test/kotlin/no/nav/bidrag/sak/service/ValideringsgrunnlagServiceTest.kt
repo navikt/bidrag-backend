@@ -148,5 +148,5 @@ class ValideringsgrunnlagServiceTest {
 
     private fun rolle(type: Rolletype, fnr: Personident) = RolleDto(type = type, fødselsnummer = fnr)
 
-    private fun opprett(vararg roller: RolleDto) = OpprettSakRequest(eierfogd = Enhetsnummer("1701"), roller = roller.toSet())
+    private fun opprett(vararg roller: RolleDto) = OpprettSakRequest(roller = roller.toSet())
 }

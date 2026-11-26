@@ -9,29 +9,37 @@ Applikasjonen er delt inn i to logiske grupper med tilhørende endepunkter:
 
 ### Regler for saksroller
 
-Reglene gjelder både ved opprettelse og endring av sak, hvis ikke annet står.
+Reglene står også i Springdoc for `POST /sak`, `POST /sak/oppdater` og `POST /sak/oppdater/roller` (`controller/SakRegler.kt`).
 
-#### Personer og identer
-- Alle roller med fødselsnummer i forespørselen (BP, BM, BA, RM og FR) må finnes i bidrag-person. En RM som er samhandler i forespørselen, må finnes som samhandler. Ved endring sjekkes ikke eksistensen til lagrede roller som ikke er med i forespørselen.
+#### Saksroller (opprettelse og endring)
+- Alle roller med fødselsnummer i forespørselen (BP, BM, BA, RM og FR) må finnes i bidrag-person. En RM som er samhandler, må finnes som samhandler.
 - Fødselsnummer kan ikke være tom streng.
-- Feiler oppslaget mot bidrag-person, feiler forespørselen.
-- Ved endring bruker bidrag-sak gjeldende ident fra bidrag-person for alle roller unntatt FR, både i forespørselen og for lagrede roller. Gjeldende ident er folkeregisteridenten, eller NPID hvis personen ikke har folkeregisterident. Identbytter på lagrede roller lagres i rollehistorikken som `ENDRE_FNR`. Historisk og gjeldende ident regnes som samme person.
-
-#### Roller i saken
-- Saken kan ha maks én BM og én BP.
+- Reell mottaker kan ikke ha tom ident.
 - Minst én av rollene BP, BM eller BA må være knyttet til en kjent person.
 - En person kan bare ha én rolle i saken, med unntak av RM og FR.
 - Samme barn kan ikke sendes inn to ganger i én forespørsel.
+- Saken kan ha maks én BM og én BP.
 - RM kan bare registreres på barn.
-- Kjente BP-, BM- og BA-roller kan ikke fjernes eller endres. RM kan endres.
-- `/sak/oppdater` og `/sak/oppdater/roller` støtter ikke oppdatering av FR. FR-roller i forespørselen ignoreres av oppdateringslogikken.
-
-#### Reell mottaker (RM)
-- Barn fra og med 18 år må ha RM. Ved endring sjekkes bare barn som er med i forespørselen.
-- Hvis fødselsdatoen til barnet er ukjent etter oppslag, kreves ikke RM.
-
-#### Land
+- Barn fra og med 18 år må ha RM. Er fødselsdatoen ukjent etter oppslag, kreves ikke RM. Feiler oppslaget, feiler forespørselen.
+- Verge styres av `reellMottaker.verge`. Mangler `reellMottaker`, brukes `mottagerErVerge`, som er deprecated. Verge lagres både på barnets rolle og på RM-rollen, fordi Bisys leser den fra RM-rollen. Verge krever reell mottaker og må være en person.
 - Landkoden må finnes i kodeverket.
+
+#### Ved hver lagring
+- bidrag-sak bestemmer eierfogd fra arbeidsfordelingen i Norg og returnerer den i svaret. Adressebeskyttelse (kode 6/7) hentes fra PDL og skjerming fra skjermingsregisteret, for alle nåværende og tidligere parter. Norg får den strengeste av dem sammen med geografisk tilknytning og velger enheten. Har saken arbeidsfordeling `INH`, brukes settekontoret til enheten, unntatt når en part har adressebeskyttelse eller skjerming. Ved rolleendring skjer dette bare når toggelen `arbeidsflyt.flytt_oppgaver_ved_enhetsbytte` er på, slik at oppgavene flyttes med.
+- bidrag-sak setter `ansatt` på saken: `true` når en nåværende eller tidligere part er skjermet i skjermingsregisteret, ellers `false`. Bisys krever utvidede rettigheter for saker med flagget.
+- `inhabilitet` settes bare i det gamle rollebildet i Bisys. Ny løsning endrer ikke flagget.
+
+#### Ved opprettelse (`POST /sak`)
+- Har samme BP og BM en sak med arbeidsfordeling EEN fra før, returneres den saken, og det opprettes ingen ny. Mangler saksbehandleren tilgang til den saken, svarer endepunktet 403 uten data.
+- Forespørselen har ikke `eierfogd`, `ansatt` eller `inhabilitet`. Sendes feltene, ignoreres de.
+
+#### Ved endring (`POST /sak/oppdater` og `POST /sak/oppdater/roller`)
+- Saksbehandleren må ha tilgang til saken. Ellers svarer endepunktet 403.
+- Kjente BP-, BM- og BA-roller kan ikke fjernes eller endres. RM kan endres.
+- Bare roller i forespørselen valideres. Lagrede roller som ikke er med, sjekkes ikke på nytt, heller ikke om de finnes i bidrag-person eller om myndige barn mangler RM.
+- FR kan ikke endres. FR-roller i forespørselen ignoreres.
+- bidrag-sak bruker gjeldende ident fra bidrag-person for alle roller unntatt FR, både i forespørselen og for lagrede roller. Gjeldende ident er folkeregisteridenten, eller NPID hvis personen ikke har folkeregisterident. Identbytter på lagrede roller lagres i rollehistorikken som `ENDRE_FNR`. Historisk og gjeldende ident regnes som samme person.
+- Forespørselen har ikke `ansatt` eller `inhabilitet`. Sendes feltene, ignoreres de.
 
 #### Unntak
 - Eldre `POST /bidrag-sak/sak/ny` kan opprette en sak uten roller.

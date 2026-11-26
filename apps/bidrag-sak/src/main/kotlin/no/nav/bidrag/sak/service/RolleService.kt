@@ -240,10 +240,13 @@ class RolleService(
             } ?: false
 
         // Hvis RM i request er lik nåværende RM -> ikke lag ny RM-rolle, ikke nullstill kobling
+        // Verge skrives både på barnet og RM-rollen. Bisys leser verge fra RM-rollen (gebyr og brev i fb050).
+        val verge = dtoTilOppdatering.harRM && dtoTilOppdatering.rolle.erVerge()
         if (dtoTilOppdatering.harRM && rmIdentMatch) {
             eksisterendeRolle.apply {
-                mottagerErVerge = dtoTilOppdatering.rolle.mottagerErVerge
+                mottagerErVerge = verge
             }
+            nåværendeRm?.mottagerErVerge = verge
             return listOf(eksisterendeRolle)
         }
 
@@ -262,7 +265,7 @@ class RolleService(
             }
 
         eksisterendeRolle.apply {
-            mottagerErVerge = dtoTilOppdatering.rolle.mottagerErVerge
+            mottagerErVerge = verge
             rmRolleId = null
         }
 
@@ -273,6 +276,7 @@ class RolleService(
 
         // Hvis RM finnes allerede: ikke lag ny RM-rolle og gjenbruk eksisterende RM-rolle med samme ident
         if (eksisterendeRmMedSammeIdent != null) {
+            eksisterendeRmMedSammeIdent.mottagerErVerge = verge
             return listOf(eksisterendeRolle, eksisterendeRmMedSammeIdent)
         }
 
@@ -283,6 +287,7 @@ class RolleService(
                 samhandlerIdent = ønsketRmSam,
                 rolleType = Rolletype.REELMOTTAKER,
                 fødselsdato = dtoTilOppdatering.rmFødselsnummer?.let { dtoTilOppdatering.fødselsdato },
+                mottagerErVerge = verge,
                 bidragssak = eksisterendeBidragssak,
             )
 
