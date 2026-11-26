@@ -83,42 +83,56 @@ export enum Vedtakstype {
 export enum Valutakode {
   ALL = "ALL",
   ANG = "ANG",
+  ARS = "ARS",
   AUD = "AUD",
   BAM = "BAM",
+  BDT = "BDT",
   BGN = "BGN",
   BRL = "BRL",
+  BYN = "BYN",
   CAD = "CAD",
   CHF = "CHF",
   CNY = "CNY",
+  COP = "COP",
   CZK = "CZK",
   DKK = "DKK",
+  DZD = "DZD",
   EEK = "EEK",
   EUR = "EUR",
   GBP = "GBP",
   HKD = "HKD",
   HRK = "HRK",
   HUF = "HUF",
+  IDR = "IDR",
+  ILS = "ILS",
   INR = "INR",
   ISK = "ISK",
   JPY = "JPY",
+  KRW = "KRW",
   LTL = "LTL",
   LVL = "LVL",
   MAD = "MAD",
+  MMK = "MMK",
+  MXN = "MXN",
+  MYR = "MYR",
   NOK = "NOK",
   NZD = "NZD",
+  PHP = "PHP",
   PKR = "PKR",
   PLN = "PLN",
   RON = "RON",
   RSD = "RSD",
+  RUB = "RUB",
   SEK = "SEK",
+  SGD = "SGD",
   THB = "THB",
   TND = "TND",
   TRY = "TRY",
+  TWD = "TWD",
   UAH = "UAH",
   USD = "USD",
   VND = "VND",
   ZAR = "ZAR",
-  PHP = "PHP",
 }
 
 export enum Utgiftstype {
@@ -138,6 +152,7 @@ export enum SoktAvType {
   BARN18AR = "BARN_18_ÅR",
   BM_I_ANNEN_SAK = "BM_I_ANNEN_SAK",
   NAV_BIDRAG = "NAV_BIDRAG",
+  AUTOMATISK = "AUTOMATISK",
   FYLKESNEMDA = "FYLKESNEMDA",
   NAV_INTERNASJONALT = "NAV_INTERNASJONALT",
   KOMMUNE = "KOMMUNE",
@@ -237,8 +252,8 @@ export enum Resultatkode {
   ORDINAeRTFORSKUDD75PROSENT = "ORDINÆRT_FORSKUDD_75_PROSENT",
   FORHOYETFORSKUDD100PROSENT = "FORHØYET_FORSKUDD_100_PROSENT",
   FORHOYETFORSKUDD11AR125PROSENT = "FORHØYET_FORSKUDD_11_ÅR_125_PROSENT",
-  SAeRTILSKUDDINNVILGET = "SÆRTILSKUDD_INNVILGET",
   SAeRBIDRAGINNVILGET = "SÆRBIDRAG_INNVILGET",
+  SAeRTILSKUDDINNVILGET = "SÆRTILSKUDD_INNVILGET",
   SAeRTILSKUDDIKKEFULLBIDRAGSEVNE = "SÆRTILSKUDD_IKKE_FULL_BIDRAGSEVNE",
   SAeRBIDRAGIKKEFULLBIDRAGSEVNE = "SÆRBIDRAG_IKKE_FULL_BIDRAGSEVNE",
   SAeRBIDRAGMANGLERBIDRAGSEVNE = "SÆRBIDRAG_MANGLER_BIDRAGSEVNE",
@@ -284,11 +299,16 @@ export enum Resultatkode {
   KOSTNADSBEREGNET_BIDRAG = "KOSTNADSBEREGNET_BIDRAG",
   INNKREVINGSGRUNNLAG = "INNKREVINGSGRUNNLAG",
   INDEKSREGULERING = "INDEKSREGULERING",
+  IKKE_UNDERHOLDSPLIKT = "IKKE_UNDERHOLDSPLIKT",
   BIDRAG_JUSTERT_FOR_DELT_BOSTED = "BIDRAG_JUSTERT_FOR_DELT_BOSTED",
   BIDRAG_JUSTERT_FOR_NETTO_BARNETILLEGG_BP = "BIDRAG_JUSTERT_FOR_NETTO_BARNETILLEGG_BP",
   BIDRAG_JUSTERT_FOR_NETTO_BARNETILLEGG_BM = "BIDRAG_JUSTERT_FOR_NETTO_BARNETILLEGG_BM",
   BIDRAG_JUSTERT_TIL_FORSKUDDSSATS = "BIDRAG_JUSTERT_TIL_FORSKUDDSSATS",
   BIDRAG_JUSTERT_MANUELT_TIL_FORSKUDDSSATS = "BIDRAG_JUSTERT_MANUELT_TIL_FORSKUDDSSATS",
+  STADSFESTELSE = "STADSFESTELSE",
+  UTENLANDSK_AVGJORELSE = "UTENLANDSK_AVGJORELSE",
+  VEDTAKINNKREVINGAVSAeRBIDRAG = "VEDTAK_INNKREVING_AV_SÆRBIDRAG",
+  AVVIST = "AVVIST",
 }
 
 export enum PrivatAvtaleType {
@@ -470,11 +490,11 @@ export enum Behandlingstema {
 }
 
 export interface Rolle {
-  /** @format date */
-  fodselsdato?: string | null;
-  fodselsnummer?: string | null;
   rolle: Rolletype;
   navn: string;
+  fodselsnummer?: string | null;
+  /** @format date */
+  fodselsdato?: string | null;
   type?: Rolletype | null;
 }
 
@@ -519,7 +539,7 @@ export interface BeregnetBidragPerBarn {
   gjelderBarn: string;
   saksnummer: string;
   løpendeBeløp: number;
-  valutakode: string;
+  valutakode: Valutakode;
   samværsklasse: Samvaersklasse;
   samværsfradrag: number;
   beregnetBeløp: number;
@@ -532,6 +552,10 @@ export interface BeregnetBidragPerBarn {
   bruttoBidragEtterBarnetilleggBM?: number | null;
   bruttoBidragEtterBarnetilleggBP?: number | null;
   erVedtakKildeBBM: boolean;
+  /** Beregnet bidrag i NOK til bruk i evnevurderingen. Null når NOK-beløpet ikke er oppgitt. */
+  beregnetBidragNOK?: number | null;
+  /** Referanse til valutakursgrunnlaget som er brukt ved omregningen til NOK. */
+  valutakursGrunnlagsreferanse?: string | null;
 }
 
 export interface BidragPeriodeBeregningsdetaljer {
@@ -746,10 +770,10 @@ export interface DokumentmalResultatBeregningInntekterDto {
   inntektBP?: number | null;
   inntektBarn?: number | null;
   barnEndeligInntekt?: number | null;
-  inntektBarnMånedlig?: number | null;
   totalEndeligInntekt: number;
   inntektBPMånedlig?: number | null;
   inntektBMMånedlig?: number | null;
+  inntektBarnMånedlig?: number | null;
 }
 
 export type DokumentmalResultatBidragsberegningBarnDto = UtilRequiredKeys<
@@ -773,9 +797,9 @@ export interface DokumentmalSkattBeregning {
   skattAlminneligInntekt: number;
   trinnskatt: number;
   trygdeavgift: number;
+  skattMånedsbeløp: number;
   trinnskattMånedsbeløp: number;
   trygdeavgiftMånedsbeløp: number;
-  skattMånedsbeløp: number;
   skattAlminneligInntektMånedsbeløp: number;
 }
 
@@ -900,16 +924,17 @@ export interface NotatBehandlingDetaljerDto {
    * @deprecated
    */
   avslag?: Resultatkode | null;
+  avslagVisningsnavn?: string | null;
+  avslagVisningsnavnUtenPrefiks?: string | null;
   kategoriVisningsnavn?: string | null;
   vedtakstypeVisningsnavn?: string | null;
-  avslagVisningsnavnUtenPrefiks?: string | null;
-  avslagVisningsnavn?: string | null;
   erAvvisning: boolean;
 }
 
 export interface NotatBeregnetBidragPerBarnDto {
   beregnetBidragPerBarn: BeregnetBidragPerBarn;
   personidentBarn: string;
+  valutakurs?: number | null;
 }
 
 export interface NotatBeregnetInntektDto {
@@ -950,7 +975,7 @@ export interface NotatBoforholdTilBMMedSoknadsbarn {
   perioder: OpplysningerFraFolkeregisteretMedDetaljerBostatuskodeUnit[];
 }
 
-export interface NotatErSamvaerVirkningLikForAlleForSak {
+export interface NotatErLikForAlleBasertPaSak {
   saksnummer: string;
   erLikForAlle: boolean;
 }
@@ -963,6 +988,11 @@ export interface NotatFaktiskTilsynsutgiftDto {
   total: number;
 }
 
+export interface NotatForpleiningDto {
+  periode: DatoperiodeDto;
+  beløp: number;
+}
+
 export interface NotatGebyrDetaljerDto {
   søknad?: NotatGebyrSoknadDetaljerDto | null;
   inntekt: NotatGebyrInntektDto;
@@ -973,8 +1003,8 @@ export interface NotatGebyrDetaljerDto {
   beløpGebyrsats: number;
   /** @deprecated */
   rolle: DokumentmalPersonDto;
-  gebyrResultatVisningsnavn: string;
   erManueltOverstyrt: boolean;
+  gebyrResultatVisningsnavn: string;
 }
 
 export interface NotatGebyrInntektDto {
@@ -1028,14 +1058,15 @@ export interface NotatInntektDto {
   gjelderBarn?: DokumentmalPersonDto | null;
   historisk: boolean;
   inntektsposter: NotatInntektspostDto[];
+  /** Avrundet månedsbeløp for barnetillegg */
+  beløpMånedDagsats?: number | null;
   beløpstypeVisningsnavn: string;
   visningsnavn: string;
   /** Avrundet dagsats for barnetillegg */
   dagsats?: number | null;
   beløpstype?: InntektBelopstype | null;
+  /** Skattefaktor for barnetillegg. Null når skatteprosent ikke er relevant (skattefrie barnetillegg) */
   skattefaktor?: number | null;
-  /** Avrundet månedsbeløp for barnetillegg */
-  beløpMånedDagsats?: number | null;
   /** Avrundet månedsbeløp for barnetillegg */
   månedsbeløp?: number | null;
 }
@@ -1124,8 +1155,8 @@ export interface NotatResultatPeriodeDto {
   vedtakstype?: Vedtakstype | null;
   /** @format int32 */
   antallBarnIHusstanden: number;
-  sivilstandVisningsnavn?: string | null;
   resultatKodeVisningsnavn: string;
+  sivilstandVisningsnavn?: string | null;
 }
 
 export type NotatResultatSaerbidragsberegningDto = UtilRequiredKeys<
@@ -1161,7 +1192,7 @@ export interface NotatSamvaerBarnDto {
 
 export interface NotatSamvaerDto {
   erSammeForAlle: boolean;
-  sammeSamværForAlleSaker: NotatErSamvaerVirkningLikForAlleForSak[];
+  sammeSamværForAlleSaker: NotatErLikForAlleBasertPaSak[];
   barn: NotatSamvaerBarnDto[];
 }
 
@@ -1252,11 +1283,6 @@ export interface NotatUnderholdDto {
   underholdskostnaderBarn: NotatUnderholdBarnDto[];
   offentligeOpplysninger: NotatOffentligeOpplysningerUnderholdBarn[];
   offentligeOpplysningerV2: NotatOffentligeOpplysningerUnderhold;
-}
-
-export interface NotatForpleiningDto {
-  periode: DatoperiodeDto;
-  beløp: number;
 }
 
 export interface NotatUnderholdskostnadBeregningDto {
@@ -1384,9 +1410,9 @@ export interface NotatVirkningstidspunktBarnDto {
    * @deprecated
    */
   notat: NotatBegrunnelseDto;
-  behandlingstypeVisningsnavn?: string | null;
-  avslagVisningsnavnUtenPrefiks?: string | null;
   avslagVisningsnavn?: string | null;
+  avslagVisningsnavnUtenPrefiks?: string | null;
+  behandlingstypeVisningsnavn?: string | null;
   erAvvisning: boolean;
   årsakVisningsnavn?: string | null;
 }
@@ -1394,9 +1420,9 @@ export interface NotatVirkningstidspunktBarnDto {
 export interface NotatVirkningstidspunktDto {
   /** Hvis det er likt for alle bruk avslag/årsak fra ett av barna */
   erLikForAlle: boolean;
-  erLikForAlleBasertPåSak: NotatErSamvaerVirkningLikForAlleForSak[];
+  erLikForAlleBasertPåSak: NotatErLikForAlleBasertPaSak[];
   erVirkningstidspunktLikForAlle: boolean;
-  erVirkningstidspunktLiktForAlleSaker: NotatErSamvaerVirkningLikForAlleForSak[];
+  erVirkningstidspunktLiktForAlleSaker: NotatErLikForAlleBasertPaSak[];
   erAvslagForAlle: boolean;
   eldsteVirkningstidspunkt: string;
   barn: NotatVirkningstidspunktBarnDto[];
@@ -1664,9 +1690,9 @@ export interface DokumentBestilling {
   datoSakOpprettet?: string | null;
   spraak?: string | null;
   roller: {
-    bidragspliktig?: PartInfo | null;
-    bidragsmottaker?: PartInfo | null;
     barn: Barn[];
+    bidragsmottaker?: PartInfo | null;
+    bidragspliktig?: PartInfo | null;
     isEmpty: boolean;
     /** @format int32 */
     size: number;
@@ -1829,9 +1855,9 @@ export interface Skatt {
   skattAlminneligInntekt: number;
   trinnskatt: number;
   trygdeavgift: number;
+  skattMånedsbeløp: number;
   trinnskattMånedsbeløp: number;
   trygdeavgiftMånedsbeløp: number;
-  skattMånedsbeløp: number;
   skattAlminneligInntektMånedsbeløp: number;
 }
 

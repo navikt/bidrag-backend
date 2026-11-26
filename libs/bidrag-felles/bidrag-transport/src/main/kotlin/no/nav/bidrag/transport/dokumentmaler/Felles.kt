@@ -360,6 +360,7 @@ data class DokumentmalDelberegningBidragspliktigesBeregnedeTotalbidragDto(
     data class NotatBeregnetBidragPerBarnDto(
         val beregnetBidragPerBarn: BeregnetBidragPerBarn,
         val personidentBarn: String,
+        val valutakurs: BigDecimal?,
     )
 }
 

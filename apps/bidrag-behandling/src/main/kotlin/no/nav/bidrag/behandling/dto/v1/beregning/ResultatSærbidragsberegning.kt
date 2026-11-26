@@ -48,6 +48,7 @@ data class DelberegningBidragspliktigesBeregnedeTotalbidragDto(
     data class BeregnetBidragPerBarnDto(
         val beregnetBidragPerBarn: BeregnetBidragPerBarn,
         val personidentBarn: String,
+        val valutakurs: BigDecimal?,
     )
 }
 
