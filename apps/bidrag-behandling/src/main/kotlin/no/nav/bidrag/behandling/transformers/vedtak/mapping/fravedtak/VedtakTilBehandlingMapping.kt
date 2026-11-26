@@ -504,7 +504,8 @@ class VedtakTilBehandlingMapping(
         lesemodus: Boolean,
     ): Utgift? {
         if (behandling.tilType() !== TypeBehandling.SÆRBIDRAG ||
-            validerBeregning.run { behandling.tilSærbidragAvslagskode() }?.erAvslagSomInneholderUtgifter() == false
+            // TODO: Unntak for bisys her for at det skal være mulig å se utgifter i bisys vedtak for å verifisere overføring.
+            (!behandling.erBisysVedtak && validerBeregning.run { behandling.tilSærbidragAvslagskode() }?.erAvslagSomInneholderUtgifter() == false)
         ) {
             return null
         }

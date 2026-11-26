@@ -484,6 +484,7 @@ class Dtomapper(
                 begrunnelse = BegrunnelseDto(henteNotatinnhold(this, NotatType.UTGIFTER)),
                 begrunnelseFraOpprinneligVedtak = utgiftBegrunnelseFraOpprinneligVedtak(),
                 valideringsfeil = valideringsfeil,
+                utgifter = utgift.utgiftsposter.sorter().map { it.tilDto() },
                 totalBeregning = utgift.tilTotalBeregningDto(),
             )
         } else {
