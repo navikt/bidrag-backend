@@ -82,6 +82,11 @@ function normalize(body) {
   return null;
 }
 
+function idempotencyKey(body, event) {
+  if (event.insertId && event.insertId !== MISSING) return `insertId:${event.insertId}`;
+  return body?.message?.messageId ? `messageId:${body.message.messageId}` : null;
+}
+
 function isDb2(database) {
   return DB2_DATABASE_PATTERN.test(database);
 }
@@ -153,6 +158,7 @@ module.exports = {
   fromIncident,
   fromLogEntry,
   normalize,
+  idempotencyKey,
   buildLogUrl,
   slackMention,
   missingSlackIdWarning,
