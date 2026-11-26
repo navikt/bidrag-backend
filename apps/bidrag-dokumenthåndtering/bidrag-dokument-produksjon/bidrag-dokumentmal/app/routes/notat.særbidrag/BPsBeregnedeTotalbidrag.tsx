@@ -1,14 +1,26 @@
-import { NotatDelberegningBidragspliktigesBeregnedeTotalbidragDto } from "~/types/Api";
-import { formatterBeløpForBeregning } from "~/utils/visningsnavn";
+import { DokumentmalDelberegningBidragspliktigesBeregnedeTotalbidragDto } from "~/types/Api";
+import {
+  formatterBeløp,
+  formatterBeløpForBeregning,
+} from "~/utils/visningsnavn";
 import tekster from "~/tekster";
-import { CommonTable, TableColumn, TableRow } from "~/components/CommonTable";
+import {
+  CommonTable,
+  TableColumn,
+  TableHeader,
+  TableRow,
+} from "~/components/CommonTable";
 import { CalculationTable } from "~/components/vedtak/CalculationTable";
 
 export const BPsBeregnedeTotalbidrag = ({
   delberegning,
 }: {
-  delberegning: NotatDelberegningBidragspliktigesBeregnedeTotalbidragDto;
+  delberegning: DokumentmalDelberegningBidragspliktigesBeregnedeTotalbidragDto;
 }) => {
+  const løperIUtlandskValuta = delberegning.beregnetBidragPerBarnListe.some(
+    ({ beregnetBidragPerBarn: row }) => row.valutakode !== "NOK",
+  );
+
   return (
     <div>
       <h4>{`${tekster.begreper.bidragspliktiges} beregnede totalbidrag`}</h4>
@@ -24,6 +36,12 @@ export const BPsBeregnedeTotalbidrag = ({
             {
               name: "Løpende bidrag",
             },
+            løperIUtlandskValuta && {
+              name: "Valutakurs",
+            },
+            løperIUtlandskValuta && {
+              name: "Løpende bidrag (NOK)",
+            },
             {
               name: "Samvær",
             },
@@ -33,105 +51,119 @@ export const BPsBeregnedeTotalbidrag = ({
             {
               name: "Sum",
             },
-          ],
+          ].filter((header) => header != null) as TableHeader[],
           rows: delberegning.beregnetBidragPerBarnListe
-            .map(({ beregnetBidragPerBarn: row, personidentBarn }) => {
-              const showBeregningAvU =
-                row.beregnetBidrag !== 0 || row.faktiskBeløp !== 0;
-              const erVedtakFraBBM =
-                row.erVedtakKildeBBM === undefined ||
-                row.erVedtakKildeBBM === true;
-              return {
-                expandableContent: showBeregningAvU
-                  ? [
-                      {
-                        content: (
-                          <CalculationTable
-                            width={"200px"}
-                            simpleStyling
-                            className={"ml-2"}
-                            title={`Reduksjon av BPs andel av U`}
-                            data={[
-                              {
-                                label: `BPs andel av U${
-                                  !erVedtakFraBBM &&
-                                  row.bidragJustertForNettoBarnetilleggBP
-                                    ? " (justert opp til BPs netto barnetillegg)"
-                                    : ""
-                                }`,
+            .map<TableRow>(
+              ({ beregnetBidragPerBarn: row, valutakurs, personidentBarn }) => {
+                const showBeregningAvU =
+                  row.beregnetBidrag !== 0 || row.faktiskBeløp !== 0;
+                const erVedtakFraBBM =
+                  row.erVedtakKildeBBM === undefined ||
+                  row.erVedtakKildeBBM === true;
+                return {
+                  expandableContent: showBeregningAvU
+                    ? [
+                        {
+                          content: (
+                            <CalculationTable
+                              width={"200px"}
+                              simpleStyling
+                              className={"ml-2"}
+                              title={`Reduksjon av BPs andel av U`}
+                              data={[
+                                {
+                                  label: `BPs andel av U${
+                                    !erVedtakFraBBM &&
+                                    row.bidragJustertForNettoBarnetilleggBP
+                                      ? " (justert opp til BPs netto barnetillegg)"
+                                      : ""
+                                  }`,
 
+                                  value: formatterBeløpForBeregning(
+                                    erVedtakFraBBM
+                                      ? row.beregnetBeløp
+                                      : (row.bruttoBidragEtterBarnetilleggBM ??
+                                          0),
+                                    true,
+                                  ),
+                                },
+                                {
+                                  label: `Faktisk bidrag`,
+                                  value: (
+                                    <div>
+                                      -{" "}
+                                      {formatterBeløpForBeregning(
+                                        erVedtakFraBBM
+                                          ? row.faktiskBeløp
+                                          : (row.bruttoBidragEtterBarnetilleggBP ??
+                                              0),
+                                        true,
+                                      )}
+                                    </div>
+                                  ),
+                                },
+                              ]}
+                              result={{
+                                label: "Resultat",
                                 value: formatterBeløpForBeregning(
-                                  erVedtakFraBBM
-                                    ? row.beregnetBeløp
-                                    : row.bruttoBidragEtterBarnetilleggBM,
+                                  row.reduksjonUnderholdskostnad,
                                   true,
                                 ),
-                              },
-                              {
-                                label: `Faktisk bidrag`,
-                                value: (
-                                  <div>
-                                    -{" "}
-                                    {formatterBeløpForBeregning(
-                                      erVedtakFraBBM
-                                        ? row.faktiskBeløp
-                                        : row.bruttoBidragEtterBarnetilleggBP,
-                                      true,
-                                    )}
-                                  </div>
-                                ),
-                              },
-                            ]}
-                            result={{
-                              label: "Resultat",
-                              value: formatterBeløpForBeregning(
-                                row.reduksjonUnderholdskostnad,
-                                true,
-                              ),
-                            }}
-                          />
-                        ),
-                      },
-                    ]
-                  : undefined,
-                columns: [
-                  {
-                    content: personidentBarn,
-                  },
-                  {
-                    content: row.saksnummer,
-                  },
-                  {
-                    content: formatterBeløpForBeregning(row.løpendeBeløp, true),
-                  },
-                  {
-                    content: formatterBeløpForBeregning(
-                      row.samværsfradrag,
-                      true,
-                    ),
-                  },
-                  {
-                    content: formatterBeløpForBeregning(
-                      row.reduksjonUnderholdskostnad,
-                      true,
-                    ),
-                  },
-                  {
-                    content: formatterBeløpForBeregning(
-                      row.beregnetBidrag,
-                      true,
-                    ),
-                  },
-                ],
-              };
-            })
+                              }}
+                            />
+                          ),
+                        },
+                      ]
+                    : undefined,
+                  columns: [
+                    {
+                      content: personidentBarn,
+                    },
+                    {
+                      content: row.saksnummer,
+                    },
+                    {
+                      content:
+                        row.valutakode === "NOK"
+                          ? formatterBeløpForBeregning(row.løpendeBeløp, true)
+                          : `${formatterBeløp(row.løpendeBeløp)} (${row.valutakode})`,
+                    },
+                    løperIUtlandskValuta && {
+                      content: formatterBeløp(valutakurs ?? 0),
+                    },
+                    løperIUtlandskValuta && {
+                      content: formatterBeløp(row.beregnetBidragNOK ?? 0),
+                    },
+
+                    {
+                      content: formatterBeløpForBeregning(
+                        row.samværsfradrag,
+                        true,
+                      ),
+                    },
+                    {
+                      content: formatterBeløpForBeregning(
+                        row.reduksjonUnderholdskostnad,
+                        true,
+                      ),
+                    },
+                    {
+                      content: formatterBeløpForBeregning(
+                        row.beregnetBidragNOK,
+                        true,
+                      ),
+                    },
+                  ].filter((column) => column != null) as TableColumn[],
+                };
+              },
+            )
             .concat([
               {
                 skipPadding: true,
                 columns: [
                   {
                     content: "",
-                    colSpan: 4,
+                    colSpan: løperIUtlandskValuta ? 5 : 4,
                   } as TableColumn,
                   {
                     content: "Beregnet totalbidrag: ",
@@ -155,7 +187,7 @@ export const BPsBeregnedeTotalbidrag = ({
                 columns: [
                   {
                     content: "U = Underholdskostnad, BP = Bidragspliktig",
-                    colSpan: 7,
+                    colSpan: løperIUtlandskValuta ? 7 : 6,
                   },
                 ] as TableColumn[],
               } as TableRow,
