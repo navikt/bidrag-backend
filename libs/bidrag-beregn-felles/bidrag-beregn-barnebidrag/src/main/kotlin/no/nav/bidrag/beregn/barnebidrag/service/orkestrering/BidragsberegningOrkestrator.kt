@@ -1,6 +1,5 @@
 package no.nav.bidrag.beregn.barnebidrag.service.orkestrering
 
-import com.fasterxml.jackson.databind.node.POJONode
 import no.nav.bidrag.beregn.barnebidrag.BeregnBarnebidragApi
 import no.nav.bidrag.beregn.barnebidrag.service.external.BeregningPersonConsumer
 import no.nav.bidrag.beregn.barnebidrag.service.external.BeregningSakConsumer
@@ -10,12 +9,10 @@ import no.nav.bidrag.beregn.core.exception.IkkeFullBidragsevneOgOppfostringsbidr
 import no.nav.bidrag.beregn.core.exception.IkkeFullBidragsevneOgUfullstendigeGrunnlagBeregningException
 import no.nav.bidrag.beregn.core.exception.IkkeFullBidragsevneOgUfullstendigeGrunnlagException
 import no.nav.bidrag.beregn.core.service.ValutakursService
-import no.nav.bidrag.commons.security.SikkerhetsKontekst
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.beregning.Beregningstype
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
 import no.nav.bidrag.domene.enums.sak.Sakskategori
-import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.domene.ident.Personident
@@ -53,7 +50,6 @@ import org.springframework.context.annotation.Import
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClientResponseException
-import java.math.BigDecimal
 import java.time.LocalDate
 
 data class BeregningResultat(
