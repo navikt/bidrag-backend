@@ -1783,7 +1783,7 @@ fun List<GrunnlagDto>.byggGrunnlagForholdsmessigFordeling(
         sumBidragTilFordelingGrunnlagsliste
             .filter {
                 it.referanse.endsWith(BARNEBIDRAG_BEREGNING_GRUNNLAGSREFERANSE_SJEKK_EVNESPREKK_ETTER_FF_POSTFIX)
-            }.finnFørsteSomOverlapper(sluttberegningPeriode) ?: run {
+            }.maxByOrNull { it.innhold.periode.fom } ?: run {
             // TODO: Dette er en fallback som egentlig ikke bør skje. Er det en feil i beregningen?
             val sumBidragTilFordelingGrunnlagsliste =
                 filtrerOgKonverterBasertPåEgenReferanse<DelberegningSumBidragTilFordeling>(
@@ -1791,7 +1791,9 @@ fun List<GrunnlagDto>.byggGrunnlagForholdsmessigFordeling(
                 ).filter {
                     it.referanse.endsWith(BARNEBIDRAG_BEREGNING_GRUNNLAGSREFERANSE_SJEKK_EVNESPREKK_ETTER_FF_POSTFIX)
                 }
-            sumBidragTilFordelingGrunnlagsliste.finnFørsteSomOverlapper(sluttberegningPeriode)
+            sumBidragTilFordelingGrunnlagsliste.find {
+                it.innhold.periode.overlapper(sluttberegningPeriode)
+            }
         }
 
     val sumBidragTilBeregning =
@@ -1829,14 +1831,6 @@ fun List<GrunnlagDto>.byggGrunnlagForholdsmessigFordeling(
         erForholdsmessigFordelt = periodeHarSlåttUtTilFF(sluttberegning.sluttberegningPeriode()),
         delberegningEvneRevurderingsbarn = finnDelberegningEvneRevurderingsbarn(grunnlagsreferanseListe),
     )
-}
-
-internal fun List<InnholdMedReferanse<DelberegningSumBidragTilFordeling>>.finnFørsteSomOverlapper(
-    periode: ÅrMånedsperiode,
-): InnholdMedReferanse<DelberegningSumBidragTilFordeling>? = firstOrNull {
-    val bidragTilFordelingPeriode = it.innhold.periode
-    (bidragTilFordelingPeriode.til == null || periode.fom < bidragTilFordelingPeriode.til) &&
-        (periode.til == null || bidragTilFordelingPeriode.fom < periode.til)
 }
 
 private fun List<GrunnlagDto>.byggForholdsmessigFordelingBeregningSumFordeling(
