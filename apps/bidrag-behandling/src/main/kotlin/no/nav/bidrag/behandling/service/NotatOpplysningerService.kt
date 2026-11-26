@@ -1570,6 +1570,7 @@ private fun DelberegningBidragspliktigesBeregnedeTotalbidragDto.tilNotatDto() = 
             .NotatBeregnetBidragPerBarnDto(
                 beregnetBidragPerBarn = it.beregnetBidragPerBarn,
                 personidentBarn = it.personidentBarn,
+                valutakurs = it.valutakurs,
             )
     },
 )
