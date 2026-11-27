@@ -1,14 +1,12 @@
 package no.nav.bidrag.sak.controller
 
-import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.Operation
-import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
-import no.nav.bidrag.commons.util.sanitizeForLog
+import jakarta.validation.Valid
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.sak.Saksnummer
@@ -35,7 +33,6 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
@@ -44,8 +41,6 @@ import org.springframework.web.bind.annotation.RestController
 class BidragSakController(
     private val bidragSakService: BidragSakService,
 ) {
-    private val logger = KotlinLogging.logger {}
-
     @GetMapping("/bidrag-sak$SAK_SOK/{saksnummer}")
     @Operation(
         description = "Finn metadata for en bidragssak",
@@ -165,37 +160,42 @@ class BidragSakController(
     @Operation(
         summary = "Oppdater roller i sak",
         description = "Rollene i forespørselen legges til eller oppdateres. Roller som ikke er med, blir stående uendret.\n\n" +
-            SAKSROLLE_REGLER,
+            SakRegler.ENDRE,
         security = [SecurityRequirement(name = "bearer-key")],
     )
     @ApiResponses(
         value = [
             ApiResponse(responseCode = "200", description = "Rollene er oppdatert"),
             ApiResponse(responseCode = "400", description = "Forespørselen bryter en av reglene for saksroller"),
+            ApiResponse(responseCode = "403", description = "Saksbehandleren har ikke tilgang til saken"),
         ],
     )
     fun oppdaterSakRoller(
-        @RequestBody request: OppdaterRollerISakRequest,
+        @Valid @RequestBody request: OppdaterRollerISakRequest,
     ): OppdaterSakResponse {
         secureLogger.debug { "oppdaterSakRoller request: ${commonObjectmapper.writeValueAsString(request)}" }
         return bidragSakService.oppdaterRollerISak(request)
     }
 
+    @Deprecated("Ingen kallere. Fjernes. Bruk POST /sak/oppdater/roller for roller.")
     @PostMapping("/sak/oppdater")
     @Operation(
         summary = "Oppdater sak",
-        description = "Oppdaterer metadata og roller i saken. Felt som er null, blir stående uendret.\n\n" +
-            SAKSROLLE_REGLER,
+        description = "**Deprecated: ingen kallere, fjernes.** Bruk `POST /sak/oppdater/roller` for roller.\n\n" +
+            "Oppdaterer metadata og roller i saken. Felt som er null, blir stående uendret.\n\n" +
+            SakRegler.ENDRE,
+        deprecated = true,
         security = [SecurityRequirement(name = "bearer-key")],
     )
     @ApiResponses(
         value = [
             ApiResponse(responseCode = "200", description = "Saken er oppdatert"),
             ApiResponse(responseCode = "400", description = "Forespørselen bryter en av reglene for saksroller"),
+            ApiResponse(responseCode = "403", description = "Saksbehandleren har ikke tilgang til saken"),
         ],
     )
     fun oppdaterSak(
-        @RequestBody oppdaterSakRequest: OppdaterSakRequest,
+        @Valid @RequestBody oppdaterSakRequest: OppdaterSakRequest,
     ): OppdaterSakResponse {
         secureLogger.debug { "oppdaterSak request: ${commonObjectmapper.writeValueAsString(oppdaterSakRequest)}" }
         return bidragSakService.oppdaterSak(oppdaterSakRequest)
@@ -220,9 +220,21 @@ class BidragSakController(
     ) = bidragSakService.opprettEllerUtvidMidlertidligTilgangSak(request)
 
     @PostMapping("/sak")
-    @Operation(description = "Opprette ny sak", security = [SecurityRequirement(name = "bearer-key")])
+    @Operation(
+        summary = "Opprett sak",
+        description = "Oppretter en ny sak, eller returnerer saken som finnes fra før for samme BP og BM.\n\n" +
+            SakRegler.OPPRETT,
+        security = [SecurityRequirement(name = "bearer-key")],
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "200", description = "Saken er opprettet, eller eksisterende sak er returnert"),
+            ApiResponse(responseCode = "400", description = "Forespørselen bryter en av reglene for saksroller"),
+            ApiResponse(responseCode = "403", description = "Saken finnes fra før, og saksbehandleren har ikke tilgang til den"),
+        ],
+    )
     fun opprettSak(
-        @RequestBody opprettSakRequest: OpprettSakRequest,
+        @Valid @RequestBody opprettSakRequest: OpprettSakRequest,
     ): OpprettSakResponse {
         secureLogger.debug { "opprettSak request ${commonObjectmapper.writeValueAsString(opprettSakRequest)}" }
         return bidragSakService.opprettSak(opprettSakRequest)
@@ -307,27 +319,5 @@ class BidragSakController(
         const val SAK_SOK = "/sak"
         const val PERSON_SAK = "/person/sak"
         const val SAK_NY = "/sak/ny"
-
-        const val SAKSROLLE_REGLER =
-            "**Regler for saksroller**\n" +
-                "- Alle roller med fødselsnummer i forespørselen (BP, BM, BA, RM og FR) må finnes i bidrag-person. " +
-                "En RM som er samhandler i forespørselen, må finnes som samhandler. " +
-                "Ved endring sjekkes ikke eksistensen til lagrede roller som ikke er med i forespørselen.\n" +
-                "- Fødselsnummer kan ikke være tom streng.\n" +
-                "- Minst én av rollene BP, BM eller BA må være knyttet til en kjent person.\n" +
-                "- En person kan bare ha én rolle i saken, med unntak av RM og FR.\n" +
-                "- Samme barn kan ikke sendes inn to ganger i én forespørsel.\n" +
-                "- Saken kan ha maks én BM og én BP.\n" +
-                "- RM kan bare registreres på barn.\n" +
-                "- Kjente BP-, BM- og BA-roller kan ikke fjernes eller endres. RM kan endres.\n" +
-                "- `/sak/oppdater` og `/sak/oppdater/roller` støtter ikke oppdatering av FR. " +
-                "FR-roller i forespørselen ignoreres av oppdateringslogikken.\n" +
-                "- Ved endring bruker bidrag-sak gjeldende ident fra bidrag-person for alle roller unntatt FR, både i forespørselen og for lagrede roller. " +
-                "Gjeldende ident er folkeregisteridenten, eller NPID hvis personen ikke har folkeregisterident. " +
-                "Identbytter på lagrede roller lagres i rollehistorikken som `ENDRE_FNR`. Historisk og gjeldende ident regnes som samme person.\n" +
-                "- Landkoden må finnes i kodeverket.\n" +
-                "- Barn fra og med 18 år må ha RM. Regelen sjekkes bare for barn som er med i forespørselen. " +
-                "Barn som ikke er med, valideres ikke på nytt, selv om de mangler RM i dag.\n" +
-                "- Hvis fødselsdatoen til barnet er ukjent etter oppslag, krever vi ikke RM. Feiler oppslaget, feiler forespørselen."
     }
 }

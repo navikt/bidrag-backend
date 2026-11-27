@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.ident.ReellMottaker
+import no.nav.bidrag.domene.ident.SamhandlerId
 
 data class RolleDto(
     @field:Schema(
@@ -32,7 +33,7 @@ data class RolleDto(
             "Erstattes av 'reellMottaker'.",
         deprecated = true,
     )
-    @Deprecated("Bruk heller reellMottaker", replaceWith = ReplaceWith("reellMottaker"))
+    @Deprecated("Bruk heller reellMottaker. Fjernes når det gamle opprett-skjemaet i bidrag-frontend er fjernet.", replaceWith = ReplaceWith("reellMottaker"))
     val reellMottager: ReellMottaker? = null,
     @field:Schema(
         description =
@@ -44,8 +45,10 @@ data class RolleDto(
     @field:Schema(
         description =
         "Angir om mottaker samtidig er verge for barnet. " +
-            "Settes til true dersom mottaker også er verge.",
+            "Brukes bare når reellMottaker mangler. Bruk heller reellMottaker.verge.",
+        deprecated = true,
     )
+    @Deprecated("Bruk reellMottaker.verge. Fjernes når bidrag-frontend ikke sender eller leser feltet.", ReplaceWith("reellMottaker?.verge"))
     val mottagerErVerge: Boolean = false,
     @field:Schema(
         description = "Tidligere brukt felt for fødselsnummer. Erstattes av 'fødselsnummer'.",
@@ -62,21 +65,47 @@ data class RolleDto(
     @field:Schema(description = "Rollehistorikk for sak. Returneres kun hvis det er angitt i requestparameter")
     val rollehistorikk: List<RollehistorikkDto> = emptyList(),
 ) {
-    fun rmErSamhandlerId() = reellMottaker?.ident?.erSamhandlerId() ?: reellMottager?.erSamhandlerId() ?: false
+    fun rmSamhandlerId(): SamhandlerId? {
+        val rm = reellMottaker ?: return reellMottager?.samhandlerId()
+        return when (rm.type) {
+            ReellMottakerType.SAMHANDLER -> SamhandlerId(rm.ident.verdi)
+            ReellMottakerType.PERSON -> null
+            null -> rm.ident.samhandlerId() ?: reellMottager?.samhandlerId()
+        }
+    }
 
-    fun rmErVerge() = reellMottaker?.verge ?: false
-
-    fun rmSamhandlerId() = reellMottaker?.ident?.samhandlerId() ?: reellMottager?.samhandlerId()
-
-    fun rmFødselsnummer() = reellMottaker?.ident?.personIdent() ?: reellMottager?.personIdent()
+    fun rmFødselsnummer(): Personident? {
+        val rm = reellMottaker ?: return reellMottager?.personIdent()
+        return when (rm.type) {
+            ReellMottakerType.PERSON -> Personident(rm.ident.verdi)
+            ReellMottakerType.SAMHANDLER -> null
+            null -> rm.ident.personIdent() ?: reellMottager?.personIdent()
+        }
+    }
 
     fun harRM(): Boolean = listOf(
         rmFødselsnummer()?.verdi,
         rmSamhandlerId()?.verdi,
     ).any { !it.isNullOrBlank() }
+
+    /** Verge for barnet. `reellMottaker.verge` bestemmer når reell mottaker er satt, ellers `mottagerErVerge`. */
+    @Suppress("DEPRECATION")
+    fun erVerge(): Boolean = reellMottaker?.verge ?: mottagerErVerge
+}
+
+enum class ReellMottakerType {
+    PERSON,
+    SAMHANDLER,
 }
 
 data class ReellMottakerDto(
     val ident: ReellMottaker,
+    @field:Schema(
+        description = "Om reell mottaker er verge for barnet.",
+    )
     val verge: Boolean = false,
+    @field:Schema(
+        description = "Om reell mottaker er en person eller en samhandler. Settes alltid i respons. Hvis den mangler i request, tolkes identen.",
+    )
+    val type: ReellMottakerType? = null,
 )

@@ -10,7 +10,6 @@ import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.ident.ReellMottaker
 import no.nav.bidrag.domene.land.Landkode
-import no.nav.bidrag.domene.organisasjon.Enhetsnummer
 import no.nav.bidrag.generer.testdata.person.genererPersonident
 import no.nav.bidrag.sak.domain.Rolle
 import no.nav.bidrag.sak.integration.kodeverk.CachedKodeverkService
@@ -148,5 +147,5 @@ class ValideringsgrunnlagServiceTest {
 
     private fun rolle(type: Rolletype, fnr: Personident) = RolleDto(type = type, fødselsnummer = fnr)
 
-    private fun opprett(vararg roller: RolleDto) = OpprettSakRequest(eierfogd = Enhetsnummer("1701"), roller = roller.toSet())
+    private fun opprett(vararg roller: RolleDto) = OpprettSakRequest(roller = roller.toSet())
 }

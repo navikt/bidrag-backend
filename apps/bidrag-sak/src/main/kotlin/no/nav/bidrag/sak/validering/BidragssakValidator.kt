@@ -3,8 +3,8 @@ package no.nav.bidrag.sak.validering
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.sak.Arbeidsfordeling
+import no.nav.bidrag.domene.land.Landkode
 import no.nav.bidrag.sak.domain.Rolle
-import no.nav.bidrag.transport.felles.commonObjectmapper
 import no.nav.bidrag.transport.sak.OppdaterSakRequest
 import no.nav.bidrag.transport.sak.OpprettSakRequest
 import no.nav.bidrag.transport.sak.RolleDto
@@ -21,18 +21,27 @@ class BidragssakValidator {
         val erKjent get() = ident != null
     }
 
-    fun valider(opprettSakRequest: OpprettSakRequest, grunnlag: Valideringsgrunnlag) {
-        opprettSakRequest.land?.let {
+    fun valider(opprettSakRequest: OpprettSakRequest, grunnlag: Valideringsgrunnlag) = valider(
+        opprettSakRequest.roller,
+        opprettSakRequest.land,
+        opprettSakRequest.arbeidsfordeling,
+        grunnlag,
+    )
+
+    fun valider(forespurteRoller: Set<RolleDto>, land: Landkode?, arbeidsfordeling: Arbeidsfordeling, grunnlag: Valideringsgrunnlag) {
+        land?.let {
             require(it in grunnlag.landkoder) {
-                "Bidragssak forsøkt opprettet med ugyldig land: ${opprettSakRequest.land?.verdi}"
+                "Bidragssak forsøkt opprettet med ugyldig land: ${land.verdi}"
             }
         }
 
-        validerForespurteRoller(opprettSakRequest.roller, grunnlag)
+        validerForespurteRoller(forespurteRoller, grunnlag)
 
-        loggHvisEierenhetOppretterSakUtenBarn(opprettSakRequest)
+        if (arbeidsfordeling == Arbeidsfordeling.EIERENHET && forespurteRoller.none { it.type == Rolletype.BARN }) {
+            secureLogger.info { "Oppretter sak med arbeidsfordeling EEN uten barn." }
+        }
 
-        val roller = opprettSakRequest.roller.map { Saksrolle(it) }
+        val roller = forespurteRoller.map { Saksrolle(it) }
         validerMinstÉnKjentRolle(roller)
         validerÉnRollePerPerson(roller, grunnlag)
     }
@@ -45,21 +54,13 @@ class BidragssakValidator {
         }
     }
 
-    private fun loggHvisEierenhetOppretterSakUtenBarn(opprettSakRequest: OpprettSakRequest) {
-        val erEierenhet = opprettSakRequest.arbeidsfordeling == Arbeidsfordeling.EIERENHET
-        val harBarn = opprettSakRequest.roller.any { it.type == Rolletype.BARN }
-        if (erEierenhet && !harBarn) {
-            secureLogger.info {
-                "Oppretter sak uten barn. Request: " +
-                    "${commonObjectmapper.writerWithDefaultPrettyPrinter().writeValueAsString(opprettSakRequest)}"
-            }
-        }
-    }
-
     private fun validerRolle(rolle: RolleDto, grunnlag: Valideringsgrunnlag) {
         rolle.fødselsnummer?.let { fnr ->
             require(fnr.verdi.isNotBlank()) { "Fødselsnummer kan ikke være tom streng." }
         }
+        require(rolle.reellMottaker?.ident?.verdi?.isNotBlank() ?: true) { "Reell mottaker må ha en ident." }
+        require(!rolle.erVerge() || rolle.harRM()) { "Verge krever reell mottaker." }
+        require(!rolle.erVerge() || rolle.rmSamhandlerId() == null) { "Verge må være en person." }
 
         require(rolle.type != Rolletype.REELMOTTAKER) {
             "Reell mottaker (RM) kan kun registreres på barn (BA)."

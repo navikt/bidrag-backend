@@ -71,7 +71,7 @@ internal class RolleServiceTest {
 
         val result = rolleService.oppdaterRoller(bidragssak, rolleDtoer, fødselsdatoer)
         result shouldHaveSize 3
-        result.first { it.fødselsnummer == fødselsnummerBarn1 }.mottagerErVerge shouldBe true
+        result.first { it.fødselsnummer == fødselsnummerBarn1 }.mottagerErVerge shouldBe false // verge uten reell mottaker lagres ikke
         result.first { it.fødselsnummer == fødselsnummerBarn1 }.rolleType shouldBe Rolletype.BARN
         result.first { it.fødselsnummer == fødselsnummerBp }.rolleType shouldBe Rolletype.BIDRAGSPLIKTIG
         result.first { it.fødselsnummer == fødselsnummerBarn2 }.rolleType shouldBe Rolletype.BARN
@@ -362,5 +362,23 @@ internal class RolleServiceTest {
 
         resultat.fødselsnummer shouldBe Personident(fødselsnummerBarn2)
         resultat.reellMottaker?.ident shouldBe ReellMottaker(fødselsnummerBp)
+    }
+
+    @Test
+    fun `beholder samhandler i reellMottaker uten type når reellMottager er en person`() {
+        every { identConsumer.hentGjeldendeIdent(fødselsnummerBarn1) } returns fødselsnummerBarn1
+        every { identConsumer.hentGjeldendeIdent(fødselsnummerRm) } returns fødselsnummerRm
+        val samhandler = ReellMottaker("85000000083")
+        val forespørsel = RolleDto(
+            type = Rolletype.BARN,
+            fødselsnummer = Personident(fødselsnummerBarn1),
+            reellMottaker = ReellMottakerDto(ident = samhandler, verge = false),
+            reellMottager = ReellMottaker(fødselsnummerRm),
+        )
+
+        val resultat = rolleService.brukGjeldendeIdent(setOf(forespørsel)).single()
+
+        resultat.reellMottaker?.ident shouldBe samhandler
+        resultat.reellMottager shouldBe ReellMottaker(fødselsnummerRm)
     }
 }

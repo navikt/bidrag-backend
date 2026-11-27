@@ -1,7 +1,9 @@
 package no.nav.bidrag.sak.service
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldNotContain
 import io.mockk.CapturingSlot
 import io.mockk.every
 import io.mockk.mockk
@@ -11,8 +13,10 @@ import io.mockk.slot
 import io.mockk.unmockkObject
 import io.mockk.unmockkStatic
 import io.mockk.verify
+import io.mockk.verifyOrder
 import no.nav.bidrag.commons.security.utils.TokenUtils
 import no.nav.bidrag.commons.service.AppContext
+import no.nav.bidrag.commons.unleash.UnleashFeaturesProvider
 import no.nav.bidrag.commons.util.IdentConsumer
 import no.nav.bidrag.domene.enums.behandling.HendelseType
 import no.nav.bidrag.domene.enums.behandling.SøknadGruppeKombinasjon
@@ -27,6 +31,7 @@ import no.nav.bidrag.domene.land.Landkode
 import no.nav.bidrag.domene.organisasjon.Enhetsnummer
 import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.generer.testdata.person.genererPersonident
+import no.nav.bidrag.sak.config.UnleashFeatures
 import no.nav.bidrag.sak.domain.Bidragssak
 import no.nav.bidrag.sak.domain.Hendelse
 import no.nav.bidrag.sak.domain.Søknad
@@ -34,6 +39,7 @@ import no.nav.bidrag.sak.domain.Søknadslinje
 import no.nav.bidrag.sak.domain.Tilgang
 import no.nav.bidrag.sak.dto.NySakCommandDto
 import no.nav.bidrag.sak.integration.BidragBBMConsumer
+import no.nav.bidrag.sak.mapper.BidragssakMapper.toBidragssak
 import no.nav.bidrag.sak.repository.BidragssakRepository
 import no.nav.bidrag.sak.repository.HendelseRepository
 import no.nav.bidrag.sak.repository.RolleRepository
@@ -53,6 +59,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.data.repository.findByIdOrNull
+import org.springframework.http.HttpStatus
+import org.springframework.web.client.HttpClientErrorException
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -89,6 +97,8 @@ internal class BidragSakServiceTest {
         every { rolleService.brukGjeldendeIdent(any()) } answers { firstArg() }
         every { identConsumer.hentPersonInformasjon(any()) } returns null
         every { identConsumer.hentGjeldendeIdent(any()) } answers { firstArg() }
+        every { arbeidsfordelingService.hentEnhetForNySak(any(), any(), any(), any()) } returns
+            no.nav.bidrag.transport.organisasjon.EnhetDto(Enhetsnummer("1701"))
         mockkObject(AppContext)
         every { AppContext.getBean(IdentConsumer::class.java) } returns identConsumer
 
@@ -108,20 +118,67 @@ internal class BidragSakServiceTest {
                 bidragssakValidator = bidragssakValidator,
                 bbmConsumer = bbmConsumerMock,
             )
+        mockkObject(UnleashFeaturesProvider)
+        settArbeidsfordelingVedRolleendring(true)
+    }
+
+    private fun settArbeidsfordelingVedRolleendring(på: Boolean) {
+        every {
+            UnleashFeaturesProvider.isEnabled(feature = eq(UnleashFeatures.ARBEIDSFORDELING_VED_ROLLEENDRING.featureName), defaultValue = any())
+        } returns på
     }
 
     @AfterEach
     fun tearDown() {
         unmockkObject(AppContext)
+        unmockkObject(UnleashFeaturesProvider)
     }
 
     @Nested
     inner class OpprettSak {
         @Test
+        fun `returnerer eksisterende sak uten å kreve ny arbeidsfordeling`() {
+            val request = OpprettSakRequest(
+                roller = setOf(
+                    RolleDto(genererPersonident(), Rolletype.BIDRAGSMOTTAKER),
+                    RolleDto(genererPersonident(), Rolletype.BIDRAGSPLIKTIG),
+                ),
+            )
+            val eksisterendeSak = request.toBidragssak(Saksnummer("2600000"), emptyMap(), Enhetsnummer("4865"))
+            every { bidragssakRepositoryMock.findByRoller(any()) } returns listOf(eksisterendeSak)
+            every { tilgangClientMock.harTilgangSaksnummer(Saksnummer(eksisterendeSak.saksnummer)) } returns true
+            every { arbeidsfordelingService.hentEnhetForNySak(any(), any(), any(), any()) } throws IllegalStateException("Norg er utilgjengelig")
+
+            val svar = bidragSakService.opprettSak(request)
+
+            svar.saksnummer shouldBe Saksnummer(eksisterendeSak.saksnummer)
+            svar.eierfogd shouldBe Enhetsnummer("4865")
+            verify(exactly = 0) { bidragssakRepositoryMock.save(any()) }
+        }
+
+        @Test
+        fun `avviser eksisterende sak uten sakstilgang uten å vise eierfogd`() {
+            val request = OpprettSakRequest(
+                roller = setOf(
+                    RolleDto(genererPersonident(), Rolletype.BIDRAGSMOTTAKER),
+                    RolleDto(genererPersonident(), Rolletype.BIDRAGSPLIKTIG),
+                ),
+            )
+            val eksisterendeSak = request.toBidragssak(Saksnummer("2600000"), emptyMap(), Enhetsnummer("2103"))
+            every { bidragssakRepositoryMock.findByRoller(any()) } returns listOf(eksisterendeSak)
+            every { tilgangClientMock.harTilgangSaksnummer(Saksnummer(eksisterendeSak.saksnummer)) } returns false
+
+            val feil = shouldThrow<HttpClientErrorException> { bidragSakService.opprettSak(request) }
+
+            feil.statusCode shouldBe HttpStatus.FORBIDDEN
+            feil.message shouldNotContain "2103"
+            verify(exactly = 0) { bidragssakRepositoryMock.save(any()) }
+        }
+
+        @Test
         fun `skal opprette sak med gyldig landkode om request kommer med det`() {
             val opprettSakRequest =
                 OpprettSakRequest(
-                    eierfogd = Enhetsnummer("1701"),
                     land = Landkode("NOR"),
                     roller =
                     setOf(
@@ -136,6 +193,25 @@ internal class BidragSakServiceTest {
         }
 
         @Test
+        fun `skal overføre til skjermet enhet ved behov før saken lagres`() {
+            val opprettSakRequest =
+                OpprettSakRequest(
+                    roller =
+                    setOf(
+                        RolleDto(Personident(FnrGenerator.generer()), Rolletype.BIDRAGSMOTTAKER),
+                        RolleDto(Personident(FnrGenerator.generer()), Rolletype.BIDRAGSPLIKTIG),
+                    ),
+                )
+
+            bidragSakService.opprettSak(opprettSakRequest)
+
+            verifyOrder {
+                arbeidsfordelingService.hentEnhetForNySak(any(), any(), any(), any())
+                bidragssakRepositoryMock.save(any())
+            }
+        }
+
+        @Test
         fun `skal opprette sak med roller og tilgang basert på verdier fra request`() {
             every { rollehistorikkService.oppdaterRollehistorikk(any(), any(), any()) } answers {
                 val bidragssak = thirdArg<Bidragssak>()
@@ -144,10 +220,7 @@ internal class BidragSakServiceTest {
 
             val opprettSakRequest =
                 OpprettSakRequest(
-                    eierfogd = Enhetsnummer("1701"),
                     kategori = Sakskategori.NASJONAL,
-                    ansatt = true,
-                    inhabilitet = false,
                     levdeAdskilt = true,
                     konvensjon = Konvensjon.US,
                     konvensjonsdato = LocalDate.now(),
@@ -168,10 +241,10 @@ internal class BidragSakServiceTest {
 
             bidragSakService.opprettSak(opprettSakRequest)
 
-            saveSakSlot.captured.eierfogd shouldBe opprettSakRequest.eierfogd.verdi
+            saveSakSlot.captured.eierfogd shouldBe "1701"
             saveSakSlot.captured.kategori shouldBe opprettSakRequest.kategori
-            saveSakSlot.captured.ansatt shouldBe opprettSakRequest.ansatt
-            saveSakSlot.captured.inhabilitet shouldBe opprettSakRequest.inhabilitet
+            saveSakSlot.captured.ansatt shouldBe false // ansatt fra klienten ignoreres
+            saveSakSlot.captured.inhabilitet shouldBe false
             saveSakSlot.captured.levdeAdskilt shouldBe opprettSakRequest.levdeAdskilt
             saveSakSlot.captured.konvensjon shouldBe opprettSakRequest.konvensjon
             saveSakSlot.captured.konvensjonsdato shouldBe opprettSakRequest.konvensjonsdato
@@ -226,6 +299,7 @@ internal class BidragSakServiceTest {
 
         @BeforeEach
         fun stubSakFinnes() {
+            every { tilgangClientMock.harTilgangSaksnummer(Saksnummer(saksnr)) } returns true
             // Sørg for at findByIdOrThrow (top-level ext) finner noe via findByIdOrNull
             every { bidragssakRepositoryMock.findByIdOrNull(saksnr) } returns
                 Bidragssak(
@@ -270,6 +344,24 @@ internal class BidragSakServiceTest {
             verify(exactly = 1) { rolleService.oppdaterRoller(any(), req.roller, any()) }
             // hendelse sendt
             verify(exactly = 1) { hendelseService.opprettKafkaHendelse(any(), any()) }
+            verifyOrder {
+                rolleService.oppdaterRoller(any(), req.roller, any())
+                arbeidsfordelingService.utførArbeidsfordeling(any())
+                bidragssakRepositoryMock.save(any())
+            }
+        }
+
+        @Test
+        fun `kjører ikke arbeidsfordeling ved rolleendring når toggelen er av, men oppdaterer ansatt`() {
+            settArbeidsfordelingVedRolleendring(false)
+            val req = OppdaterRollerISakRequest(saksnummer = Saksnummer(saksnr), roller = setOf(baMedFnr(barnUnder18)))
+            every { rolleService.oppdaterRoller(any(), req.roller, any()) } answers { firstArg<Bidragssak>().roller }
+            every { rolleService.oppdaterRollerMedReelleMottager(any(), any()) } answers { firstArg() }
+
+            bidragSakService.oppdaterRollerISak(req)
+
+            verify(exactly = 0) { arbeidsfordelingService.utførArbeidsfordeling(any()) }
+            verify(exactly = 1) { arbeidsfordelingService.oppdaterAnsatt(any()) }
         }
 
         @Test

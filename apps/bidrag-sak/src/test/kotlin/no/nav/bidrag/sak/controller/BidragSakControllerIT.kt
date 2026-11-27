@@ -111,7 +111,6 @@ internal class BidragSakControllerIT : SpringTestRunner() {
                 bidragssakService
                     .opprettSak(
                         OpprettSakRequest(
-                            Enhetsnummer("1701"),
                             roller =
                             setOf(
                                 RolleDto(fnrBM, Rolletype.BIDRAGSMOTTAKER),
@@ -170,7 +169,6 @@ internal class BidragSakControllerIT : SpringTestRunner() {
                 bidragssakService
                     .opprettSak(
                         OpprettSakRequest(
-                            Enhetsnummer("1701"),
                             roller =
                             setOf(
                                 RolleDto(Personident(fnrBM), Rolletype.BIDRAGSMOTTAKER),
@@ -191,8 +189,6 @@ internal class BidragSakControllerIT : SpringTestRunner() {
                     OppdaterSakRequest(
                         saksnummer = saksnummer,
                         status = Bidragssakstatus.AK,
-                        ansatt = true,
-                        inhabilitet = true,
                         levdeAdskilt = true,
                         sanertDato = LocalDate.now(),
                         arbeidsfordeling = Arbeidsfordeling.BARNEBORTFØRING,
@@ -208,8 +204,8 @@ internal class BidragSakControllerIT : SpringTestRunner() {
 
             val oppdatertSak = bidragssakRepository.findByIdOrThrow(saksnummer.verdi)
             oppdatertSak.status shouldBe Bidragssakstatus.AK
-            oppdatertSak.ansatt shouldBe true
-            oppdatertSak.inhabilitet shouldBe true
+            oppdatertSak.ansatt shouldBe false
+            oppdatertSak.inhabilitet shouldBe false
             oppdatertSak.levdeAdskilt shouldBe true
             oppdatertSak.sanertDato shouldBe LocalDate.now()
             oppdatertSak.arbeidsfordeling shouldBe Arbeidsfordeling.BARNEBORTFØRING
@@ -435,10 +431,7 @@ internal class BidragSakControllerIT : SpringTestRunner() {
             val bp = Personident(FnrGenerator.generer(1985, 4, 17))
             val opprettSakRequest =
                 OpprettSakRequest(
-                    eierfogd = Enhetsnummer("0"),
                     kategori = Sakskategori.NASJONAL,
-                    ansatt = true,
-                    inhabilitet = true,
                     levdeAdskilt = true,
                     konvensjon = Konvensjon.INGEN,
                     konvensjonsdato = LocalDate.of(2024, 10, 31),
@@ -483,7 +476,6 @@ internal class BidragSakControllerIT : SpringTestRunner() {
                     localhost("sak"),
                     initHttpEntity(
                         OpprettSakRequest(
-                            eierfogd = Enhetsnummer("1701"),
                             kategori = Sakskategori.NASJONAL,
                             konvensjon = Konvensjon.NI,
                             roller =
@@ -525,7 +517,6 @@ internal class BidragSakControllerIT : SpringTestRunner() {
                     localhost("sak"),
                     initHttpEntity(
                         OpprettSakRequest(
-                            eierfogd = Enhetsnummer("1701"),
                             kategori = Sakskategori.NASJONAL,
                             konvensjon = Konvensjon.NI,
                             roller =

@@ -15,7 +15,6 @@ import no.nav.bidrag.domene.enums.sak.Sakskategori
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.ident.ReellMottaker
 import no.nav.bidrag.domene.land.Landkode
-import no.nav.bidrag.domene.organisasjon.Enhetsnummer
 import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.generer.testdata.person.genererPersonident
 import no.nav.bidrag.sak.SpringTestRunner
@@ -91,7 +90,6 @@ internal class BidragSakServiceIntegrationIT : SpringTestRunner() {
                 bidragssakService
                     .opprettSak(
                         OpprettSakRequest(
-                            Enhetsnummer("1701"),
                             roller =
                             setOf(
                                 RolleDto(fnrBM, Rolletype.BIDRAGSMOTTAKER),
@@ -108,7 +106,6 @@ internal class BidragSakServiceIntegrationIT : SpringTestRunner() {
                 bidragssakService
                     .opprettSak(
                         OpprettSakRequest(
-                            Enhetsnummer("1701"),
                             roller =
                             setOf(
                                 RolleDto(fnrBM2, Rolletype.BIDRAGSMOTTAKER),
@@ -127,8 +124,6 @@ internal class BidragSakServiceIntegrationIT : SpringTestRunner() {
                 OppdaterSakRequest(
                     saksnummer = saksnummer,
                     status = Bidragssakstatus.AK,
-                    ansatt = true,
-                    inhabilitet = true,
                     levdeAdskilt = true,
                     sanertDato = LocalDate.now(),
                     arbeidsfordeling = Arbeidsfordeling.BARNEBORTFØRING,
@@ -142,8 +137,8 @@ internal class BidragSakServiceIntegrationIT : SpringTestRunner() {
 
             val oppdatertSak = bidragssakRepository.findByIdOrThrow(saksnummer.verdi)
             oppdatertSak.status shouldBe Bidragssakstatus.AK
-            oppdatertSak.ansatt shouldBe true
-            oppdatertSak.inhabilitet shouldBe true
+            oppdatertSak.ansatt shouldBe false
+            oppdatertSak.inhabilitet shouldBe false
             oppdatertSak.levdeAdskilt shouldBe true
             oppdatertSak.sanertDato shouldBe LocalDate.now()
             oppdatertSak.arbeidsfordeling shouldBe Arbeidsfordeling.BARNEBORTFØRING
@@ -420,7 +415,6 @@ internal class BidragSakServiceIntegrationIT : SpringTestRunner() {
             val opprettSak =
                 bidragssakService.opprettSak(
                     OpprettSakRequest(
-                        eierfogd = Enhetsnummer("1701"),
                         kategori = Sakskategori.NASJONAL,
                         konvensjon = Konvensjon.NI,
                         roller =
