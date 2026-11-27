@@ -18,6 +18,8 @@ import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.Grunnlag
 import no.nav.bidrag.behandling.database.datamodell.Person
 import no.nav.bidrag.behandling.database.datamodell.Underholdskostnad
+import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
+import no.nav.bidrag.behandling.database.datamodell.json.Omgjøringsdetaljer
 import no.nav.bidrag.behandling.database.datamodell.grunnlagsinnhentingFeiletMap
 import no.nav.bidrag.behandling.database.datamodell.konvertereData
 import no.nav.bidrag.behandling.database.repository.BehandlingRepository
@@ -65,6 +67,7 @@ import no.nav.bidrag.domene.enums.grunnlag.HentGrunnlagFeiltype
 import no.nav.bidrag.domene.enums.person.Familierelasjon
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
+import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.transport.behandling.belopshistorikk.request.HentStønadHistoriskRequest
 import no.nav.bidrag.transport.behandling.belopshistorikk.response.StønadDto
@@ -602,7 +605,6 @@ class GrunnlagMockService {
     @Test
     fun `skal ikke lagre beløpshistorikk grunnlag hvis ingen endring`() {
         val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG)
-        val søknadsbarn = behandling.søknadsbarn.first()
         mockGrunnlagrespons(
             opprettHentGrunnlagDto(),
             opprettHentGrunnlagDto(),
@@ -685,7 +687,6 @@ class GrunnlagMockService {
     @Test
     fun `skal lagre beløpshistorikk grunnlag hvis bidrag og grunnlag endret`() {
         val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG)
-        val søknadsbarn = behandling.søknadsbarn.first()
         mockGrunnlagrespons(
             opprettHentGrunnlagDto(),
             opprettHentGrunnlagDto(),
@@ -793,7 +794,7 @@ class GrunnlagMockService {
             shouldNotBeNull()
             konvertereData<StønadDto>().shouldNotBeNull()
             gjelder shouldBe søknadsbarn.ident
-            rolle shouldBe behandling.søknadsbarn.first()!!
+            rolle shouldBe behandling.søknadsbarn.first()
             erBearbeidet shouldBe false
             aktiv.shouldNotBeNull()
         }
@@ -854,7 +855,7 @@ class GrunnlagMockService {
             shouldNotBeNull()
             konvertereData<StønadDto>().shouldNotBeNull()
             gjelder shouldBe søknadsbarn.ident
-            rolle shouldBe behandling.søknadsbarn.first()!!
+            rolle shouldBe behandling.søknadsbarn.first()
             erBearbeidet shouldBe false
             aktiv.shouldNotBeNull()
         }
@@ -862,7 +863,7 @@ class GrunnlagMockService {
             shouldNotBeNull()
             konvertereData<StønadDto>().shouldNotBeNull()
             gjelder shouldBe søknadsbarn.ident
-            rolle shouldBe behandling.søknadsbarn.first()!!
+            rolle shouldBe behandling.søknadsbarn.first()
             erBearbeidet shouldBe false
             aktiv.shouldNotBeNull()
         }
@@ -880,9 +881,86 @@ class GrunnlagMockService {
     }
 
     @Test
+    fun `skal hente beløpshistorikk for 18-årsbarn ved klage på bidrag`() {
+        val behandling =
+            opprettGyldigBehandlingForBeregningOgVedtak(
+                generateId = true,
+                vedtakstype = Vedtakstype.KLAGE,
+                typeBehandling = TypeBehandling.BIDRAG,
+                andreBarn = listOf(testdataBarn2),
+            )
+        behandling.stonadstype = Stønadstype.BIDRAG
+        behandling.forholdsmessigFordeling = ForholdsmessigFordeling(null, true)
+        val bidragBarn = behandling.søknadsbarn.first { it.ident == testdataBarn1.ident }
+        val bidrag18ÅrBarn = behandling.søknadsbarn.first { it.ident == testdataBarn2.ident }
+        bidragBarn.stønadstype = Stønadstype.BIDRAG
+        bidrag18ÅrBarn.stønadstype = Stønadstype.BIDRAG18AAR
+        val minsteVedtakstidspunkt = LocalDateTime.parse("2025-01-10T12:00:00")
+        behandling.omgjøringsdetaljer =
+            Omgjøringsdetaljer(
+                omgjortVedtakstidspunktListe = mutableSetOf(minsteVedtakstidspunkt),
+            )
+
+        val eksisterendeHistorikk =
+            listOf(
+                opprettStønadPeriodeDto(
+                    ÅrMånedsperiode(LocalDate.parse("2023-01-01"), null),
+                    beløp = BigDecimal("1000"),
+                ),
+            )
+        behandling.leggTilGrunnlagBeløpshistorikk(
+            Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG_18_ÅR,
+            bidrag18ÅrBarn,
+            eksisterendeHistorikk,
+        )
+        val hentetHistorikk =
+            opprettStønadDto(
+                stønadstype = Stønadstype.BIDRAG18AAR,
+                periodeListe =
+                    listOf(
+                        opprettStønadPeriodeDto(
+                            ÅrMånedsperiode(LocalDate.parse("2024-01-01"), null),
+                            beløp = BigDecimal("2000"),
+                        ),
+                    ),
+            )
+        every {
+            bidragStønadConsumer.hentHistoriskeStønader(
+                match { it.type == Stønadstype.BIDRAG18AAR && it.kravhaver.verdi == bidrag18ÅrBarn.ident },
+            )
+        } returns hentetHistorikk
+
+        val feilrapporteringer = grunnlagService.lagreBeløpshistorikkFraOpprinneligVedtakstidspunktGrunnlag(behandling)
+
+        val forespørsler = mutableListOf<HentStønadHistoriskRequest>()
+        verify(atLeast = 1, atMost = 2) { bidragStønadConsumer.hentHistoriskeStønader(capture(forespørsler)) }
+        val historikkGrunnlag = behandling.grunnlag.filter {
+            it.type == Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG_18_ÅR && it.gjelder == bidrag18ÅrBarn.ident
+        }
+        assertSoftly {
+            feilrapporteringer shouldBe emptyMap()
+            forespørsler.filter { it.type == Stønadstype.BIDRAG18AAR } shouldHaveSize 1
+            historikkGrunnlag.filter { !it.grunnlagFraVedtakSomSkalOmgjøres } shouldHaveSize 1
+            historikkGrunnlag.filter { it.grunnlagFraVedtakSomSkalOmgjøres } shouldHaveSize 1
+        }
+        val forespørsel18År = forespørsler.single { it.type == Stønadstype.BIDRAG18AAR }
+        forespørsel18År.sak.verdi shouldBe behandling.saksnummer
+        forespørsel18År.skyldner.verdi shouldBe behandling.bidragspliktig!!.ident
+        forespørsel18År.kravhaver.verdi shouldBe bidrag18ÅrBarn.ident
+        forespørsel18År.gyldigTidspunkt shouldBe minsteVedtakstidspunkt.minusMinutes(1)
+        forespørsler.filter { it.type == Stønadstype.BIDRAG18AAR } shouldHaveSize 1
+        forespørsler.none {
+            it.type == Stønadstype.BIDRAG18AAR && it.kravhaver.verdi == bidragBarn.ident
+        } shouldBe true
+
+        val lagretHistorikk = historikkGrunnlag.single { it.grunnlagFraVedtakSomSkalOmgjøres }
+        lagretHistorikk.rolle shouldBe bidrag18ÅrBarn
+        lagretHistorikk.konvertereData<StønadDto>() shouldBe hentetHistorikk
+    }
+
+    @Test
     fun `skal lagre feilrapport hvis henting av beløpshistorikk feiler`() {
         val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG)
-        val søknadsbarn = behandling.søknadsbarn.first()
         mockGrunnlagrespons(
             opprettHentGrunnlagDto(),
             opprettHentGrunnlagDto(),
@@ -958,7 +1036,7 @@ class GrunnlagMockService {
             shouldNotBeNull()
             konvertereData<StønadDto>().shouldNotBeNull()
             gjelder shouldBe søknadsbarn.ident
-            rolle shouldBe behandling.søknadsbarn.first()!!
+            rolle shouldBe behandling.søknadsbarn.first()
             erBearbeidet shouldBe false
             aktiv.shouldNotBeNull()
         }
@@ -966,7 +1044,7 @@ class GrunnlagMockService {
             shouldNotBeNull()
             konvertereData<StønadDto>().shouldNotBeNull()
             gjelder shouldBe søknadsbarn.ident
-            rolle shouldBe behandling.søknadsbarn.first()!!
+            rolle shouldBe behandling.søknadsbarn.first()
             erBearbeidet shouldBe false
             aktiv.shouldNotBeNull()
         }
@@ -992,7 +1070,7 @@ class GrunnlagMockService {
                 grunnlagConsumer.henteGrunnlag(
                     match {
                         it.any { request ->
-                            request.personId == testdataBM?.ident!!
+                            request.personId == testdataBM.ident
                         }
                     },
                     any(),
@@ -1008,7 +1086,7 @@ class GrunnlagMockService {
                 grunnlagConsumer.henteGrunnlag(
                     match {
                         it.any { request ->
-                            request.personId == testdataBP.ident!!
+                            request.personId == testdataBP.ident
                         }
                     },
                     any(),
