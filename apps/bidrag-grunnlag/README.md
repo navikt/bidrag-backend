@@ -94,10 +94,18 @@ mvn -pl apps/bidrag-grunnlag -am -Dtest=ValutakursgrunnlagMigrationTest -Dsurefi
 ```
 
 ## Testing i Swagger
-Applikasjonen testes enklest i Swagger (for generering av gyldig token, se over):
+Åpne Swagger i Nais:
 ```
 https://bidrag-grunnlag.intern.dev.nav.no/swagger-ui/index.html
 ```
+
+Nais-sidecaren logger deg automatisk inn med Entra ID (`trygdeetaten.no` i dev og
+`nav.no` i prod). Sidecaren videresender brukerens egne token til applikasjonen, slik
+at kall fra Swagger blir utført som den innloggede brukeren. Tjenester kan fortsatt
+kalle endepunktene med egne Entra ID-tokens.
+
+Manuell innlogging kan startes på
+`https://bidrag-grunnlag.intern.dev.nav.no/oauth2/login?redirect=/swagger-ui/index.html`.
 
 ### Kjøre lokalt mot nais med lokal database
 ##### Start opp database
