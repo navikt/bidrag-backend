@@ -360,7 +360,7 @@ class GrunnlagService(
         }
     }
 
-    fun aktiverGrunnlagHvisIngenEndringerMåAksepteres(behandling: Behandling) {
+    private fun aktiverGrunnlagHvisIngenEndringerMåAksepteres(behandling: Behandling) {
         aktivereGrunnlagForBoforholdAndreVoksneIHusstandenHvisIngenEndringerMåAksepteres(behandling)
         aktiverGrunnlagForBoforholdHvisIngenEndringerMåAksepteres(behandling)
         aktiverGrunnlagForBoforholdTilBMSøknadsbarnHvisIngenEndringerMåAksepteres(behandling)
@@ -2059,8 +2059,8 @@ class GrunnlagService(
         }
     }
 
+    @Transactional
     fun aktiverGrunnlagForBoforholdTilBMSøknadsbarnHvisIngenEndringerMåAksepteres(behandling: Behandling) {
-        // FIXME - @Transactional self-invocation (in effect, a method within the target object calling another method of the target object) does not lead to an actual transaction at runtime
         opprettManglendeBearbeidetBoforholdBMSøknadsbarn(behandling)
         val ikkeAktiveGrunnlag = behandling.grunnlag.hentAlleIkkeAktiv()
         val aktiveGrunnlag = behandling.grunnlag.hentSisteAktiv()
@@ -2109,8 +2109,7 @@ class GrunnlagService(
     /**
      * Feilhåndtering hvor den oppretter bearbeidet boforhold for BM hvis det mangler.
      */
-    @Transactional
-    fun opprettManglendeBearbeidetBoforholdBMSøknadsbarn(behandling: Behandling) {
+    private fun opprettManglendeBearbeidetBoforholdBMSøknadsbarn(behandling: Behandling) {
         if (!behandling.erBidrag()) return
 
         val grunnlagsdatatype = Grunnlagsdatatype.BOFORHOLD_BM_SØKNADSBARN

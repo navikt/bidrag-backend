@@ -108,7 +108,9 @@ import org.junit.jupiter.api.Test
 import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
+import org.springframework.transaction.PlatformTransactionManager
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.support.TransactionTemplate
 import org.springframework.web.client.HttpClientErrorException
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -146,6 +148,9 @@ class GrunnlagServiceTest : TestContainerRunner() {
     @Autowired
     lateinit var entityManager: EntityManager
 
+    @Autowired
+    lateinit var transactionManager: PlatformTransactionManager
+
     val totaltAntallGrunnlag = 26
 
     @BeforeEach
@@ -154,7 +159,7 @@ class GrunnlagServiceTest : TestContainerRunner() {
             grunnlagRepository.deleteAll()
             behandlingRepository.deleteAll()
             sivilstandRepository.deleteAll()
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             // Ignore
         }
 
@@ -657,7 +662,7 @@ class GrunnlagServiceTest : TestContainerRunner() {
                 behandling.søknadsbarn[0].knyttTilBidragsmottaker(behandling.saksnummer, bidragsmottaker1.ident!!)
                 behandling.søknadsbarn[1].knyttTilBidragsmottaker("987654321", bidragsmottaker2.ident!!)
 
-                val rådataAktivert = LocalDateTime.now()
+                val rådataAktivert = LocalDateTime.of(2020, 1, 1, 0, 0)
                 listOf(bidragsmottaker1, bidragsmottaker2).forEach { bidragsmottaker ->
                     behandling.grunnlag.add(
                         Grunnlag(
@@ -685,7 +690,7 @@ class GrunnlagServiceTest : TestContainerRunner() {
                     )
                 behandling.grunnlag.add(feilLagretGrunnlag)
 
-                grunnlagService.opprettManglendeBearbeidetBoforholdBMSøknadsbarn(behandling)
+                grunnlagService.aktiverGrunnlagForBoforholdTilBMSøknadsbarnHvisIngenEndringerMåAksepteres(behandling)
 
                 behandling.grunnlag.contains(feilLagretGrunnlag) shouldBe false
                 val bearbeidetGrunnlag =
@@ -698,8 +703,83 @@ class GrunnlagServiceTest : TestContainerRunner() {
                     )
                 bearbeidetGrunnlag.all { it.aktiv != null } shouldBe true
 
-                grunnlagService.opprettManglendeBearbeidetBoforholdBMSøknadsbarn(behandling)
+                grunnlagService.aktiverGrunnlagForBoforholdTilBMSøknadsbarnHvisIngenEndringerMåAksepteres(behandling)
                 behandling.grunnlag.filter { it.type == Grunnlagsdatatype.BOFORHOLD_BM_SØKNADSBARN && it.erBearbeidet } shouldHaveSize 2
+            }
+
+            @Test
+            open fun `skal rulle tilbake opprettelse og aktivering av boforholdsgrunnlag samlet`() {
+                val behandling = oppretteTestbehandling(false, false, false, behandlingstype = TypeBehandling.BIDRAG)
+                val bidragsmottaker = behandling.bidragsmottaker!!
+                val rådataAktivert = LocalDateTime.now()
+                behandling.grunnlag.add(
+                    Grunnlag(
+                        behandling = behandling,
+                        type = Grunnlagsdatatype.BOFORHOLD_BM_SØKNADSBARN,
+                        data = "[]",
+                        innhentet = rådataAktivert,
+                        aktiv = rådataAktivert,
+                        rolle = bidragsmottaker,
+                    ),
+                )
+                testdataManager.lagreBehandlingNewTransaction(behandling)
+                val behandlingId = behandling.id!!
+                val transactionTemplate = TransactionTemplate(transactionManager)
+
+                data class GrunnlagTilstand(
+                    val id: Long?,
+                    val erBearbeidet: Boolean,
+                    val data: String,
+                    val innhentet: LocalDateTime,
+                    val aktiv: LocalDateTime?,
+                    val rolleId: Long?,
+                    val gjelder: String?,
+                    val gjelderBarnRolleId: Long?,
+                )
+
+                fun hentTilstand() =
+                    transactionTemplate.execute {
+                        behandlingRepository.findBehandlingById(behandlingId).get().grunnlag
+                            .filter { it.type == Grunnlagsdatatype.BOFORHOLD_BM_SØKNADSBARN }
+                            .map {
+                                GrunnlagTilstand(
+                                    id = it.id,
+                                    erBearbeidet = it.erBearbeidet,
+                                    data = it.data,
+                                    innhentet = it.innhentet,
+                                    aktiv = it.aktiv,
+                                    rolleId = it.rolle.id,
+                                    gjelder = it.gjelder,
+                                    gjelderBarnRolleId = it.gjelderBarnRolle?.id,
+                                )
+                            }.sortedBy { it.id }
+                    }
+
+                val førtilstand = hentTilstand()
+                førtilstand.shouldNotBeEmpty()
+                førtilstand.all { !it.erBearbeidet && it.aktiv != null } shouldBe true
+
+                class ForventetRollback : RuntimeException()
+
+                assertFailsWith<ForventetRollback> {
+                    transactionTemplate.executeWithoutResult {
+                        val ferskBehandling = behandlingRepository.findBehandlingById(behandlingId).get()
+                        grunnlagService.aktiverGrunnlagForBoforholdTilBMSøknadsbarnHvisIngenEndringerMåAksepteres(
+                            ferskBehandling,
+                        )
+
+                        val bearbeidetGrunnlag =
+                            ferskBehandling.grunnlag.filter {
+                                it.type == Grunnlagsdatatype.BOFORHOLD_BM_SØKNADSBARN && it.erBearbeidet
+                            }
+                        bearbeidetGrunnlag.shouldNotBeEmpty()
+                        bearbeidetGrunnlag.all { it.aktiv != null } shouldBe true
+                        entityManager.flush()
+                        throw ForventetRollback()
+                    }
+                }
+
+                hentTilstand() shouldBe førtilstand
             }
 
             @Test
