@@ -19,6 +19,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.retry.annotation.Backoff
 import org.springframework.retry.annotation.Retryable
 import org.springframework.stereotype.Service
+import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.HttpStatusCodeException
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.util.UriComponentsBuilder
@@ -113,4 +114,20 @@ class BidragOrganisasjonConsumer(
 
         return response
     }
+
+    fun hentSaksbehandlerEnheter(saksbehandlerIdent: String): List<EnhetDto> {
+        val uri = baseUri.pathSegment("saksbehandler", "enhetsliste", saksbehandlerIdent).build().toUri()
+        return try {
+            getForEntity<List<EnhetDto>>(uri) ?: emptyList()
+        } catch (_: HttpClientErrorException.NotFound) {
+            emptyList()
+        } catch (e: Exception) {
+            // URI-en og feilmeldingen inneholder NAV-identen. Logg den bare til secure log,
+            // og kast en ny exception uten cause så identen ikke havner i vanlig logg.
+            secureLogger.error(e) { "Feil ved henting av enheter for saksbehandler $saksbehandlerIdent" }
+            throw HentSaksbehandlerEnheterFeiletException()
+        }
+    }
 }
+
+class HentSaksbehandlerEnheterFeiletException : RuntimeException("Feil ved henting av enheter for saksbehandler")

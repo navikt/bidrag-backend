@@ -20,6 +20,7 @@ TOPIC_JOURNALPOST: bidrag-journalpost
 TOPIC_OPPGAVE_ENDRET: oppgave-endret
 TOPIC_OPPGAVE_OPPRETTET: oppgave-opprettet
 TOPIC_BEHANDLING_HENDELSE: bidrag.behandling-lokal
+TOPIC_SAK: bidrag.sak-lokal
 TOPIC_VEDTAK_HENDELSE: bidrag.vedtak-lokal
 NAV_TRUSTSTORE_PATH: test
 NAV_TRUSTSTORE_PASSWORD: test

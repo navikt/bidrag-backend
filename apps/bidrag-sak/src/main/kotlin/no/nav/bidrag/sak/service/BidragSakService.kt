@@ -19,16 +19,15 @@ import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.sak.config.UnleashFeatures
 import no.nav.bidrag.sak.domain.Bidragssak
 import no.nav.bidrag.sak.domain.Tilgang
-import no.nav.bidrag.sak.dto.FogdhistorikkDto
 import no.nav.bidrag.sak.dto.NySakCommandDto
 import no.nav.bidrag.sak.dto.NySakResponseDto
 import no.nav.bidrag.sak.dto.SakshendelseDto
-import no.nav.bidrag.sak.dto.tilFogdhistorikkDto
 import no.nav.bidrag.sak.integration.BidragBBMConsumer
 import no.nav.bidrag.sak.integration.FinnSammenknytningerHovedsøknadResponse
 import no.nav.bidrag.sak.mapper.BidragssakMapper.toBidragssak
 import no.nav.bidrag.sak.mapper.BidragssakMapper.toOpprettSakResponse
 import no.nav.bidrag.sak.mapper.RolleMapper.toRolleDto
+import no.nav.bidrag.sak.mapper.tilFogdhistorikkDto
 import no.nav.bidrag.sak.repository.BidragssakRepository
 import no.nav.bidrag.sak.repository.HendelseRepository
 import no.nav.bidrag.sak.repository.RolleRepository
@@ -46,6 +45,7 @@ import no.nav.bidrag.sak.validering.BidragssakValidator.Saksrolle
 import no.nav.bidrag.transport.sak.BidragssakDto
 import no.nav.bidrag.transport.sak.BidragssakPipDto
 import no.nav.bidrag.transport.sak.FjernMidlertidligTilgangRequest
+import no.nav.bidrag.transport.sak.FogdhistorikkDto
 import no.nav.bidrag.transport.sak.OppdaterRollerISakRequest
 import no.nav.bidrag.transport.sak.OppdaterSakRequest
 import no.nav.bidrag.transport.sak.OppdaterSakResponse

@@ -26,6 +26,7 @@ env:
 
   TOPIC_VEDTAK_HENDELSE: bidrag.vedtak
   TOPIC_BEHANDLING_HENDELSE: bidrag.behandling
+  TOPIC_SAK: bidrag.sak
   TOPIC_OPPGAVE_HENDELSE: oppgavehandtering.oppgavehendelse-v1
   TOPIC_DOKUMENT: bidrag.dokument
   TOPIC_JOURNALPOST: bidrag.journalpost

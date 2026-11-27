@@ -19,6 +19,9 @@ spec:
     retentionHours: 720
   acl:
     - team: bidrag
+      application: bidrag-arbeidsflyt
+      access: read
+    - team: bidrag
       application: bidrag-cli
       access: read
     - team: bidrag
