@@ -2,6 +2,7 @@ package no.nav.bidrag.behandling.service
 
 import com.ninjasquad.springmockk.MockkBean
 import io.kotest.assertions.assertSoftly
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.comparables.shouldBeLessThan
@@ -13,6 +14,7 @@ import io.mockk.every
 import io.mockk.mockkClass
 import io.mockk.mockkConstructor
 import io.mockk.mockkObject
+import io.mockk.unmockkConstructor
 import io.mockk.unmockkObject
 import io.mockk.verify
 import no.nav.bidrag.behandling.config.UnleashFeatures
@@ -58,6 +60,7 @@ import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.OmgjøringOrkestrat
 import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.OmgjøringOrkestratorV2
 import no.nav.bidrag.beregn.forskudd.BeregnForskuddApi
 import no.nav.bidrag.beregn.særbidrag.BeregnSærbidragApi
+import no.nav.bidrag.commons.service.sjablon.SjablonProvider
 import no.nav.bidrag.commons.unleash.UnleashFeaturesProvider
 import no.nav.bidrag.commons.web.mock.stubKodeverkProvider
 import no.nav.bidrag.commons.web.mock.stubSjablonProvider
@@ -81,6 +84,7 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.BostatusPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningUtgift
 import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
 import no.nav.bidrag.transport.behandling.felles.grunnlag.NotatGrunnlag.NotatType
+import no.nav.bidrag.transport.behandling.felles.grunnlag.SærbidragRimeligÅInnvilgeGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.bidragsmottaker
 import no.nav.bidrag.transport.behandling.felles.grunnlag.bidragspliktig
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerBasertPåEgenReferanse
@@ -97,6 +101,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.http.HttpStatus
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.web.client.HttpClientErrorException
+import org.springframework.web.client.HttpServerErrorException
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.YearMonth
@@ -691,6 +696,7 @@ class BeregningServiceTest {
             exception.message shouldContain FEILMELDING_SELVFORSØRGET_BARN_SÆRBIDRAG
 
             disableUnleashFeature(UnleashFeatures.SPERR_SELVFORSØRGET_BARN_SÆRBIDRAG)
+            behandling.utgift!!.rimeligÅInnvilgeBegrunnelse = "Ikke rimelig å innvilge"
             val resultat =
                 BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator)
                     .beregneSærbidrag(1)
@@ -711,6 +717,7 @@ class BeregningServiceTest {
         try {
             disableUnleashFeature(UnleashFeatures.SPERR_SELVFORSØRGET_BARN_SÆRBIDRAG)
             val behandling = opprettSærbidragBehandlingMedInntektBarn(BigDecimal(1000000))
+            behandling.utgift!!.rimeligÅInnvilgeBegrunnelse = "Ikke rimelig å innvilge"
             every { behandlingService.hentBehandlingById(any()) } returns behandling
 
             val resultat =
@@ -718,6 +725,7 @@ class BeregningServiceTest {
                     .beregneSærbidrag(1)
 
             resultat.beregnetSærbidragPeriodeListe.first().resultat.resultatkode shouldBe Resultatkode.BARNET_ER_SELVFORSØRGET
+            resultat.grunnlagListe.filter { it.type == Grunnlagstype.SÆRBIDRAG_RIMELIG_Å_INNVILGE } shouldHaveSize 0
         } finally {
             unmockkObject(UnleashFeaturesProvider)
         }
@@ -738,6 +746,126 @@ class BeregningServiceTest {
             resultat.beregnetSærbidragPeriodeListe.first().resultat.resultatkode shouldBe Resultatkode.SÆRBIDRAG_INNVILGET
         } finally {
             unmockkObject(UnleashFeaturesProvider)
+        }
+    }
+
+    @Test
+    fun `skal feile beregning av særbidrag når barnet er selvforsørget og begrunnelse for rimelig å innvilge mangler`() {
+        mockkObject(UnleashFeaturesProvider)
+        try {
+            disableUnleashFeature(UnleashFeatures.SPERR_SELVFORSØRGET_BARN_SÆRBIDRAG)
+            val behandling = opprettSærbidragBehandlingMedInntektBarn(BigDecimal(1000000))
+            every { behandlingService.hentBehandlingById(any()) } returns behandling
+
+            val exception =
+                assertThrows<HttpClientErrorException> {
+                    BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator)
+                        .beregneSærbidrag(1)
+                }
+            exception.statusCode shouldBe HttpStatus.BAD_REQUEST
+            exception.responseBodyAsString shouldContain "\"særbidragRimeligÅInnvilge\":{\"manglerBegrunnelse\":true}"
+        } finally {
+            unmockkObject(UnleashFeaturesProvider)
+        }
+    }
+
+    @Test
+    fun `skal feile beregning av særbidrag når begrunnelse for rimelig å innvilge bare har tomme linjer`() {
+        mockkObject(UnleashFeaturesProvider)
+        try {
+            disableUnleashFeature(UnleashFeatures.SPERR_SELVFORSØRGET_BARN_SÆRBIDRAG)
+            val behandling = opprettSærbidragBehandlingMedInntektBarn(BigDecimal(1000000))
+            behandling.utgift!!.rimeligÅInnvilge = true
+            behandling.utgift!!.rimeligÅInnvilgeBegrunnelse = "<p><br/></p><p>&nbsp;</p>"
+            every { behandlingService.hentBehandlingById(any()) } returns behandling
+
+            val exception =
+                assertThrows<HttpClientErrorException> {
+                    BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator)
+                        .beregneSærbidrag(1)
+                }
+            exception.statusCode shouldBe HttpStatus.BAD_REQUEST
+            exception.responseBodyAsString shouldContain "\"særbidragRimeligÅInnvilge\":{\"manglerBegrunnelse\":true}"
+        } finally {
+            unmockkObject(UnleashFeaturesProvider)
+        }
+    }
+
+    @Test
+    fun `skal beregne BPs andel når barnet er selvforsørget og saksbehandler har vurdert at det er rimelig å innvilge`() {
+        mockkObject(UnleashFeaturesProvider)
+        try {
+            enableUnleashFeature(UnleashFeatures.SPERR_SELVFORSØRGET_BARN_SÆRBIDRAG)
+            val behandling = opprettSærbidragBehandlingMedInntektBarn(BigDecimal(1000000))
+            behandling.utgift!!.rimeligÅInnvilge = true
+            behandling.utgift!!.rimeligÅInnvilgeBegrunnelse = "Særlige forhold gjør det rimelig å innvilge"
+            every { behandlingService.hentBehandlingById(any()) } returns behandling
+
+            val resultat =
+                BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator)
+                    .beregneSærbidrag(1)
+
+            resultat.beregnetSærbidragPeriodeListe.first().resultat.resultatkode shouldBe Resultatkode.SÆRBIDRAG_INNVILGET
+            val grunnlagRimeligÅInnvilge = resultat.grunnlagListe.filter { it.type == Grunnlagstype.SÆRBIDRAG_RIMELIG_Å_INNVILGE }
+            grunnlagRimeligÅInnvilge shouldHaveSize 1
+            grunnlagRimeligÅInnvilge.first().innholdTilObjekt<SærbidragRimeligÅInnvilgeGrunnlag>().begrunnelse shouldBe
+                "Særlige forhold gjør det rimelig å innvilge"
+        } finally {
+            unmockkObject(UnleashFeaturesProvider)
+        }
+    }
+
+    @Test
+    fun `skal finne ut om barnets inntekt er over grensen for selvforsørget uten å hente løpende bidrag`() {
+        val beregningService =
+            BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator)
+
+        val behandlingOverGrensen = opprettSærbidragBehandlingMedInntektBarn(BigDecimal(1000000))
+        behandlingOverGrensen.utgift!!.rimeligÅInnvilge = true
+        behandlingOverGrensen.utgift!!.rimeligÅInnvilgeBegrunnelse = "Rimelig"
+        beregningService.barnetsInntektErOverGrensenForSelvforsørget(behandlingOverGrensen) shouldBe true
+
+        beregningService.barnetsInntektErOverGrensenForSelvforsørget(opprettSærbidragBehandlingMedInntektBarn(BigDecimal(10000))) shouldBe false
+
+        verify(exactly = 0) { evnevurderingService.hentLøpendeBidragForBehandling(any()) }
+    }
+
+    @Test
+    fun `skal gi at barnets inntekt ikke er over grensen for selvforsørget når grunnlaget ikke er komplett`() {
+        val beregningService =
+            BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator)
+        val behandling = opprettSærbidragBehandlingMedInntektBarn(BigDecimal(1000000))
+        behandling.inntekter.clear()
+
+        beregningService.barnetsInntektErOverGrensenForSelvforsørget(behandling) shouldBe false
+    }
+
+    @Test
+    fun `skal gi teknisk feil når sjablontallene ikke kan hentes for å beregne om barnets inntekt er over grensen`() {
+        val beregningService =
+            BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator)
+        val behandling = opprettSærbidragBehandlingMedInntektBarn(BigDecimal(1000000))
+        every { SjablonProvider.hentSjablontall() } returns emptyList()
+
+        shouldThrow<HttpServerErrorException> {
+            beregningService.barnetsInntektErOverGrensenForSelvforsørget(behandling)
+        }
+    }
+
+    @Test
+    fun `skal kaste teknisk feil videre når det ikke kan beregnes om barnets inntekt er over grensen for selvforsørget`() {
+        mockkConstructor(BeregnSærbidragApi::class)
+        every { BeregnSærbidragApi().barnetsInntektErOverGrensenForSelvforsørget(any(), any()) } throws
+            HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE)
+        val beregningService =
+            BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator)
+        val behandling = opprettSærbidragBehandlingMedInntektBarn(BigDecimal(1000000))
+        try {
+            shouldThrow<HttpServerErrorException> {
+                beregningService.barnetsInntektErOverGrensenForSelvforsørget(behandling)
+            }
+        } finally {
+            unmockkConstructor(BeregnSærbidragApi::class)
         }
     }
 

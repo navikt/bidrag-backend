@@ -9,6 +9,7 @@ import no.nav.bidrag.behandling.dto.v2.behandling.GebyrDto
 import no.nav.bidrag.behandling.dto.v2.behandling.GebyrDtoV2
 import no.nav.bidrag.behandling.dto.v2.behandling.GebyrDtoV3
 import no.nav.bidrag.behandling.dto.v2.behandling.OppdatereBegrunnelse
+import no.nav.bidrag.behandling.dto.v2.behandling.SærbidragRimeligÅInnvilgeDto
 import no.nav.bidrag.behandling.dto.v2.validering.InntektValideringsfeilDto
 import no.nav.bidrag.behandling.dto.v2.validering.InntektValideringsfeilV2Dto
 import no.nav.bidrag.domene.enums.diverse.InntektBeløpstype
@@ -230,6 +231,8 @@ data class OppdatereInntektResponse(
     @get:Schema(description = "Oppdatert begrunnelse")
     val begrunnelse: String? = null,
     val valideringsfeil: InntektValideringsfeilDto,
+    @get:Schema(description = "Særbidrag: om barnets inntekt er over grensen for selvforsørget, og saksbehandlers vurdering")
+    val særbidragRimeligÅInnvilge: SærbidragRimeligÅInnvilgeDto? = null,
 ) {
     @Deprecated("Erstattes av begrunnelse")
     @get:Schema(description = "Oppdatert begrunnelse", deprecated = true)

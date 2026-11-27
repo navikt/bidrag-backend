@@ -12,7 +12,8 @@ const val FEILMELDING_SELVFORSØRGET_BARN_SÆRBIDRAG =
 /**
  * Midlertidig sperre: Løsningen for særbidrag når barnet er selvforsørget (§ 5) er ikke i henhold til lovverket. Inntil det er
  * avklart feiler beregningen når BPs andel er beregnet med selvforsørget barn, slik at det ikke kan fattes vedtak. Dette gjelder også
- * når resultatet er [no.nav.bidrag.domene.enums.beregning.Resultatkode.SÆRBIDRAG_IKKE_FULL_BIDRAGSEVNE]. Sperren styres av
+ * når resultatet er [no.nav.bidrag.domene.enums.beregning.Resultatkode.SÆRBIDRAG_IKKE_FULL_BIDRAGSEVNE]. Sperren gjelder ikke når
+ * saksbehandler har vurdert at det er rimelig å innvilge særbidrag, fordi BPs andel da er beregnet på vanlig måte. Sperren styres av
  * Unleash-toggle [UnleashFeatures.SPERR_SELVFORSØRGET_BARN_SÆRBIDRAG].
  */
 fun sperrSærbidragNårBarnetErSelvforsørgetIfUnleashToggleIsOn(resultat: BeregnetSærbidragResultat) {

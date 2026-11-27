@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.PastOrPresent
 import jakarta.validation.constraints.PositiveOrZero
 import no.nav.bidrag.behandling.dto.v2.behandling.OppdatereBegrunnelse
+import no.nav.bidrag.behandling.dto.v2.behandling.SærbidragRimeligÅInnvilgeDto
 import no.nav.bidrag.behandling.dto.v2.behandling.TotalBeregningUtgifterDto
 import no.nav.bidrag.behandling.dto.v2.behandling.UtgiftBeregningDto
 import no.nav.bidrag.behandling.dto.v2.behandling.UtgiftspostDto
@@ -22,6 +23,11 @@ data class OppdatereUtgiftRequest(
     val avslag: Resultatkode? = null,
     val beløpDirekteBetaltAvBp: BigDecimal? = null,
     val maksGodkjentBeløp: MaksGodkjentBeløpDto? = null,
+    @get:Schema(
+        description =
+        "Oppdater saksbehandlers vurdering av om det er rimelig å innvilge særbidrag når barnet er selvforsørget",
+    )
+    val rimeligÅInnvilge: RimeligÅInnvilgeDto? = null,
     @get:Schema(
         description =
         "Legg til eller endre en utgift. Utgift kan ikke endres eller oppdateres hvis avslag er satt",
@@ -47,6 +53,12 @@ data class MaksGodkjentBeløpDto(
     val begrunnelse: String? = null,
 )
 
+data class RimeligÅInnvilgeDto(
+    @get:Schema(description = "Om det er rimelig å innvilge særbidrag selv om barnets inntekt er lik eller høyere enn 100 ganger forskuddssats")
+    val rimeligÅInnvilge: Boolean = false,
+    val begrunnelse: String? = null,
+)
+
 data class OppdatereUtgiftResponse(
     @get:Schema(description = "Utgiftspost som ble oppdatert")
     val oppdatertUtgiftspost: UtgiftspostDto? = null,
@@ -55,6 +67,12 @@ data class OppdatereUtgiftResponse(
     val begrunnelse: String? = null,
     val beregning: UtgiftBeregningDto? = null,
     val maksGodkjentBeløp: MaksGodkjentBeløpDto? = null,
+    @get:Schema(
+        description =
+        "Vurderingen av om det er rimelig å innvilge særbidrag, og om barnets inntekt er over grensen etter oppdateringen. " +
+            "Avslag og utgifter påvirker om grensen beregnes",
+    )
+    val rimeligÅInnvilge: SærbidragRimeligÅInnvilgeDto? = null,
     val avslag: Resultatkode? = null,
     val valideringsfeil: UtgiftValideringsfeilDto?,
     val totalBeregning: List<TotalBeregningUtgifterDto> = emptyList(),

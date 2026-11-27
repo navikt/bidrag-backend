@@ -25,6 +25,7 @@ import no.nav.bidrag.behandling.dto.v2.samvær.SamværDtoV2
 import no.nav.bidrag.behandling.dto.v2.underhold.StønadTilBarnetilsynDto
 import no.nav.bidrag.behandling.dto.v2.underhold.UnderholdDto
 import no.nav.bidrag.behandling.dto.v2.utgift.MaksGodkjentBeløpDto
+import no.nav.bidrag.behandling.dto.v2.validering.SærbidragRimeligÅInnvilgeValideringsfeil
 import no.nav.bidrag.behandling.dto.v2.validering.UtgiftValideringsfeilDto
 import no.nav.bidrag.behandling.transformers.PeriodeDeserialiserer
 import no.nav.bidrag.behandling.transformers.fødselsdatoSorteringJustering
@@ -240,12 +241,25 @@ data class PersoninfoDto(
     val sortKey get() = "${ident}_${navn}_$stønadstype"
 }
 
+data class SærbidragRimeligÅInnvilgeDto(
+    @get:Schema(
+        description =
+        "Om barnets inntekt er lik eller høyere enn 100 ganger forskuddssats. " +
+            "Saksbehandler må da vurdere om det er rimelig å innvilge særbidrag",
+    )
+    val barnetsInntektErOverGrensen: Boolean,
+    val rimeligÅInnvilge: Boolean,
+    val begrunnelse: String? = null,
+    val valideringsfeil: SærbidragRimeligÅInnvilgeValideringsfeil? = null,
+)
+
 data class SærbidragUtgifterDto(
     val avslag: Resultatkode? = null,
     val resultatkodeVisningsnavn: String? = null,
     val kategori: SærbidragKategoriDto,
     val beregning: UtgiftBeregningDto? = null,
     val maksGodkjentBeløp: MaksGodkjentBeløpDto? = null,
+    val rimeligÅInnvilge: SærbidragRimeligÅInnvilgeDto? = null,
     @get:Schema(description = "Saksbehandlers begrunnelse", deprecated = false)
     val begrunnelse: BegrunnelseDto,
     val begrunnelseFraOpprinneligVedtak: BegrunnelseDto? = null,

@@ -45,6 +45,7 @@ class BPsAndelSærbidragPeriode(private val bPsAndelSærbidragBeregning: BPsAnde
         grunnlagTilBeregning.inntektSBPeriodeListe = periodeGrunnlag.inntektSBPeriodeListe.map { it }
         grunnlagTilBeregning.utgiftPeriodeListe = periodeGrunnlag.utgiftPeriodeListe.map { it }
         grunnlagTilBeregning.sjablonPeriodeListe = periodeGrunnlag.sjablonPeriodeListe.map { it }
+        grunnlagTilBeregning.rimeligÅInnvilgeReferanse = periodeGrunnlag.rimeligÅInnvilgeReferanse
     }
 
     // Lager bruddperioder ved å løpe gjennom alle periodelistene
@@ -103,6 +104,7 @@ class BPsAndelSærbidragPeriode(private val bPsAndelSærbidragBeregning: BPsAnde
                     inntektBM = inntektBM,
                     inntektSB = inntektSB,
                     sjablonListe = sjablonliste,
+                    rimeligÅInnvilgeReferanse = grunnlag.rimeligÅInnvilgeReferanse,
                 )
 
             grunnlag.periodeResultatListe.add(

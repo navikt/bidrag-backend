@@ -36,10 +36,14 @@ import no.nav.bidrag.domene.enums.særbidrag.Særbidragskategori
 import no.nav.bidrag.domene.enums.særbidrag.Utgiftstype
 import no.nav.bidrag.domene.enums.vedtak.Engangsbeløptype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
+import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
+import no.nav.bidrag.transport.behandling.felles.grunnlag.SærbidragRimeligÅInnvilgeGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SøknadGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.innholdTilObjekt
 import no.nav.bidrag.transport.behandling.inntekt.response.SummertÅrsinntekt
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import java.math.BigDecimal
 import java.math.MathContext
 import java.time.LocalDate
@@ -111,6 +115,46 @@ class VedtakTilBehandlingSærbidragTest : CommonVedtakTilBehandlingTest() {
                 maksGodkjentBeløpTaMed shouldBe true
                 utgiftsposter shouldHaveSize 3
             }
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = [true, false])
+    fun `Skal konvertere vurdering av om det er rimelig å innvilge særbidrag fra vedtak til behandling`(rimeligÅInnvilge: Boolean) {
+        val vedtakDto = lagVedtaksdata("vedtak_response-særbidrag")
+        every { vedtakConsumer.hentVedtak(any()) } returns
+            vedtakDto.copy(
+                grunnlagListe =
+                vedtakDto.grunnlagListe +
+                    GrunnlagDto(
+                        referanse = "særbidrag_rimelig_å_innvilge",
+                        type = Grunnlagstype.SÆRBIDRAG_RIMELIG_Å_INNVILGE,
+                        innhold =
+                        POJONode(
+                            SærbidragRimeligÅInnvilgeGrunnlag(rimeligÅInnvilge = rimeligÅInnvilge, begrunnelse = "<p>Særlige forhold</p>"),
+                        ),
+                    ),
+            )
+        every { behandlingService.hentBehandlingById(1) } returns (oppretteBehandling())
+
+        val behandling = vedtakService.konverterVedtakTilBehandlingForLesemodus(1)!!
+
+        assertSoftly(behandling.utgift!!) {
+            this.rimeligÅInnvilge shouldBe rimeligÅInnvilge
+            rimeligÅInnvilgeBegrunnelse shouldBe "<p>Særlige forhold</p>"
+        }
+    }
+
+    @Test
+    fun `Skal konvertere vedtak til behandling for lesemodus for SÆRBIDRAG uten vurdering av om det er rimelig å innvilge`() {
+        every { vedtakConsumer.hentVedtak(any()) } returns lagVedtaksdata("vedtak_response-særbidrag")
+        every { behandlingService.hentBehandlingById(1) } returns (oppretteBehandling())
+
+        val behandling = vedtakService.konverterVedtakTilBehandlingForLesemodus(1)!!
+
+        assertSoftly(behandling.utgift!!) {
+            rimeligÅInnvilge shouldBe false
+            rimeligÅInnvilgeBegrunnelse shouldBe null
         }
     }
 

@@ -18,6 +18,8 @@ data class BeregnBPsAndelSærbidragGrunnlagCore(
     val inntektSBPeriodeListe: List<InntektPeriodeCore>,
     val utgiftPeriodeListe: List<UtgiftPeriodeCore>,
     var sjablonPeriodeListe: List<SjablonPeriodeCore>,
+    // Referanse til grunnlaget der saksbehandler har vurdert at det er rimelig å innvilge særbidrag selv om barnet er selvforsørget
+    val rimeligÅInnvilgeReferanse: String? = null,
 )
 
 data class UtgiftPeriodeCore(val referanse: String, val periode: PeriodeCore, val beløp: BigDecimal)

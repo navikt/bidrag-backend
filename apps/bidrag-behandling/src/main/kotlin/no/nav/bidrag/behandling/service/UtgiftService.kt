@@ -45,6 +45,11 @@ class UtgiftService(
         val utgift = behandling.utgift ?: Utgift(behandling = behandling)
         utgift.beløpDirekteBetaltAvBp = request.beløpDirekteBetaltAvBp ?: utgift.beløpDirekteBetaltAvBp
         utgift.oppdaterMaksGodkjentBeløp(request)
+        request.rimeligÅInnvilge?.let {
+            utgift.rimeligÅInnvilge = it.rimeligÅInnvilge
+            utgift.rimeligÅInnvilgeBegrunnelse = it.begrunnelse
+            behandling.utgift = utgiftRepository.save(utgift)
+        }
         request.henteOppdatereNotat()?.let {
             notatService.oppdatereNotat(
                 behandling,
@@ -53,7 +58,10 @@ class UtgiftService(
                 behandling.bidragsmottaker!!,
             )
         }
-        if (request.oppdatereBegrunnelse == null) {
+        // En forespørsel med begrunnelse eller vurderingen av om det er rimelig å innvilge særbidrag fjerner ikke et avslag som
+        // mangler i forespørselen, men et avslag som er satt i forespørselen, lagres alltid
+        val oppdatererAnnetEnnAvslag = request.oppdatereBegrunnelse != null || request.rimeligÅInnvilge != null
+        if (!oppdatererAnnetEnnAvslag || request.avslag != null) {
             behandling.avslag = request.avslag
             behandling.søknadsbarn.forEach {
                 it.avslag = request.avslag

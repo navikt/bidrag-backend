@@ -88,6 +88,7 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.innholdTilObjektListe
 import no.nav.bidrag.transport.behandling.felles.grunnlag.personIdent
 import no.nav.bidrag.transport.behandling.felles.grunnlag.personObjekt
 import no.nav.bidrag.transport.behandling.felles.grunnlag.stønadstype
+import no.nav.bidrag.transport.behandling.felles.grunnlag.særbidragRimeligÅInnvilge
 import no.nav.bidrag.transport.behandling.felles.grunnlag.særbidragskategori
 import no.nav.bidrag.transport.behandling.felles.grunnlag.utgiftDirekteBetalt
 import no.nav.bidrag.transport.behandling.felles.grunnlag.utgiftMaksGodkjentBeløp
@@ -524,6 +525,8 @@ class VedtakTilBehandlingMapping(
                 maksGodkjentBeløpTaMed = utgiftMaksGodkjentBeløp != null,
                 maksGodkjentBeløp = utgiftMaksGodkjentBeløp?.beløp,
                 maksGodkjentBeløpBegrunnelse = utgiftMaksGodkjentBeløp?.begrunnelse,
+                rimeligÅInnvilge = særbidragRimeligÅInnvilge?.rimeligÅInnvilge ?: false,
+                rimeligÅInnvilgeBegrunnelse = særbidragRimeligÅInnvilge?.begrunnelse,
             )
         utgift.utgiftsposter =
             utgiftsposter

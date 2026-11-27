@@ -7,6 +7,7 @@ import io.kotest.matchers.date.shouldHaveSameDayAs
 import io.kotest.matchers.shouldBe
 import no.nav.bidrag.behandling.database.datamodell.Bostatusperiode
 import no.nav.bidrag.behandling.database.datamodell.Inntekt
+import no.nav.bidrag.behandling.database.datamodell.Utgift
 import no.nav.bidrag.behandling.database.grunnlag.SkattepliktigeInntekter
 import no.nav.bidrag.behandling.dto.v1.behandling.OppdatereVirkningstidspunkt
 import no.nav.bidrag.behandling.dto.v2.behandling.AktivereGrunnlagRequestV2
@@ -14,6 +15,9 @@ import no.nav.bidrag.behandling.dto.v2.behandling.AktivereGrunnlagResponseV2
 import no.nav.bidrag.behandling.dto.v2.behandling.BehandlingDtoV2
 import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
 import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagstype
+import no.nav.bidrag.behandling.dto.v2.utgift.OppdatereUtgiftRequest
+import no.nav.bidrag.behandling.dto.v2.utgift.OppdatereUtgiftResponse
+import no.nav.bidrag.behandling.dto.v2.utgift.RimeligÅInnvilgeDto
 import no.nav.bidrag.behandling.service.opprettHentGrunnlagDto
 import no.nav.bidrag.behandling.service.tilSummerteInntekter
 import no.nav.bidrag.behandling.utils.testdata.opprettInntekt
@@ -22,6 +26,7 @@ import no.nav.bidrag.behandling.utils.testdata.oppretteHusstandsmedlem
 import no.nav.bidrag.behandling.utils.testdata.oppretteHusstandsmedlemMedOffentligePerioder
 import no.nav.bidrag.behandling.utils.testdata.oppretteTestbehandling
 import no.nav.bidrag.behandling.utils.testdata.testdataBarn1
+import no.nav.bidrag.domene.enums.behandling.TypeBehandling
 import no.nav.bidrag.domene.enums.beregning.Resultatkode
 import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
@@ -718,5 +723,30 @@ class OppdatereBehandlingTest : BehandlingControllerTest() {
 
         assertNotNull(oppdatertBehandling)
         oppdatertBehandling.deleted shouldBe false
+    }
+
+    @Test
+    fun `skal returnere vurderingen av om det er rimelig å innvilge særbidrag etter oppdatering av utgift`() {
+        val behandling = oppretteTestbehandling(false, false, true, true, TypeBehandling.SÆRBIDRAG, true)
+        behandling.utgift = Utgift(behandling = behandling)
+        testdataManager.lagreBehandlingNewTransaction(behandling)
+
+        val respons =
+            httpHeaderTestRestTemplate.exchange(
+                "${rootUriV2()}/behandling/${behandling.id}/utgift",
+                HttpMethod.PUT,
+                HttpEntity(
+                    OppdatereUtgiftRequest(
+                        rimeligÅInnvilge = RimeligÅInnvilgeDto(rimeligÅInnvilge = true, begrunnelse = "Særlige forhold"),
+                    ),
+                ),
+                OppdatereUtgiftResponse::class.java,
+            )
+
+        respons.statusCode shouldBe HttpStatus.OK
+        assertSoftly(respons.body!!.rimeligÅInnvilge!!) {
+            rimeligÅInnvilge shouldBe true
+            begrunnelse shouldBe "Særlige forhold"
+        }
     }
 }
