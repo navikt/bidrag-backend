@@ -158,13 +158,6 @@ fun bestemTypeBehandling(
     TypeBehandling.BIDRAG
 }
 
-fun Behandling.tilStønadsid(søknadsbarn: Rolle) = Stønadsid(
-    stonadstype!!,
-    Personident(søknadsbarn.ident!!),
-    Personident(bidragspliktig!!.ident!!),
-    Saksnummer(saksnummer),
-)
-
 fun <T : Comparable<T>> maxOfNullable(vararg values: T?): T? {
     val nonNull = values.filterNotNull()
     return nonNull.maxOrNull()
@@ -178,7 +171,7 @@ fun <T : Comparable<T>> minOfNullable(vararg values: T?): T? {
 fun finnCutoffDatoFom(
     virkningstidspunkt: LocalDate,
     fødselsdato: LocalDate? = null,
-) = if (virkningstidspunkt.isAfter(LocalDate.now()) && fødselsdato != null) {
+): LocalDate = if (virkningstidspunkt.isAfter(LocalDate.now()) && fødselsdato != null) {
     maxOf(virkningstidspunkt.withDayOfMonth(1), fødselsdato)
 } else {
     virkningstidspunkt
@@ -330,28 +323,34 @@ fun Behandling.hentNesteEtterfølgendeVedtak(rolle: Rolle): EtterfølgendeVedtak
 fun Behandling.hentGrunnlagBeløpshistorikkForRolle(
     rolle: Rolle,
     grunnlagFraVedtakSomSkalOmgjøres: Boolean? = null,
-) = if (rolle.stønadstype == Stønadstype.BIDRAG18AAR) {
-    grunnlag.hentSisteGrunnlagSomGjelderRolle(
-        rolle,
-        Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG_18_ÅR,
-        grunnlagFraVedtakSomSkalOmgjøres,
-    )
-} else if (rolle.stønadstype == Stønadstype.BIDRAG) {
-    grunnlag.hentSisteGrunnlagSomGjelderRolle(
-        rolle,
-        Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG,
-        grunnlagFraVedtakSomSkalOmgjøres,
-    )
-} else {
-    grunnlag.hentSisteGrunnlagSomGjelderRolle(
-        rolle,
-        Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG_18_ÅR,
-        grunnlagFraVedtakSomSkalOmgjøres,
-    ) ?: grunnlag.hentSisteGrunnlagSomGjelderRolle(
-        rolle,
-        Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG,
-        grunnlagFraVedtakSomSkalOmgjøres,
-    )
+) = when (rolle.stønadstype) {
+    Stønadstype.BIDRAG18AAR -> {
+        grunnlag.hentSisteGrunnlagSomGjelderRolle(
+            rolle,
+            Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG_18_ÅR,
+            grunnlagFraVedtakSomSkalOmgjøres,
+        )
+    }
+
+    Stønadstype.BIDRAG -> {
+        grunnlag.hentSisteGrunnlagSomGjelderRolle(
+            rolle,
+            Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG,
+            grunnlagFraVedtakSomSkalOmgjøres,
+        )
+    }
+
+    Stønadstype.FORSKUDD, Stønadstype.EKTEFELLEBIDRAG, Stønadstype.MOTREGNING, Stønadstype.OPPFOSTRINGSBIDRAG, null -> {
+        grunnlag.hentSisteGrunnlagSomGjelderRolle(
+            rolle,
+            Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG_18_ÅR,
+            grunnlagFraVedtakSomSkalOmgjøres,
+        ) ?: grunnlag.hentSisteGrunnlagSomGjelderRolle(
+            rolle,
+            Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG,
+            grunnlagFraVedtakSomSkalOmgjøres,
+        )
+    }
 }
 
 fun Behandling.finnSistePeriodeLøpendeForskuddPeriodeInnenforSøktFomDato(rolle: Rolle): StønadPeriodeDto? {
@@ -382,12 +381,6 @@ fun Behandling.finnPeriodeLøpendePeriodeInnenforSøktFomDato(rolle: Rolle): År
             ?.til,
     )
 }
-
-fun Rolle.løperPeriodeEtterBeregnTil(periode: ÅrMånedsperiode) = periode.til == null ||
-    periode.til!! > YearMonth.from(behandling.eldsteSøktFomDato)
-
-fun Rolle.løperPeriodeEtterSøktFomDato(periode: ÅrMånedsperiode) = periode.til == null ||
-    periode.til!! > YearMonth.from(forholdsmessigFordeling?.eldsteSøknad?.søknadFomDato ?: behandling.eldsteSøktFomDato)
 
 fun Behandling.løperPeriodeEtterEldsteVirkningstidspunkt(periode: ÅrMånedsperiode) = periode.til == null || periode.til!! > YearMonth.from(eldsteVirkningstidspunkt)
 
@@ -446,11 +439,7 @@ fun Rolle.løperBidragFørOpphør() = opphørsdato != null && finnLøperBidragFr
     opphørsdato!! > behandling.eldsteSøktFomDato &&
     opphørsdato!!.toYearMonth() > finnLøperBidragFra()!!
 
-fun Rolle.erRevurderingsbarnUtenLøpendeBidrag() = finnLøperBidragFra() == null || finnLøperBidragTil() != null || finnLøperBidragTil()!! < behandling.eldsteSøktFomDato.toYearMonth()
-
 fun Rolle.finnLøperBidragFra() = behandling.finnPeriodeLøperBidrag(this)?.fom
-
-fun Rolle.finnLøperBidragTil() = behandling.finnPeriodeLøperBidrag(this)?.til
 
 fun Rolle.finnEksisterendeVedtakMedOpphørForRolle(): EksisterendeOpphørsvedtakDto? = behandling.finnEksisterendeVedtakMedOpphør(this)
 

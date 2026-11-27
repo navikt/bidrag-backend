@@ -17,6 +17,7 @@ import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordelingRolle
 import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
+import no.nav.bidrag.behandling.dto.v2.behandling.LesemodusVedtak
 import no.nav.bidrag.behandling.service.BarnebidragGrunnlagInnhenting
 import no.nav.bidrag.behandling.service.BeregningEvnevurderingService
 import no.nav.bidrag.behandling.service.PersonService
@@ -49,6 +50,7 @@ import no.nav.bidrag.domene.enums.privatavtale.PrivatAvtaleType
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.sjablon.SjablonTallNavn
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
+import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.transport.behandling.vedtak.response.VedtakPeriodeDto
 import no.nav.bidrag.transport.felles.toYearMonth
@@ -419,6 +421,30 @@ class VedtakGrunnlagMapperTest {
             )
 
             behandling.barn2().finnBeregnFra() shouldBe YearMonth.of(2025, 1)
+        }
+
+        @Test
+        fun `skal bruke beløpshistorikk i lesemodus for klage når bidrag løper før barnets virkningstidspunkt i FF`() {
+            val behandling = opprettFFBehandlingDerBarn2HarSenereVirkningstidspunkt()
+            behandling.vedtakstype = Vedtakstype.KLAGE
+            behandling.lesemodusVedtak =
+                LesemodusVedtak(
+                    erAvvist = false,
+                    inneholderBareRevurderingsbarn = false,
+                    opprettetAvBatch = false,
+                    erOrkestrertVedtak = false,
+                    fattetTidspunkt = LocalDate.of(2025, 6, 1).atStartOfDay(),
+                )
+            behandling.leggTilGrunnlagBeløpshistorikk(
+                Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG,
+                behandling.barn2(),
+                listOf(opprettStønadPeriodeDto(ÅrMånedsperiode(YearMonth.of(2025, 1), null))),
+                nesteIndeksår = 2026,
+            )
+
+            val beregnFra = behandling.barn2().finnBeregnFra()
+
+            beregnFra shouldBe YearMonth.of(2025, 1)
         }
 
         @Test

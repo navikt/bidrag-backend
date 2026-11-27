@@ -252,9 +252,17 @@ fun Rolle.finnBeregnFra(): YearMonth = when (rolletype) {
         val beregnFra = virkningstidspunkt?.toYearMonth() ?: behandling.virkningstidspunktEllerSøktFomDato.toYearMonth()
         if (behandling.erIForholdsmessigFordeling) {
             val eldsteVirkningstidspunkt = behandling.eldsteVirkningstidspunkt.toYearMonth()
+            val brukHistorikkFraVedtakSomSkalOmgjøres = when {
+                // I lesemodus er vedtakets historikk mappet som ordinært grunnlag.
+                behandling.lesemodusVedtak != null -> false
+
+                behandling.erKlageEllerOmgjøring -> true
+
+                else -> false
+            }
 
             val bidragsperioder = behandling
-                .hentGrunnlagBeløpshistorikkForRolle(this, behandling.erKlageEllerOmgjøring)
+                .hentGrunnlagBeløpshistorikkForRolle(this, brukHistorikkFraVedtakSomSkalOmgjøres)
                 ?.konverterTilStønadDto()
                 ?.periodeListe
                 ?.filter { it.beløp != null }

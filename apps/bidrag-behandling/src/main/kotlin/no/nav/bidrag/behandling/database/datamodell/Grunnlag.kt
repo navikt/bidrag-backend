@@ -42,6 +42,16 @@ open class Grunnlag(
     @Enumerated(EnumType.STRING)
     open val type: Grunnlagsdatatype,
     open val erBearbeidet: Boolean = false,
+    /**
+     * Marker om grunnlaget beskriver situasjonen ved vedtaket vi nå
+     * behandler en klage eller omgjøring av.
+     *
+     * `true` brukes for grunnlag fra dette vedtaket og beløpshistorikk
+     * hentet slik den var før vedtaket ble fattet.
+     *
+     * `false` brukes for behandlingens øvrige grunnlag.
+     * Ved ren visning av et vedtak (lesemodus) brukes også `false`.
+     */
     open val grunnlagFraVedtakSomSkalOmgjøres: Boolean = false,
     @Column(name = "data", columnDefinition = "jsonb")
     @ColumnTransformer(write = "?::jsonb")
@@ -73,7 +83,7 @@ open class Grunnlag(
     override fun toString(): String = try {
         "Grunnlag($type, erBearbeidet=$erBearbeidet, rolle=${rolle.rolletype}, ident=${rolle.ident}, aktiv=$aktiv, " +
             "id=$id, behandling=${behandling.id}, innhentet=$innhentet, gjelder=$gjelder)"
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         "Grunnlag($type, erBearbeidet=$erBearbeidet, aktiv=$aktiv, id=$id, innhentet=$innhentet, gjelder=$gjelder)"
     }
 
