@@ -23,6 +23,9 @@ spec:
         extra:
           - "NAVident"
           - "azp_name"
+    sidecar:
+      enabled: true
+      autoLogin: true
   accessPolicy:
     inbound:
       rules:
