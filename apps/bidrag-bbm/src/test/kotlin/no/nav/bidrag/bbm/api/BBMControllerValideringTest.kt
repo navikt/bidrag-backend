@@ -10,6 +10,8 @@ import no.nav.bidrag.bbm.utils.SAKSNUMMER_1
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.transport.behandling.beregning.felles.BidragBeregningRequestDto
+import no.nav.bidrag.transport.behandling.beregning.felles.HentBeregningForSøknad
+import no.nav.bidrag.transport.behandling.beregning.felles.HentBeregningForSøknaderRequest
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
@@ -131,6 +133,48 @@ class BBMControllerValideringTest : CommonTestRunner() {
         ) {
             statusCode shouldBe HttpStatus.NOT_FOUND
             headers[HttpHeaders.WARNING]?.first() shouldContain "Fant ikke søknad med id 123213213"
+        }
+    }
+
+    @Test
+    fun `Skal feile med BAD_REQUEST hvis søknadlisten er tom ved henting av beregning for søknader`() {
+        assertSoftly(
+            httpHeaderTestRestTemplate.postForEntity(
+                "$rootUri/api/beregning/soknader",
+                HttpEntity(HentBeregningForSøknaderRequest(emptyList())),
+                String::class.java,
+            ),
+        ) {
+            statusCode shouldBe HttpStatus.BAD_REQUEST
+            body shouldContain "Søknadlisten kan ikke være tom"
+        }
+    }
+
+    @Test
+    fun `Skal feile med BAD_REQUEST hvis ugyldig saksnummer ved henting av beregning for søknader`() {
+        val httpEntity =
+            HttpEntity(
+                HentBeregningForSøknaderRequest(
+                    listOf(
+                        HentBeregningForSøknad(
+                            søknadsid = 1,
+                            saksnummer = "123213123213123",
+                            personidentBarn = Personident(PERSONIDENT_BARN_1),
+                            stønadstype = Stønadstype.BIDRAG,
+                        ),
+                    ),
+                ),
+            )
+
+        assertSoftly(
+            httpHeaderTestRestTemplate.postForEntity(
+                "$rootUri/api/beregning/soknader",
+                httpEntity,
+                String::class.java,
+            ),
+        ) {
+            statusCode shouldBe HttpStatus.BAD_REQUEST
+            body shouldContain "Saksnummer må bestå av 7 tegn"
         }
     }
 }

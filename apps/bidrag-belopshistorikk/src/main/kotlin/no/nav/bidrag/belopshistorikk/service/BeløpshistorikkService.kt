@@ -322,6 +322,7 @@ class BeløpshistorikkService(val persistenceService: PersistenceService, privat
                     bidragPeriodeListe.add(
                         BidragPeriode(
                             periode = ÅrMånedsperiode(fom = periode.fom, til = periode.til),
+                            vedtaksid = periode.vedtaksid,
                             løpendeBeløp = periode.beløp ?: BigDecimal.ZERO,
                             valutakode = periode.valutakode ?: "NOK",
                         ),

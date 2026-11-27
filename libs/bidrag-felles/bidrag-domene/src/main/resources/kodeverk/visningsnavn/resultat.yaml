@@ -171,7 +171,8 @@ INNVILGET_VEDTAK:
 
 SKJØNN_UTLANDET:
   intern: "Skjønn utlandet"
-
+UTENLANDSK_AVGJØRELSE:
+  intern: "Utenlandsk avgjørelse"
 LAVERE_ENN_INNTEKTSEVNE_BEGGE_PARTER:
   intern: "Lavere enn inntektsevne begge parter"
 LAVERE_ENN_INNTEKTSEVNE_BIDRAGSPLIKTIG:

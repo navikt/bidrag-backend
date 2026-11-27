@@ -1,8 +1,15 @@
 package no.nav.bidrag.automatiskjobb.service
 
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import io.mockk.every
 import io.mockk.impl.annotations.InjectMockKs
 import io.mockk.impl.annotations.RelaxedMockK
@@ -31,6 +38,7 @@ import no.nav.bidrag.transport.behandling.vedtak.saksnummer
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.slf4j.LoggerFactory
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -100,6 +108,46 @@ class VedtakServiceTest {
                 ?.til
         barnSlot.captured.forskuddFra shouldBe null
         barnSlot.captured.forskuddTil shouldBe null
+    }
+
+    @Test
+    fun `skal kun logge person og throwable til sikker logg ved feil i personoppslag`() {
+        val kravhaver = Personident(genererFødselsnummer())
+        val hendelse = opprettVedtakHendelse(Stønadstype.BIDRAG, Innkrevingstype.MED_INNKREVING, kravhaver = kravhaver)
+        mocks(hendelse)
+        val feiltekst = "sensitiv feil for person"
+        every { bidragPersonConsumer.hentFødselsdatoForPerson(kravhaver) } throws RuntimeException(feiltekst)
+        val regularAppender = ListAppender<ILoggingEvent>().apply { start() }
+        val secureAppender = ListAppender<ILoggingEvent>().apply { start() }
+        val rootLogger = LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME) as Logger
+        val secureLogger = LoggerFactory.getLogger("secureLogger") as Logger
+        val rootLevel = rootLogger.level
+        val secureLevel = secureLogger.level
+        rootLogger.level = Level.DEBUG
+        secureLogger.level = Level.DEBUG
+        rootLogger.addAppender(regularAppender)
+        secureLogger.addAppender(secureAppender)
+
+        try {
+            shouldThrow<RuntimeException> { vedtakService.behandleVedtak(hendelse) }
+
+            val regularEvents = regularAppender.list.filter {
+                it.loggerName.startsWith("no.nav.bidrag.automatiskjobb")
+            }
+            val regularMessages = regularEvents.joinToString { it.formattedMessage }
+            regularEvents.none { it.throwableProxy != null } shouldBe true
+            regularMessages shouldNotContain kravhaver.verdi
+            regularMessages shouldNotContain feiltekst
+            secureAppender.list.joinToString { it.formattedMessage } shouldContain kravhaver.verdi
+            secureAppender.list.single { it.throwableProxy != null }.throwableProxy?.message shouldBe feiltekst
+        } finally {
+            rootLogger.detachAppender(regularAppender)
+            secureLogger.detachAppender(secureAppender)
+            regularAppender.stop()
+            secureAppender.stop()
+            rootLogger.level = rootLevel
+            secureLogger.level = secureLevel
+        }
     }
 
     @Test

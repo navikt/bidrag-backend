@@ -130,6 +130,24 @@ enum class HendelseType(
     ;
 
     companion object {
+        val vedtakstyper: Set<HendelseType> =
+            setOf(
+                VEDTAK_BARN_OVER_18,
+                VEDTAK_BM,
+                VEDTAK_BP,
+                VEDTAK,
+                VEDTAK_FTK,
+                VEDTAK_FYLKESNEMDA,
+                VEDTAK_FRA_BOST,
+                VEDTAK_KOMMUNE,
+                VEDTAK_MIDLERTIDIG,
+                VEDTAK_UTENLANDSKE_MYNDIGHETER,
+                VEDTAK_VERGE,
+                INNKREVINGSVEDTAK,
+                KLAGEVEDTAK,
+                OMGJØRINGSVEDTAK,
+            )
+
         fun fraKode(kode: String): HendelseType? = try {
             HendelseType.entries.find { it.kode == kode } ?: HendelseType.valueOf(kode)
         } catch (e: Exception) {
