@@ -255,7 +255,9 @@ fun Rolle.finnBeregnFra(): YearMonth = when (rolletype) {
             val brukHistorikkFraVedtakSomSkalOmgjøres = when {
                 // I lesemodus er vedtakets historikk mappet som ordinært grunnlag.
                 behandling.lesemodusVedtak != null -> false
+
                 behandling.erKlageEllerOmgjøring -> true
+
                 else -> false
             }
 

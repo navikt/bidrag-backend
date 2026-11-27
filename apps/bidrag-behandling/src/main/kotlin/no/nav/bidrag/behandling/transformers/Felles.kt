@@ -324,33 +324,34 @@ fun Behandling.hentGrunnlagBeløpshistorikkForRolle(
     rolle: Rolle,
     grunnlagFraVedtakSomSkalOmgjøres: Boolean? = null,
 ) = when (rolle.stønadstype) {
-        Stønadstype.BIDRAG18AAR -> {
-            grunnlag.hentSisteGrunnlagSomGjelderRolle(
-                rolle,
-                Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG_18_ÅR,
-                grunnlagFraVedtakSomSkalOmgjøres,
-            )
-        }
-        Stønadstype.BIDRAG -> {
-            grunnlag.hentSisteGrunnlagSomGjelderRolle(
-                rolle,
-                Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG,
-                grunnlagFraVedtakSomSkalOmgjøres,
-            )
-        }
-
-       Stønadstype.FORSKUDD, Stønadstype.EKTEFELLEBIDRAG, Stønadstype.MOTREGNING, Stønadstype.OPPFOSTRINGSBIDRAG, null -> {
-            grunnlag.hentSisteGrunnlagSomGjelderRolle(
-                rolle,
-                Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG_18_ÅR,
-                grunnlagFraVedtakSomSkalOmgjøres,
-            ) ?: grunnlag.hentSisteGrunnlagSomGjelderRolle(
-                rolle,
-                Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG,
-                grunnlagFraVedtakSomSkalOmgjøres,
-            )
-        }
+    Stønadstype.BIDRAG18AAR -> {
+        grunnlag.hentSisteGrunnlagSomGjelderRolle(
+            rolle,
+            Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG_18_ÅR,
+            grunnlagFraVedtakSomSkalOmgjøres,
+        )
     }
+
+    Stønadstype.BIDRAG -> {
+        grunnlag.hentSisteGrunnlagSomGjelderRolle(
+            rolle,
+            Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG,
+            grunnlagFraVedtakSomSkalOmgjøres,
+        )
+    }
+
+    Stønadstype.FORSKUDD, Stønadstype.EKTEFELLEBIDRAG, Stønadstype.MOTREGNING, Stønadstype.OPPFOSTRINGSBIDRAG, null -> {
+        grunnlag.hentSisteGrunnlagSomGjelderRolle(
+            rolle,
+            Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG_18_ÅR,
+            grunnlagFraVedtakSomSkalOmgjøres,
+        ) ?: grunnlag.hentSisteGrunnlagSomGjelderRolle(
+            rolle,
+            Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG,
+            grunnlagFraVedtakSomSkalOmgjøres,
+        )
+    }
+}
 
 fun Behandling.finnSistePeriodeLøpendeForskuddPeriodeInnenforSøktFomDato(rolle: Rolle): StønadPeriodeDto? {
     val eksisterendeVedtak =

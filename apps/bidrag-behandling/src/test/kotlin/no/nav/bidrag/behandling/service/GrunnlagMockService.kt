@@ -18,9 +18,9 @@ import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.Grunnlag
 import no.nav.bidrag.behandling.database.datamodell.Person
 import no.nav.bidrag.behandling.database.datamodell.Underholdskostnad
+import no.nav.bidrag.behandling.database.datamodell.grunnlagsinnhentingFeiletMap
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
 import no.nav.bidrag.behandling.database.datamodell.json.Omgjøringsdetaljer
-import no.nav.bidrag.behandling.database.datamodell.grunnlagsinnhentingFeiletMap
 import no.nav.bidrag.behandling.database.datamodell.konvertereData
 import no.nav.bidrag.behandling.database.repository.BehandlingRepository
 import no.nav.bidrag.behandling.database.repository.GrunnlagRepository
@@ -917,12 +917,12 @@ class GrunnlagMockService {
             opprettStønadDto(
                 stønadstype = Stønadstype.BIDRAG18AAR,
                 periodeListe =
-                    listOf(
-                        opprettStønadPeriodeDto(
-                            ÅrMånedsperiode(LocalDate.parse("2024-01-01"), null),
-                            beløp = BigDecimal("2000"),
-                        ),
+                listOf(
+                    opprettStønadPeriodeDto(
+                        ÅrMånedsperiode(LocalDate.parse("2024-01-01"), null),
+                        beløp = BigDecimal("2000"),
                     ),
+                ),
             )
         every {
             bidragStønadConsumer.hentHistoriskeStønader(

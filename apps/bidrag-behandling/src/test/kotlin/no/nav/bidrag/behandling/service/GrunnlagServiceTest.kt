@@ -737,23 +737,22 @@ class GrunnlagServiceTest : TestContainerRunner() {
                     val gjelderBarnRolleId: Long?,
                 )
 
-                fun hentTilstand() =
-                    transactionTemplate.execute {
-                        behandlingRepository.findBehandlingById(behandlingId).get().grunnlag
-                            .filter { it.type == Grunnlagsdatatype.BOFORHOLD_BM_SØKNADSBARN }
-                            .map {
-                                GrunnlagTilstand(
-                                    id = it.id,
-                                    erBearbeidet = it.erBearbeidet,
-                                    data = it.data,
-                                    innhentet = it.innhentet,
-                                    aktiv = it.aktiv,
-                                    rolleId = it.rolle.id,
-                                    gjelder = it.gjelder,
-                                    gjelderBarnRolleId = it.gjelderBarnRolle?.id,
-                                )
-                            }.sortedBy { it.id }
-                    }
+                fun hentTilstand() = transactionTemplate.execute {
+                    behandlingRepository.findBehandlingById(behandlingId).get().grunnlag
+                        .filter { it.type == Grunnlagsdatatype.BOFORHOLD_BM_SØKNADSBARN }
+                        .map {
+                            GrunnlagTilstand(
+                                id = it.id,
+                                erBearbeidet = it.erBearbeidet,
+                                data = it.data,
+                                innhentet = it.innhentet,
+                                aktiv = it.aktiv,
+                                rolleId = it.rolle.id,
+                                gjelder = it.gjelder,
+                                gjelderBarnRolleId = it.gjelderBarnRolle?.id,
+                            )
+                        }.sortedBy { it.id }
+                }
 
                 val førtilstand = hentTilstand()
                 førtilstand.shouldNotBeEmpty()
