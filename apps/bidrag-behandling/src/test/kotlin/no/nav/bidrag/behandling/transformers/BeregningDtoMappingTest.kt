@@ -699,7 +699,7 @@ class BeregningDtoMappingTest {
                 sumBidragTilFordeling = 2000,
             )
 
-        val resultat = listOf(september, oktober).finnFørsteSomOverlapper(periodeSeptember)
+        val resultat = listOf(oktober, september).finnFørsteSomOverlapper(periodeSeptember)
 
         resultat shouldBe september
     }

@@ -57,6 +57,13 @@ import kotlin.collections.set
 
 private val log = KotlinLogging.logger {}
 
+val resultatkoderManuellVedtakUtenBeregning = listOf(
+    Resultatkode.INNVILGET_VEDTAK,
+    Resultatkode.PRIVAT_AVTALE,
+    Resultatkode.SKJØNN_UTLANDET,
+    Resultatkode.UTENLANDSK_YTELSE,
+)
+
 @Service
 @Import(Vedtaksfiltrering::class)
 class HentLøpendeBidragService(private val vedtakService: VedtakService, private val bbmConsumer: BeregningBBMConsumer) {
@@ -139,10 +146,6 @@ class HentLøpendeBidragService(private val vedtakService: VedtakService, privat
                     )
                 }
                 .filtrerVedtakMotBeregningsperiode(beregningsperiode)
-                .filter {
-                    val erInnvilgetVedtak = it.stønadsendring.periodeListe.isNotEmpty() && it.stønadsendring.periodeListe.all { Resultatkode.fraKode(it.resultatkode) == Resultatkode.INNVILGET_VEDTAK }
-                    !erInnvilgetVedtak
-                }
 
             val beregningerPerVedtak = manuelleVedtakFiltrertMotBeregningsperiode.hentBeregningerPerVedtak()
             secureLogger.info { "Hentede beregningsdata i manuelle vedtak: $beregningerPerVedtak" }
@@ -166,7 +169,9 @@ class HentLøpendeBidragService(private val vedtakService: VedtakService, privat
             vedtak.vedtaksid to finnAlleBeregningerIBidragVedtak(vedtak)
         }
 
-        return (beregningerFraBidragVedtak + vedtakFraBBM.hentBeregningerFraBBM())
+        val beregningerFraBBM = vedtakFraBBM.hentBeregningerFraBBM()
+
+        return (beregningerFraBidragVedtak + beregningerFraBBM)
             .groupBy(keySelector = { it.first }, valueTransform = { it.second })
             .mapValues { (_, beregningListe) -> beregningListe.flatten().sortedByDescending { it.periode?.fom } }
     }
@@ -201,12 +206,22 @@ class HentLøpendeBidragService(private val vedtakService: VedtakService, privat
         // BBM returnerer ett element per element i forespørselen i samme rekkefølge
         return vedtakMedSøknadsid.zip(respons.søknadListe).mapNotNull { (vedtak, beregningForSøknad) ->
             when {
+                // Hvis hendelse ikke er funnet så er det heller ikke mulig å vite om det er manuell vedtak. Sjekker reskode
                 !beregningForSøknad.hendelseFunnet -> {
-                    log.warn {
-                        "Fant ikke søknad eller vedtakshendelse i BBM for søknad ${beregningForSøknad.søknadsid} " +
-                            "og vedtak ${vedtak.vedtaksid}. Beholder vedtaket"
+                    val erManuellVedtak = vedtak.stønadsendring.periodeListe.all { resultatkoderManuellVedtakUtenBeregning.contains(Resultatkode.fraKode(it.resultatkode)) }
+                    if (erManuellVedtak) {
+                        log.warn {
+                            "Fant ikke søknad eller vedtakshendelse i BBM for søknad ${beregningForSøknad.søknadsid} " +
+                                "og vedtak ${vedtak.vedtaksid}. Vedtak inneholder bare perioder resultat som ikke krever beregning. Hopper over"
+                        }
+                        null
+                    } else {
+                        log.warn {
+                            "Fant ikke søknad eller vedtakshendelse i BBM for søknad ${beregningForSøknad.søknadsid} " +
+                                "og vedtak ${vedtak.vedtaksid}. Beholder vedtaket"
+                        }
+                        vedtak.vedtaksid to beregningForSøknad.beregningerForMottattDato()
                     }
-                    vedtak.vedtaksid to beregningForSøknad.beregningerForMottattDato()
                 }
 
                 beregningForSøknad.erVedtakMedBeregning -> vedtak.vedtaksid to beregningForSøknad.beregningerForMottattDato()
@@ -352,7 +367,7 @@ private fun List<LøpendeBidrag>.medBeregning(
                 periode = løpendeBidragPeriode.periode,
                 løpendeBeløp = løpendeBidragPeriode.løpendeBeløp,
                 valutakode = løpendeBidragPeriode.valutakode,
-                beregning = beregningListe.firstOrNull { it.periode?.fom?.isAfter(løpendeBidragPeriode.periode.fom) == false }
+                beregning = beregningListe.firstOrNull { it.periode?.overlapper(løpendeBidragPeriode.periode) == true }
                     ?: beregningListe.firstOrNull(),
             )
         },

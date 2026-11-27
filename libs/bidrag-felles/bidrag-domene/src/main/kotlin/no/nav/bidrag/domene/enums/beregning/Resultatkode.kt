@@ -330,6 +330,10 @@ enum class Resultatkode(
         listOf(BisysResultatkode("11B")),
         ResultatkodeType.BARNEBIDRAG,
     ),
+    UTENLANDSK_AVGJØRELSE(
+        listOf(BisysResultatkode("UA")),
+        ResultatkodeType.BARNEBIDRAG,
+    ),
 
     // Koder som ikke brukes i ny løsning men bare i Bisys
 

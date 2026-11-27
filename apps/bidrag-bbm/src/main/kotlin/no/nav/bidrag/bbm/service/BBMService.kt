@@ -150,18 +150,19 @@ class BBMService(
 
         return HentBeregningForSøknaderRespons(
             request.søknadListe.map {
-                val søknadMottattDato = søknader[it.søknadsid]?.søknadMottattDato
+                val søknad = søknader[it.søknadsid]
+                val søknadMottattDato = søknad?.søknadMottattDato
                 val hendelse = sisteVedtakshendelser[it.søknadsid]
                 if (søknadMottattDato == null || hendelse == null) {
                     log.warn {
                         "Fant ikke søknad (funnet=${søknadMottattDato != null}) eller vedtakshendelse (funnet=${hendelse != null}) " +
-                            "for søknadsid ${it.søknadsid} i sak ${it.saksnummer}"
+                                "for søknadsid ${it.søknadsid} i sak ${it.saksnummer}"
                     }
                 }
                 BeregningForSøknad(
                     søknadsid = it.søknadsid,
                     søknadMottattDato = søknadMottattDato,
-                    erVedtakMedBeregning = hendelse?.fraBbm == FRA_BBM,
+                    erVedtakMedBeregning = hendelse?.fraBbm == FRA_BBM || søknad?.behandlingsid != null,
                     hendelseFunnet = søknadMottattDato != null && hendelse != null,
                     beregningListe =
                     søknadMottattDato
