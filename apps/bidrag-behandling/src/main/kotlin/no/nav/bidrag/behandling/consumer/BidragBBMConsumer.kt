@@ -2,6 +2,7 @@ package no.nav.bidrag.behandling.consumer
 
 import no.nav.bidrag.behandling.config.CacheConfig.Companion.BBM_ALLE_BEREGNINGER_CACHE
 import no.nav.bidrag.behandling.config.CacheConfig.Companion.BBM_BEREGNING_CACHE
+import no.nav.bidrag.behandling.config.CacheConfig.Companion.BBM_BEREGNING_FOR_SØKNADER_CACHE
 import no.nav.bidrag.behandling.config.CacheConfig.Companion.BBM_SAMMENKNYTNINGER_HOVEDSØKNAD_CACHE
 import no.nav.bidrag.behandling.consumer.dto.SammenknyttSøknaderRequest
 import no.nav.bidrag.behandling.consumer.dto.SlettHovedsøknadRequest
@@ -16,6 +17,8 @@ import no.nav.bidrag.domene.enums.behandling.SøknadsknytningStatus
 import no.nav.bidrag.domene.enums.rolle.SøktAvType
 import no.nav.bidrag.transport.behandling.beregning.felles.BidragBeregningRequestDto
 import no.nav.bidrag.transport.behandling.beregning.felles.BidragBeregningResponsDto
+import no.nav.bidrag.transport.behandling.beregning.felles.HentBeregningForSøknaderRequest
+import no.nav.bidrag.transport.behandling.beregning.felles.HentBeregningForSøknaderRespons
 import no.nav.bidrag.transport.behandling.beregning.felles.FeilregistrerSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.FeilregistrerSøknadsBarnRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.HentBPsÅpneSøknaderRequest
@@ -71,6 +74,17 @@ class BidragBBMConsumer(
     @BrukerCacheable(BBM_ALLE_BEREGNINGER_CACHE)
     override fun hentAlleBeregninger(request: BidragBeregningRequestDto): BidragBeregningResponsDto = postForNonNullEntity(
         bidragBBMUri.pathSegment("alleberegningerogsamvar").build().toUri(),
+        request,
+    )
+
+    @BrukerCacheable(BBM_BEREGNING_FOR_SØKNADER_CACHE)
+    @Retryable(
+        value = [Exception::class],
+        maxAttempts = 3,
+        backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
+    )
+    override fun hentBeregningForSøknader(request: HentBeregningForSøknaderRequest): HentBeregningForSøknaderRespons = postForNonNullEntity(
+        bidragBBMUri.pathSegment("soknader").build().toUri(),
         request,
     )
 

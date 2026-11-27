@@ -100,7 +100,7 @@ abstract class CommonVedtakTilBehandlingTest : CommonMockServiceTest() {
         stubVedtakConsumer(vedtakConsumer)
         stubUnderholdskostnadRepository(underholdskostnadRepository)
         stubBehandlingrepository(behandlingRepository)
-        hentLøpendeBidragService = HentLøpendeBidragService(vedtakServiceBeregning)
+        hentLøpendeBidragService = HentLøpendeBidragService(vedtakServiceBeregning, bbmConsumer)
         val valutakursService = lagValutakursService()
         bidragsberegningOrkestrator = BidragsberegningOrkestrator(BeregnBarnebidragApi(), klageOrkestrator, klageOrkestratorV2, hentLøpendeBidragService, personConsumer, sakConsumer, valutakursService)
 
@@ -142,7 +142,7 @@ abstract class CommonVedtakTilBehandlingTest : CommonMockServiceTest() {
         aldersjusteringOrchestrator =
             AldersjusteringOrchestrator(
                 no.nav.bidrag.beregn.barnebidrag.service.external
-                    .VedtakService(vedtakConsumer, bidragStønadConsumer, bbmConsumer, Vedtaksfiltrering(), identUtils),
+                    .VedtakService(vedtakConsumer, bidragStønadConsumer, Vedtaksfiltrering(), identUtils),
                 sakConsumer,
                 BeregnBarnebidragApi(),
                 personConsumer,

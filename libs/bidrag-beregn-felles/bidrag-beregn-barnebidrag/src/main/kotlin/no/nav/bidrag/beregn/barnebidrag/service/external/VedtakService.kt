@@ -18,8 +18,6 @@ import no.nav.bidrag.transport.behandling.belopshistorikk.response.LøpendeBidra
 import no.nav.bidrag.transport.behandling.belopshistorikk.response.LøpendeBidragssak
 import no.nav.bidrag.transport.behandling.belopshistorikk.response.StønadDto
 import no.nav.bidrag.transport.behandling.belopshistorikk.response.StønadPeriodeDto
-import no.nav.bidrag.transport.behandling.beregning.felles.BidragBeregningRequestDto
-import no.nav.bidrag.transport.behandling.beregning.felles.BidragBeregningResponsDto
 import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
 import no.nav.bidrag.transport.behandling.vedtak.request.HentManuelleVedtakRequest
 import no.nav.bidrag.transport.behandling.vedtak.request.HentVedtakForStønadRequest
@@ -30,7 +28,6 @@ import no.nav.bidrag.transport.behandling.vedtak.response.erDelvedtak
 import no.nav.bidrag.transport.behandling.vedtak.response.erOrkestrertVedtak
 import no.nav.bidrag.transport.behandling.vedtak.response.harResultatFraAnnenVedtak
 import no.nav.bidrag.transport.behandling.vedtak.response.referertVedtaksid
-import no.nav.bidrag.transport.behandling.vedtak.response.søknadsid
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 import java.time.YearMonth
@@ -43,7 +40,6 @@ internal data class PåklagetVedtak(val vedtaksid: Int, val vedtakstidspunkt: Lo
 class VedtakService(
     private val vedtakConsumer: BeregningVedtakConsumer,
     private val stønadConsumer: BeregningBeløpshistorikkConsumer,
-    private val bbmConsumer: BeregningBBMConsumer,
     private val vedtakFilter: Vedtaksfiltrering,
     private val identUtils: IdentUtils,
 ) {
@@ -286,19 +282,6 @@ class VedtakService(
         // Filtrering for manuelle vedtak gjøres allerede i bidrag-vedtak, men beholder logikken for å sikre riktig behandling ved klage.
         return vedtakFilter.finneAlleManuelleVedtak(manuelleVedtakForBp.vedtakListe)
     }
-
-    fun hentAlleBeregningerFraBBM(vedtakForStønadListe: List<VedtakForStønad>): BidragBeregningResponsDto = bbmConsumer.hentAlleBeregninger(
-        BidragBeregningRequestDto(
-            vedtakForStønadListe.map {
-                BidragBeregningRequestDto.HentBidragBeregning(
-                    saksnummer = it.stønadsendring.sak.verdi,
-                    personidentBarn = it.stønadsendring.kravhaver,
-                    søknadsid = it.behandlingsreferanser.søknadsid.toString(),
-                    stønadstype = it.stønadsendring.type,
-                )
-            },
-        ),
-    )
 
     fun hentAlleStønaderForBidragspliktig(request: LøpendeBidragPeriodeRequest): LøpendeBidragPeriodeResponse = stønadConsumer.hentAlleLøpendeStønaderIPeriode(request)
 }

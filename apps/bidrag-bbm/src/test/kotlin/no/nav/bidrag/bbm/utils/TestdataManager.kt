@@ -68,6 +68,9 @@ class TestdataManager(
     fun hentSøknadslinjerForSøknadMedId(søknadsid: Long): List<Søknadslinje>? = søknadslinjeRepository.finnSøknadslinjerForSøknad(søknadsid)
 
     @Transactional
+    fun lagreHendelseListe(hendelser: List<Hendelse>): List<Hendelse> = hendelseRepository.saveAll(hendelser).toList()
+
+    @Transactional
     fun hentHendelserForSøknadMedId(søknadsid: Long): List<Hendelse>? = hendelseRepository.finnHendelserForSøknad(søknadsid)
 
     @Transactional
@@ -99,5 +102,6 @@ class TestdataManager(
         rolleRepository.deleteAll()
         blankettRepository.deleteAll()
         søknadsknytningRepository.deleteAll()
+        hendelseRepository.deleteAll()
     }
 }

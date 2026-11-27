@@ -25,6 +25,7 @@ class CacheConfig {
         const val STØNAD_HISTORIKK_CACHE = "STØNAD_HISTORIKK_CACHE"
         const val BBM_BEREGNING_CACHE = "BBM_BEREGNING_CACHE"
         const val BBM_ALLE_BEREGNINGER_CACHE = "BBM_ALLE_BEREGNINGER_CACHE"
+        const val BBM_BEREGNING_FOR_SØKNADER_CACHE = "BBM_BEREGNING_FOR_SØKNADER_CACHE"
         const val BBM_BP_AAPNE_SOKNADER = "BBM_BP_AAPNE_SOKNADER"
         const val BBM_SAMMENKNYTNINGER_HOVEDSØKNAD_CACHE = "BBM_SAMMENKNYTNINGER_HOVEDSØKNAD_CACHE"
         const val VEDTAK_FOR_STØNAD_CACHE = "VEDTAK_FOR_STØNAD_CACHE"
@@ -73,6 +74,10 @@ class CacheConfig {
         caffeineCacheManager.registerCustomCache(BBM_BEREGNING_CACHE, Caffeine.newBuilder().expireAfterWrite(30, TimeUnit.SECONDS).build())
         caffeineCacheManager.registerCustomCache(
             BBM_ALLE_BEREGNINGER_CACHE,
+            Caffeine.newBuilder().expireAfterAccess(30, TimeUnit.SECONDS).build(),
+        )
+        caffeineCacheManager.registerCustomCache(
+            BBM_BEREGNING_FOR_SØKNADER_CACHE,
             Caffeine.newBuilder().expireAfterAccess(30, TimeUnit.SECONDS).build(),
         )
         caffeineCacheManager.registerCustomCache(
