@@ -42,6 +42,7 @@ import no.nav.bidrag.domene.enums.diverse.Språk
 import no.nav.bidrag.domene.enums.person.Sivilstandskode
 import no.nav.bidrag.domene.enums.vedtak.Engangsbeløptype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
+import no.nav.bidrag.domene.enums.vedtak.konverterFraDeprekerteVerdier
 import no.nav.bidrag.domene.util.avrundetMedNullDesimaler
 import no.nav.bidrag.domene.util.visningsnavn
 import no.nav.bidrag.domene.util.årsbeløpTilMåndesbeløp
@@ -308,7 +309,7 @@ class BrevserverProducer(
                             saksnr = dokumentBestilling.saksnummer
                         }
                         vedtakBarn.engangsbeløper.forEach { engangsbeløp ->
-                            if (engangsbeløp.type == Engangsbeløptype.SÆRBIDRAG && !engangsbeløp.erDirekteAvslag && !dokumentMal.avslagsbrev) {
+                            if (engangsbeløp.type.konverterFraDeprekerteVerdier() == Engangsbeløptype.SÆRBIDRAG && !engangsbeløp.erDirekteAvslag && !dokumentMal.avslagsbrev) {
                                 val beregning = engangsbeløp.særbidragBeregning!!
                                 vedtak {
                                     fomDato = engangsbeløp.periode.fom
