@@ -14,7 +14,6 @@ import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import no.nav.bidrag.beregn.barnebidrag.BeregnBarnebidragApi
-import no.nav.bidrag.beregn.barnebidrag.service.external.BeregningBBMConsumer
 import no.nav.bidrag.beregn.barnebidrag.service.external.BeregningBeløpshistorikkConsumer
 import no.nav.bidrag.beregn.barnebidrag.service.external.BeregningPersonConsumer
 import no.nav.bidrag.beregn.barnebidrag.service.external.BeregningSakConsumer
@@ -82,9 +81,6 @@ class AldersjusteringOrchestratorTest {
     lateinit var beregningBeløpshistorikkConsumer: BeregningBeløpshistorikkConsumer
 
     @MockK
-    lateinit var beregningBBMConsumer: BeregningBBMConsumer
-
-    @MockK
     lateinit var personConsumer: BeregningPersonConsumer
 
     @MockK
@@ -104,7 +100,6 @@ class AldersjusteringOrchestratorTest {
         bidragVedtakService = VedtakService(
             vedtakConsumer = beregningVedtakConsumer,
             stønadConsumer = beregningBeløpshistorikkConsumer,
-            bbmConsumer = beregningBBMConsumer,
             vedtakFilter = Vedtaksfiltrering(),
             identUtils = identUtils,
         )

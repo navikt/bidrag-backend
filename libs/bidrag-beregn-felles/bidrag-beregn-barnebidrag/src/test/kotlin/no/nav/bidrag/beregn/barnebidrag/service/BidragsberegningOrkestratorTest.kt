@@ -13,6 +13,7 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import no.nav.bidrag.beregn.barnebidrag.BeregnBarnebidragApi
 import no.nav.bidrag.beregn.barnebidrag.felles.FellesTest
+import no.nav.bidrag.beregn.barnebidrag.service.external.BeregningBBMConsumer
 import no.nav.bidrag.beregn.barnebidrag.service.external.BeregningPersonConsumer
 import no.nav.bidrag.beregn.barnebidrag.service.external.BeregningSakConsumer
 import no.nav.bidrag.beregn.barnebidrag.service.external.VedtakService
@@ -82,6 +83,9 @@ internal class BidragsberegningOrkestratorTest : FellesTest() {
     @MockK(relaxed = true)
     private lateinit var sakConsumer: BeregningSakConsumer
 
+    @MockK(relaxed = true)
+    private lateinit var bbmConsumer: BeregningBBMConsumer
+
     @BeforeEach
     fun init() {
         every { identUtils.hentNyesteIdent(any()) }.answers {
@@ -95,7 +99,7 @@ internal class BidragsberegningOrkestratorTest : FellesTest() {
             OmgjøringOrkestrator(vedtakService, aldersjusteringOrchestrator, beregnIndeksreguleringApi, omgjøringOrkestratorHelpers)
         omgjøringOrkestratorV2 =
             OmgjøringOrkestratorV2(vedtakService, aldersjusteringOrchestrator, beregnIndeksreguleringApi, omgjøringOrkestratorHelpersV2)
-        hentLøpendeBidragService = HentLøpendeBidragService(vedtakService = vedtakService)
+        hentLøpendeBidragService = HentLøpendeBidragService(vedtakService = vedtakService, bbmConsumer = bbmConsumer)
         bidragsberegningOrkestrator = BidragsberegningOrkestrator(
             barnebidragApi = barnebidragApi,
             omgjøringOrkestrator = omgjøringOrkestrator,
