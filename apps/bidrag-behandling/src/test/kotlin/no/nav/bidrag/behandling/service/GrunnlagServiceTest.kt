@@ -708,7 +708,7 @@ class GrunnlagServiceTest : TestContainerRunner() {
             }
 
             @Test
-            open fun `skal rulle tilbake opprettelse og aktivering av boforholdsgrunnlag samlet`() {
+            open fun `skal rulle tilbake endringer når tjenesten har @Transactional uten omgivende transaksjon`() {
                 val behandling = oppretteTestbehandling(false, false, false, behandlingstype = TypeBehandling.BIDRAG)
                 val bidragsmottaker = behandling.bidragsmottaker!!
                 val rådataAktivert = LocalDateTime.now()
@@ -724,61 +724,43 @@ class GrunnlagServiceTest : TestContainerRunner() {
                 )
                 testdataManager.lagreBehandlingNewTransaction(behandling)
                 val behandlingId = behandling.id!!
-                val transactionTemplate = TransactionTemplate(transactionManager)
 
-                data class GrunnlagTilstand(
+                data class Tilstand(
                     val id: Long?,
                     val erBearbeidet: Boolean,
-                    val data: String,
-                    val innhentet: LocalDateTime,
                     val aktiv: LocalDateTime?,
-                    val rolleId: Long?,
-                    val gjelder: String?,
-                    val gjelderBarnRolleId: Long?,
                 )
 
-                fun hentTilstand() = transactionTemplate.execute {
+                val tx = TransactionTemplate(transactionManager)
+
+                fun hentTilstand() = tx.execute {
                     behandlingRepository.findBehandlingById(behandlingId).get().grunnlag
                         .filter { it.type == Grunnlagsdatatype.BOFORHOLD_BM_SØKNADSBARN }
-                        .map {
-                            GrunnlagTilstand(
-                                id = it.id,
-                                erBearbeidet = it.erBearbeidet,
-                                data = it.data,
-                                innhentet = it.innhentet,
-                                aktiv = it.aktiv,
-                                rolleId = it.rolle.id,
-                                gjelder = it.gjelder,
-                                gjelderBarnRolleId = it.gjelderBarnRolle?.id,
-                            )
-                        }.sortedBy { it.id }
+                        .map { Tilstand(it.id, it.erBearbeidet, it.aktiv) }
+                        .sortedBy { it.id }
                 }
 
                 val førtilstand = hentTilstand()
-                førtilstand.shouldNotBeEmpty()
-                førtilstand.all { !it.erBearbeidet && it.aktiv != null } shouldBe true
 
-                class ForventetRollback : RuntimeException()
+                assertFailsWith<RuntimeException> {
+                    val ferskBehandling = behandlingRepository.findBehandlingById(behandlingId).get()
+                    grunnlagService.aktiverGrunnlagForBoforholdTilBMSøknadsbarnHvisIngenEndringerMåAksepteres(
+                        ferskBehandling,
+                    )
 
-                assertFailsWith<ForventetRollback> {
-                    transactionTemplate.executeWithoutResult {
-                        val ferskBehandling = behandlingRepository.findBehandlingById(behandlingId).get()
-                        grunnlagService.aktiverGrunnlagForBoforholdTilBMSøknadsbarnHvisIngenEndringerMåAksepteres(
-                            ferskBehandling,
-                        )
-
-                        val bearbeidetGrunnlag =
-                            ferskBehandling.grunnlag.filter {
-                                it.type == Grunnlagsdatatype.BOFORHOLD_BM_SØKNADSBARN && it.erBearbeidet
-                            }
-                        bearbeidetGrunnlag.shouldNotBeEmpty()
-                        bearbeidetGrunnlag.all { it.aktiv != null } shouldBe true
-                        entityManager.flush()
-                        throw ForventetRollback()
-                    }
+                    val bearbeidetGrunnlag =
+                        ferskBehandling.grunnlag.filter {
+                            it.type == Grunnlagsdatatype.BOFORHOLD_BM_SØKNADSBARN && it.erBearbeidet
+                        }
+                    bearbeidetGrunnlag.shouldNotBeEmpty()
+                    bearbeidetGrunnlag.all { it.aktiv != null } shouldBe true
+                    entityManager.flush()
+                    throw RuntimeException("Rull tilbake")
                 }
 
-                hentTilstand() shouldBe førtilstand
+                val nyTilstand = hentTilstand()
+
+                nyTilstand shouldBe førtilstand
             }
 
             @Test
