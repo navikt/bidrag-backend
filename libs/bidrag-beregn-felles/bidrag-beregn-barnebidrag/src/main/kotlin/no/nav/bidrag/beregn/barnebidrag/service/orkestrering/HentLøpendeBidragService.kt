@@ -25,6 +25,7 @@ import no.nav.bidrag.transport.behandling.belopshistorikk.response.LøpendeBidra
 import no.nav.bidrag.transport.behandling.belopshistorikk.response.LøpendeBidragPeriodeResponse
 import no.nav.bidrag.transport.behandling.beregning.barnebidrag.BidragsberegningOrkestratorRequestV2
 import no.nav.bidrag.transport.behandling.beregning.felles.BeregnGrunnlag
+import no.nav.bidrag.transport.behandling.beregning.felles.BeregningForSøknad
 import no.nav.bidrag.transport.behandling.beregning.felles.BidragBeregningResponsDto
 import no.nav.bidrag.transport.behandling.beregning.felles.HentBeregningForSøknad
 import no.nav.bidrag.transport.behandling.beregning.felles.HentBeregningForSøknaderRequest
@@ -143,10 +144,10 @@ class HentLøpendeBidragService(private val vedtakService: VedtakService, privat
                     !erInnvilgetVedtak
                 }
 
-            val beregningerPerStønad = manuelleVedtakFiltrertMotBeregningsperiode.hentBeregningerPerStønad()
-            secureLogger.info { "Hentede beregningsdata i manuelle vedtak: $beregningerPerStønad" }
+            val beregningerPerVedtak = manuelleVedtakFiltrertMotBeregningsperiode.hentBeregningerPerVedtak()
+            secureLogger.info { "Hentede beregningsdata i manuelle vedtak: $beregningerPerVedtak" }
 
-            return løpendeBidragIPerioden.medBeregning(beregningerPerStønad)
+            return løpendeBidragIPerioden.medBeregning(beregningerPerVedtak)
         } catch (e: Exception) {
             log.error(e) { "Det skjedde en feil ved opprettelse av grunnlag for løpende bidrag for BP evnevurdering: ${e.message}" }
             throw e
@@ -155,14 +156,14 @@ class HentLøpendeBidragService(private val vedtakService: VedtakService, privat
 
     // Henter beregninger for manuelle vedtak og grupperer dem per stønad. Vedtak fattet i bidrag-behandling hentes fra bidrag-vedtak,
     // øvrige vedtak hentes fra BBM.
-    private fun List<VedtakForStønad>.hentBeregningerPerStønad(): Map<StønadNøkkel, List<BidragBeregningResponsDto.BidragBeregning>> {
-        val (vedtakFraBidragVedtak, vedtakFraBBM) = partition { vedtak ->
+    private fun List<VedtakForStønad>.hentBeregningerPerVedtak(): Map<Int, List<BidragBeregningResponsDto.BidragBeregning>> {
+        val (vedtakFraBehandling, vedtakFraBBM) = partition { vedtak ->
             vedtak.behandlingsreferanser.any { it.kilde == BehandlingsrefKilde.BEHANDLING_ID }
         }
 
-        val beregningerFraBidragVedtak = vedtakFraBidragVedtak.map { vedtak ->
+        val beregningerFraBidragVedtak = vedtakFraBehandling.map { vedtak ->
             secureLogger.info { "Henter beregning fra bidrag-vedtak for VedtakForStønad: $vedtak" }
-            vedtak.tilStønadNøkkel() to finnAlleBeregningerIBidragVedtak(vedtak)
+            vedtak.vedtaksid to finnAlleBeregningerIBidragVedtak(vedtak)
         }
 
         return (beregningerFraBidragVedtak + vedtakFraBBM.hentBeregningerFraBBM())
@@ -172,7 +173,7 @@ class HentLøpendeBidragService(private val vedtakService: VedtakService, privat
 
     // Henter beregninger fra BBM basert på søknadens mottatt dato. Vedtak der siste vedtakshendelse for søknaden ikke er registrert
     // med beregning i BBM (FRA_BBM = 0) filtreres bort. Vedtak der søknad eller vedtakshendelse ikke finnes beholdes.
-    private fun List<VedtakForStønad>.hentBeregningerFraBBM(): List<Pair<StønadNøkkel, List<BidragBeregningResponsDto.BidragBeregning>>> {
+    private fun List<VedtakForStønad>.hentBeregningerFraBBM(): List<Pair<Int, List<BidragBeregningResponsDto.BidragBeregning>>> {
         val (vedtakMedSøknadsid, vedtakUtenSøknadsid) = partition { it.behandlingsreferanser.søknadsid != null }
         vedtakUtenSøknadsid.forEach {
             log.warn { "Manuelt vedtak ${it.vedtaksid} mangler søknadsid og kan ikke kobles mot beregning i BBM" }
@@ -205,10 +206,10 @@ class HentLøpendeBidragService(private val vedtakService: VedtakService, privat
                         "Fant ikke søknad eller vedtakshendelse i BBM for søknad ${beregningForSøknad.søknadsid} " +
                             "og vedtak ${vedtak.vedtaksid}. Beholder vedtaket"
                     }
-                    vedtak.tilStønadNøkkel() to beregningForSøknad.beregningListe
+                    vedtak.vedtaksid to beregningForSøknad.beregningerForMottattDato()
                 }
 
-                beregningForSøknad.erVedtakMedBeregning -> vedtak.tilStønadNøkkel() to beregningForSøknad.beregningListe
+                beregningForSøknad.erVedtakMedBeregning -> vedtak.vedtaksid to beregningForSøknad.beregningerForMottattDato()
 
                 else -> {
                     log.info {
@@ -219,6 +220,11 @@ class HentLøpendeBidragService(private val vedtakService: VedtakService, privat
                 }
             }
         }
+    }
+
+    private fun BeregningForSøknad.beregningerForMottattDato(): List<BidragBeregningResponsDto.BidragBeregning> {
+        val mottattDato = søknadMottattDato ?: return emptyList()
+        return beregningListe.filter { it.datoSøknad == mottattDato }
     }
 
     fun finnAlleBeregningerIBidragVedtak(vedtakForStønad: VedtakForStønad): List<BidragBeregningResponsDto.BidragBeregning> {
@@ -331,24 +337,17 @@ data class LøpendeBidragPeriodeMedBeregning(
     val beregning: BidragBeregningResponsDto.BidragBeregning?,
 )
 
-private data class StønadNøkkel(val sak: Saksnummer, val type: Stønadstype, val kravhaver: Personident)
-
-private fun VedtakForStønad.tilStønadNøkkel() = StønadNøkkel(stønadsendring.sak, stønadsendring.type, stønadsendring.kravhaver)
-
-private fun LøpendeBidrag.tilStønadNøkkel() = StønadNøkkel(sak, type, kravhaver)
-
-// Kobler hver periode i løpende bidrag mot beregning for samme stønad. Bruker beregningen som gjaldt ved starten av perioden,
-// dvs. nyeste beregning med fom før eller lik periodens fom. Hvis ingen slik beregning finnes brukes nyeste beregning for samme stønad.
+// Kobler løpende bidrag til beregningen fra det aktuelle vedtaket. BBM-listen er allerede filtrert på søknadens mottatt dato.
 private fun List<LøpendeBidrag>.medBeregning(
-    beregningerPerStønad: Map<StønadNøkkel, List<BidragBeregningResponsDto.BidragBeregning>>,
+    beregningerPerVedtak: Map<Int, List<BidragBeregningResponsDto.BidragBeregning>>,
 ): List<LøpendeBidragMedBeregning> = map { løpendeBidrag ->
-    val beregningListe = beregningerPerStønad[løpendeBidrag.tilStønadNøkkel()].orEmpty()
     LøpendeBidragMedBeregning(
         sak = løpendeBidrag.sak,
         type = løpendeBidrag.type,
         kravhaver = løpendeBidrag.kravhaver,
         mottaker = løpendeBidrag.mottaker,
         periodeListe = løpendeBidrag.periodeListe.map { løpendeBidragPeriode ->
+            val beregningListe = beregningerPerVedtak[løpendeBidragPeriode.vedtaksid].orEmpty()
             LøpendeBidragPeriodeMedBeregning(
                 periode = løpendeBidragPeriode.periode,
                 løpendeBeløp = løpendeBidragPeriode.løpendeBeløp,

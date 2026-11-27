@@ -1755,6 +1755,7 @@ class BeløpshistorikkServiceTest {
             { assertThat(respons).isNotNull() },
             { assertThat(respons.bidragListe).hasSize(1) },
             { assertThat(respons.bidragListe[0].periodeListe).hasSize(1) },
+            { assertThat(respons.bidragListe[0].periodeListe[0].vedtaksid).isEqualTo(1) },
             { assertThat(respons.bidragListe[0].periodeListe[0].periode.fom).isEqualTo(YearMonth.of(2023, 1)) },
             { assertThat(respons.bidragListe[0].periodeListe[0].periode.til).isEqualTo(YearMonth.of(2023, 6)) },
         )

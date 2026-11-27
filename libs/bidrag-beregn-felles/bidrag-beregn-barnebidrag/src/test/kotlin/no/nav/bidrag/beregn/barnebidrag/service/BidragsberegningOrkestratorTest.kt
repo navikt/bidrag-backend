@@ -16,6 +16,7 @@ import io.mockk.mockk
 import io.mockk.verify
 import no.nav.bidrag.beregn.barnebidrag.BeregnBarnebidragApi
 import no.nav.bidrag.beregn.barnebidrag.felles.FellesTest
+import no.nav.bidrag.beregn.barnebidrag.service.external.BeregningBBMConsumer
 import no.nav.bidrag.beregn.barnebidrag.service.external.BeregningPersonConsumer
 import no.nav.bidrag.beregn.barnebidrag.service.external.BeregningSakConsumer
 import no.nav.bidrag.beregn.barnebidrag.service.external.VedtakService
@@ -77,6 +78,9 @@ internal class BidragsberegningOrkestratorTest : FellesTest() {
     @MockK(relaxed = true)
     private lateinit var vedtakService: VedtakService
 
+    @MockK(relaxed = true)
+    private lateinit var bbmConsumer: BeregningBBMConsumer
+
     private lateinit var barnebidragApi: BeregnBarnebidragApi
     private lateinit var omgjøringOrkestrator: OmgjøringOrkestrator
     private lateinit var omgjøringOrkestratorV2: OmgjøringOrkestratorV2
@@ -106,7 +110,7 @@ internal class BidragsberegningOrkestratorTest : FellesTest() {
             OmgjøringOrkestrator(vedtakService, aldersjusteringOrchestrator, beregnIndeksreguleringApi, omgjøringOrkestratorHelpers)
         omgjøringOrkestratorV2 =
             OmgjøringOrkestratorV2(vedtakService, aldersjusteringOrchestrator, beregnIndeksreguleringApi, omgjøringOrkestratorHelpersV2)
-        hentLøpendeBidragService = HentLøpendeBidragService(vedtakService = vedtakService)
+        hentLøpendeBidragService = HentLøpendeBidragService(vedtakService = vedtakService, bbmConsumer = bbmConsumer)
         valutakursoppslag.clear()
         valutakursHentingFeiler = false
         valutakursConsumer = mockk()
