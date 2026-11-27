@@ -40,6 +40,7 @@ import no.nav.bidrag.domene.enums.vedtak.Engangsbeløptype
 import no.nav.bidrag.domene.enums.vedtak.Innkrevingstype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
+import no.nav.bidrag.domene.enums.vedtak.konverterFraDeprekerteVerdier
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.sak.Stønadsid
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
@@ -356,7 +357,7 @@ class VedtakService(
                 medInnkreving = engangsbeløp.innkreving == Innkrevingstype.MED_INNKREVING,
                 inntekter = grunnlagListe.mapInntekter(VedtakPeriodeReferanse(periode, vedtakDto.typeBehandling, engangsbeløp.grunnlagReferanseListe), BigDecimal.ZERO),
                 særbidragBeregning =
-                if (engangsbeløp.type == Engangsbeløptype.SÆRBIDRAG) {
+                if (engangsbeløp.type.konverterFraDeprekerteVerdier() == Engangsbeløptype.SÆRBIDRAG) {
                     engangsbeløp.hentSærbidragBeregning(erDirekteAvslag, grunnlagListe)
                 } else {
                     null
