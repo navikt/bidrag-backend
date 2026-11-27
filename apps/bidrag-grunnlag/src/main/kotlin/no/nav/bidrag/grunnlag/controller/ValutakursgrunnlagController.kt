@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.grunnlag.ISSUER
 import no.nav.bidrag.grunnlag.bo.ValutakursgrunnlagBo
+import no.nav.bidrag.grunnlag.consumer.TilgangskontrollConsumer
 import no.nav.bidrag.grunnlag.hendelse.schedule.valuta.HentValutaScheduler
 import no.nav.bidrag.grunnlag.hendelse.schedule.valuta.VALUTAKURS_TIDSSONE
 import no.nav.bidrag.grunnlag.hendelse.schedule.valuta.ValutakursKjøring
@@ -17,9 +18,6 @@ import no.nav.bidrag.grunnlag.service.Valutaberegning
 import no.nav.bidrag.grunnlag.service.ValutakursgrunnlagService
 import no.nav.security.token.support.core.api.ProtectedWithClaims
 import org.springdoc.core.annotations.ParameterObject
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.core.env.Environment
-import org.springframework.core.env.Profiles
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
@@ -76,8 +74,7 @@ class ValutakursgrunnlagController(
     private val valutakursgrunnlagService: ValutakursgrunnlagService,
     private val historiskeValutakurserService: HentHistoriskeValutakurserService,
     private val hentValutaScheduler: HentValutaScheduler,
-    private val environment: Environment,
-    @param:Value("\${valutakurs.skriving-lokalt-aktivert:false}") private val skrivingLokaltAktivert: Boolean = false,
+    private val tilgangskontrollConsumer: TilgangskontrollConsumer,
 ) {
     @GetMapping("/valutakursgrunnlag", params = ["valutakode", "dato"])
     @Operation(security = [SecurityRequirement(name = "bearer-key")], summary = "Hent valutakursgrunnlag", description = OPPSLAG_BESKRIVELSE)
@@ -137,10 +134,12 @@ class ValutakursgrunnlagController(
             ApiResponse(responseCode = "200", description = "Lagret kursgrunnlag med status HENTET, FEILET eller OVERSTYRT"),
             ApiResponse(responseCode = "400", description = "Ugyldig valuta eller startdato"),
             ApiResponse(responseCode = "401", description = "Sikkerhetstoken mangler eller er ugyldig"),
+            ApiResponse(responseCode = "403", description = "Krever administrasjonstilgang for innlogget bruker"),
+            ApiResponse(responseCode = "503", description = "Kunne ikke hente brukertilganger"),
         ],
     )
     fun innhent(@RequestBody request: InnhentValutakursgrunnlagRequest): ValutakursgrunnlagBo {
-        krevLokalSkrivetilgang()
+        tilgangskontrollConsumer.krevAdministrasjonstilgang()
         if (request.valutakode == Valutakode.NOK || request.gyldigFra.dayOfMonth != 1 ||
             request.gyldigFra.monthValue !in listOf(1, 7) || request.gyldigFra.isAfter(LocalDate.now())
         ) {
@@ -161,6 +160,7 @@ class ValutakursgrunnlagController(
             ApiResponse(responseCode = "200", description = "Planlagt innhenting fullført"),
             ApiResponse(responseCode = "400", description = "År og måned mangler en del, måneden er ikke 1 eller 7, eller perioden ligger i fremtiden"),
             ApiResponse(responseCode = "401", description = "Sikkerhetstoken mangler eller er ugyldig"),
+            ApiResponse(responseCode = "503", description = "Kunne ikke hente brukertilganger"),
         ],
     )
     fun innhentPlanlagteValutakurser(
@@ -169,6 +169,7 @@ class ValutakursgrunnlagController(
         @Parameter(description = "Halvårets startmåned. Tillatte verdier er 1 og 7. Må oppgis sammen med år.", example = "7")
         @RequestParam(required = false) maaned: Int?,
     ) {
+        tilgangskontrollConsumer.krevAdministrasjonstilgang()
         val dagensDato = LocalDate.now(VALUTAKURS_TIDSSONE)
         if ((aar == null) != (maaned == null)) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Oppgi både år og måned, eller utelat begge")
@@ -206,10 +207,12 @@ class ValutakursgrunnlagController(
             ApiResponse(responseCode = "200", description = "Liste over behandlede grunnlag, inkludert FEILET-rader. Tom liste dersom ingen grunnlag måtte hentes"),
             ApiResponse(responseCode = "400", description = "Ugyldige halvårsgrenser, datorekkefølge, fremtidige halvår eller mer enn 10 perioder"),
             ApiResponse(responseCode = "401", description = "Sikkerhetstoken mangler eller er ugyldig"),
+            ApiResponse(responseCode = "403", description = "Krever administrasjonstilgang for innlogget bruker"),
+            ApiResponse(responseCode = "503", description = "Kunne ikke hente brukertilganger"),
         ],
     )
     fun innhentHistoriskeValutakursgrunnlag(@RequestBody request: InnhentHistoriskeRequest): List<ValutakursgrunnlagBo> {
-        krevLokalSkrivetilgang()
+        tilgangskontrollConsumer.krevAdministrasjonstilgang()
         return historiskeValutakurserService.hentHistoriskeValutakurser(request.fra, request.til)
     }
 
@@ -226,7 +229,9 @@ class ValutakursgrunnlagController(
             ApiResponse(responseCode = "200", description = "Oppdatert kursgrunnlag med status OVERSTYRT"),
             ApiResponse(responseCode = "400", description = "Kursen er ikke større enn null, overskrider 22 heltallssifre eller 16 desimaler, eller forespørselen er ugyldig"),
             ApiResponse(responseCode = "401", description = "Sikkerhetstoken mangler eller er ugyldig"),
+            ApiResponse(responseCode = "403", description = "Krever administrasjonstilgang for innlogget bruker"),
             ApiResponse(responseCode = "404", description = "Valutakursgrunnlaget finnes ikke"),
+            ApiResponse(responseCode = "503", description = "Kunne ikke hente brukertilganger"),
         ],
     )
     fun overstyr(
@@ -234,7 +239,7 @@ class ValutakursgrunnlagController(
         @PathVariable id: Int,
         @RequestBody request: OverstyrValutakursgrunnlagRequest,
     ): ValutakursgrunnlagBo {
-        krevLokalSkrivetilgang()
+        tilgangskontrollConsumer.krevAdministrasjonstilgang()
         return valutakursgrunnlagService.overstyr(id, request.kurs)
     }
 
@@ -257,10 +262,4 @@ class ValutakursgrunnlagController(
         ],
     )
     fun beregn(@RequestBody request: BeregnValutaRequest): Valutaberegning = valutakursgrunnlagService.beregn(request.beløp, request.fraValuta, request.tilValuta, request.dato)
-
-    private fun krevLokalSkrivetilgang() {
-        if (!skrivingLokaltAktivert || !environment.acceptsProfiles(Profiles.of("local"))) {
-            throw ResponseStatusException(HttpStatus.FORBIDDEN, "Skriveoperasjonen er ikke aktivert")
-        }
-    }
 }

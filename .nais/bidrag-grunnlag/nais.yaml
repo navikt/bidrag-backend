@@ -43,6 +43,7 @@ spec:
         - host: {{ azure.pensjon_url }}
         - host: {{ azure.aareg_url }}
         - host: {{ azure.bidrag_organisasjon_url }}
+        - host: {{ azure.bidrag_tilgangskontroll_url }}
         - host: {{ azure.tilleggsstonadersak_url }}
         - host: {{ azure.unsecure.ereg_url }}
         - host: {{ azure.unsecure.norgesbank_url }}
@@ -137,6 +138,10 @@ spec:
       value: https://{{ azure.bidrag_organisasjon_url }}/bidrag-organisasjon
     - name: BIDRAG_ORGANISASJON_SCOPE
       value: {{ azure.bidrag_organisasjon_scope }}
+    - name: BIDRAG_TILGANGSKONTROLL_URL
+      value: https://{{ azure.bidrag_tilgangskontroll_url }}
+    - name: BIDRAG_TILGANGSKONTROLL_SCOPE
+      value: {{ azure.bidrag_tilgangskontroll_scope }}
     - name: TILLEGGSSTONADERSAK_URL
       value: https://{{ azure.tilleggsstonadersak_url }}
     - name: TILLEGGSSTONADERSAK_SCOPE
