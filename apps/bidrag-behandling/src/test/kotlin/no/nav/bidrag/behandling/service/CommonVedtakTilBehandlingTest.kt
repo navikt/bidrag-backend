@@ -4,6 +4,7 @@ import io.getunleash.FakeUnleash
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
+import io.mockk.mockk
 import no.nav.bidrag.behandling.async.BestillAsyncJobService
 import no.nav.bidrag.behandling.config.UnleashFeatures
 import no.nav.bidrag.behandling.consumer.BidragBeløpshistorikkConsumer
@@ -37,17 +38,23 @@ import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.BidragsberegningOrk
 import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.HentLøpendeBidragService
 import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.OmgjøringOrkestrator
 import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.OmgjøringOrkestratorV2
+import no.nav.bidrag.beregn.core.consumer.ValutakursConsumer
+import no.nav.bidrag.beregn.core.consumer.ValutakursgrunnlagResponse
+import no.nav.bidrag.beregn.core.service.ValutakursService
 import no.nav.bidrag.beregn.vedtak.Vedtaksfiltrering
 import no.nav.bidrag.commons.util.IdentUtils
 import no.nav.bidrag.commons.web.mock.stubKodeverkProvider
 import no.nav.bidrag.commons.web.mock.stubSjablonProvider
 import no.nav.bidrag.commons.web.mock.stubSjablonService
+import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.domene.enums.vedtak.Engangsbeløptype
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.transport.behandling.belopshistorikk.response.LøpendeBidragPeriodeResponse
 import no.nav.bidrag.transport.behandling.vedtak.response.OpprettVedtakResponseDto
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.extension.ExtendWith
+import java.math.BigDecimal
+import java.time.LocalDate
 
 @ExtendWith(MockKExtension::class)
 abstract class CommonVedtakTilBehandlingTest : CommonMockServiceTest() {
@@ -94,7 +101,8 @@ abstract class CommonVedtakTilBehandlingTest : CommonMockServiceTest() {
         stubUnderholdskostnadRepository(underholdskostnadRepository)
         stubBehandlingrepository(behandlingRepository)
         hentLøpendeBidragService = HentLøpendeBidragService(vedtakServiceBeregning)
-        bidragsberegningOrkestrator = BidragsberegningOrkestrator(BeregnBarnebidragApi(), klageOrkestrator, klageOrkestratorV2, hentLøpendeBidragService, personConsumer, sakConsumer)
+        val valutakursService = lagValutakursService()
+        bidragsberegningOrkestrator = BidragsberegningOrkestrator(BeregnBarnebidragApi(), klageOrkestrator, klageOrkestratorV2, hentLøpendeBidragService, personConsumer, sakConsumer, valutakursService)
 
         every { forholdsmessigFordelingService.fjernSammeknytningHovedsøknad(any()) } returns Unit
         validerBeregning = ValiderBeregning()
@@ -146,6 +154,7 @@ abstract class CommonVedtakTilBehandlingTest : CommonMockServiceTest() {
                 vedtakGrunnlagMapper,
                 aldersjusteringOrchestrator,
                 bidragsberegningOrkestrator,
+                valutakursService,
             )
         behandlingTilVedtakMapping =
             BehandlingTilVedtakMapping(
@@ -215,4 +224,32 @@ abstract class CommonVedtakTilBehandlingTest : CommonMockServiceTest() {
         stubSaksbehandlernavnProvider()
         stubKodeverkProvider()
     }
+}
+
+private fun lagValutakursService(): ValutakursService {
+    val consumer = mockk<ValutakursConsumer>()
+    every { consumer.hentValutakurs(any(), any()) } answers {
+        val valutakode = firstArg<Valutakode>()
+        val dato = secondArg<LocalDate>()
+        val brukFra = dato.atStartOfDay()
+        val brukTil = brukFra.plusMonths(6)
+        val kurs = when (valutakode.name) {
+            "EUR" -> BigDecimal("11.45")
+            "SEK" -> BigDecimal("1.09")
+            "DKK" -> BigDecimal("1.53")
+            "GBP" -> BigDecimal("13.21")
+            "USD" -> BigDecimal("9.60")
+            else -> error("Valuta er ikke stubbet")
+        }
+        ValutakursgrunnlagResponse(
+            brukFra = brukFra,
+            brukTil = brukTil,
+            kurs = kurs,
+            multiplikator = 0,
+            basisvaluta = valutakode,
+            kvoteringsvaluta = Valutakode.NOK,
+            feiletHenting = false,
+        )
+    }
+    return ValutakursService(consumer)
 }

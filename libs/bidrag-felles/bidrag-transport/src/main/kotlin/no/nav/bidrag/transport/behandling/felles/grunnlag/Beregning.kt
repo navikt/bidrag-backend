@@ -343,7 +343,7 @@ data class BeregnetBidragPerBarn(
     val gjelderBarn: Grunnlagsreferanse,
     val saksnummer: Saksnummer,
     val løpendeBeløp: BigDecimal,
-    val valutakode: String = "NOK",
+    val valutakode: Valutakode = Valutakode.NOK,
     val samværsklasse: Samværsklasse,
     val samværsfradrag: BigDecimal,
     val beregnetBeløp: BigDecimal,
@@ -355,6 +355,10 @@ data class BeregnetBidragPerBarn(
     val bruttoBidragEtterBarnetilleggBM: BigDecimal? = null,
     val bruttoBidragEtterBarnetilleggBP: BigDecimal? = null,
     val erVedtakKildeBBM: Boolean = true,
+    @Schema(description = "Beregnet bidrag i NOK til bruk i evnevurderingen. Null når NOK-beløpet ikke er oppgitt.")
+    val beregnetBidragNOK: BigDecimal? = null,
+    @Schema(description = "Referanse til valutakursgrunnlaget som er brukt ved omregningen til NOK.")
+    val valutakursGrunnlagsreferanse: Grunnlagsreferanse? = null,
 )
 
 data class DelberegningSamværsfradrag(

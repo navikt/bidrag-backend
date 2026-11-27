@@ -516,12 +516,13 @@ internal object EndeligBidragMapperV2 : CoreMapper() {
         }
     }
 
-    private fun mapValutakurs(grunnlag: GrunnlagDto?): ValutakursGrunnlagTilBeregning? {
+    fun mapValutakurs(grunnlag: GrunnlagDto?): ValutakursGrunnlagTilBeregning? {
         try {
             val valutakursGrunnlag: ValutakursGrunnlag? = grunnlag?.innholdTilObjekt<ValutakursGrunnlag>()
             return valutakursGrunnlag?.let {
                 ValutakursGrunnlagTilBeregning(
                     referanse = grunnlag.referanse,
+                    periode = requireNotNull(it.periode) { "Valutakursgrunnlaget må ha en periode ved beregning" },
                     valutakursListe = it.valutakursListe,
                 )
             }

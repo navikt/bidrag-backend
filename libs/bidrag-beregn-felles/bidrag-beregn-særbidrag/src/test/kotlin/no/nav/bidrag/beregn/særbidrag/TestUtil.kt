@@ -255,7 +255,7 @@ object TestUtil {
         )
 
         return BeregnBPsBeregnedeTotalbidragResultatCore(
-            resultatPeriode = resultat,
+            resultatPeriodeListe = listOf(resultat),
             sjablonListe = mutableListOf(),
         )
     }

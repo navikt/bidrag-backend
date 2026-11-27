@@ -6,7 +6,7 @@ import no.nav.bidrag.beregn.særbidrag.core.bpsberegnedetotalbidrag.dto.Løpende
 import no.nav.bidrag.transport.behandling.felles.grunnlag.BeregnetBidragPerBarn
 import java.math.BigDecimal
 
-data class BeregnBPsBeregnedeTotalbidragResultat(val resultatPeriode: ResultatPeriode)
+data class BeregnBPsBeregnedeTotalbidragResultat(val resultatPeriodeListe: List<ResultatPeriode>)
 
 data class ResultatPeriode(val periode: Periode, val resultat: ResultatBeregning, val grunnlag: LøpendeBidragGrunnlagCore)
 

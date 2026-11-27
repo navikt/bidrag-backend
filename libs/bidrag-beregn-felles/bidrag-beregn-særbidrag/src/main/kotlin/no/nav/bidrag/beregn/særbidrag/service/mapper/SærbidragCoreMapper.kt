@@ -45,9 +45,7 @@ internal object SærbidragCoreMapper : CoreMapper() {
 
         // Leser output fra beregning av bBPs beregnede totalbidrag og bygger opp input til core
 
-        val resultatPeriode = beregnBPsBeregnedeTotalbidragResultatCore.resultatPeriode
-
-        val bPsBeregnedeTotalbidragPeriodeCore =
+        val bPsBeregnedeTotalbidragPeriodeListe = beregnBPsBeregnedeTotalbidragResultatCore.resultatPeriodeListe.map { resultatPeriode ->
             BPsBeregnedeTotalbidragPeriodeCore(
                 referanse = opprettDelberegningreferanse(
                     type = Grunnlagstype.DELBEREGNING_BIDRAGSPLIKTIGES_BEREGNEDE_TOTALBIDRAG,
@@ -64,6 +62,7 @@ internal object SærbidragCoreMapper : CoreMapper() {
                 bPsBeregnedeTotalbidrag = resultatPeriode.resultat.bPsBeregnedeTotalbidrag,
                 beregnetBidragPerBarnListe = resultatPeriode.resultat.beregnetBidragPerBarn,
             )
+        }
 
         // Løper gjennom output fra beregning av BPs andel særbidrag og bygger opp ny input-liste til core
         val bpAndelSærbidragPeriodeCoreListe =
@@ -90,7 +89,7 @@ internal object SærbidragCoreMapper : CoreMapper() {
             søknadsbarnPersonId = mapSøknadsbarn(beregnGrunnlag)!!.verdi,
             betaltAvBpPeriodeListe = mapUtgift(beregnGrunnlag),
             bidragsevnePeriodeListe = bidragsevnePeriodeCoreListe,
-            bPsBeregnedeTotalbidragPeriodeCore = bPsBeregnedeTotalbidragPeriodeCore,
+            bPsBeregnedeTotalbidragPeriodeListe = bPsBeregnedeTotalbidragPeriodeListe,
             bPsAndelSærbidragPeriodeListe = bpAndelSærbidragPeriodeCoreListe,
         )
     }

@@ -3,6 +3,10 @@
     "referanse": "innhentet_valutakurs_grunnlag",
     "type": "VALUTAKURS_GRUNNLAG",
     "innhold": {
+      "periode": {
+        "fom": "2024-01",
+        "til": "2025-01"
+      },
       "valutakursListe": [
         {
           "valutakode1": "NOK",
