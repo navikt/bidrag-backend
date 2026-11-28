@@ -367,7 +367,14 @@ private fun List<LøpendeBidrag>.medBeregning(
                 periode = løpendeBidragPeriode.periode,
                 løpendeBeløp = løpendeBidragPeriode.løpendeBeløp,
                 valutakode = løpendeBidragPeriode.valutakode,
-                beregning = beregningListe.firstOrNull { it.periode?.overlapper(løpendeBidragPeriode.periode) == true }
+                beregning = beregningListe.firstOrNull {
+                    val beregningsperiode = it.periode ?: return@firstOrNull false
+                    val løpendePeriode = løpendeBidragPeriode.periode
+                    val beregningTil = beregningsperiode.til
+                    val løpendeTil = løpendePeriode.til
+                    (beregningTil == null || løpendePeriode.fom < beregningTil) &&
+                        (løpendeTil == null || beregningsperiode.fom < løpendeTil)
+                }
                     ?: beregningListe.firstOrNull(),
             )
         },
