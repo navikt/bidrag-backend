@@ -1035,7 +1035,7 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
                 periodeListe = listOf(
                     BidragPeriode(
                         periode = ÅrMånedsperiode(LocalDate.of(2024, 7, 1), null),
-                        vedtaksid = 2,
+                        vedtaksid = 1,
                         løpendeBeløp = BigDecimal.valueOf(3000),
                         valutakode = "NOK",
                     ),
@@ -1054,7 +1054,7 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
             mottaker = personIdentBidragsmottaker,
             sak = saksnummer,
             beregnetBeløp = BigDecimal.valueOf(3000),
-        ).copy(vedtaksid = 2)
+        ).copy(vedtaksid = 1)
 
         val vedtakDto = opprettVedtakDtoForLøpendeBidrag(
             skyldner = personIdentBidragspliktig,
@@ -1119,6 +1119,30 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
 
         assertAll(
             { assertThat(resultat.beregninger()).hasSize(2) },
+            {
+                assertThat(
+                    resultat.single { it.kravhaver == Personident(personIdentSøknadsbarn1) }
+                        .periodeListe.single().beregning?.beregnetBeløp,
+                ).isEqualTo(BigDecimal.valueOf(5000))
+            },
+            {
+                assertThat(
+                    resultat.single { it.kravhaver == Personident(personIdentSøknadsbarn1) }
+                        .periodeListe.single().beregning?.samværsklasse,
+                ).isEqualTo(Samværsklasse.SAMVÆRSKLASSE_0)
+            },
+            {
+                assertThat(
+                    resultat.single { it.kravhaver == Personident(personIdentSøknadsbarn2) }
+                        .periodeListe.single().beregning?.beregnetBeløp,
+                ).isEqualTo(BigDecimal.valueOf(3200))
+            },
+            {
+                assertThat(
+                    resultat.single { it.kravhaver == Personident(personIdentSøknadsbarn2) }
+                        .periodeListe.single().beregning?.samværsklasse,
+                ).isEqualTo(Samværsklasse.SAMVÆRSKLASSE_0)
+            },
         )
 
         verify(exactly = 1) { bbmConsumer.hentBeregningForSøknader(any()) }
