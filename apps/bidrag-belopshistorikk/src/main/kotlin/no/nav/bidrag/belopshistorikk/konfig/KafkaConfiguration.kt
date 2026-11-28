@@ -34,7 +34,7 @@ class KafkaConfiguration {
                         "Melding som feilet: $value"
                 }
             }, backoffPolicy)
-        errorHandler.setRetryListeners(KafkaRetryListener())
+//        errorHandler.setRetryListeners(KafkaRetryListener())
         return errorHandler
     }
 }
