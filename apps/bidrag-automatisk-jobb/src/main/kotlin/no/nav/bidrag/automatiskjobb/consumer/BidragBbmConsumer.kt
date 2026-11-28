@@ -4,6 +4,8 @@ import no.nav.bidrag.beregn.barnebidrag.service.external.BeregningBBMConsumer
 import no.nav.bidrag.commons.web.client.AbstractRestClient
 import no.nav.bidrag.transport.behandling.beregning.felles.BidragBeregningRequestDto
 import no.nav.bidrag.transport.behandling.beregning.felles.BidragBeregningResponsDto
+import no.nav.bidrag.transport.behandling.beregning.felles.HentBeregningForSøknaderRequest
+import no.nav.bidrag.transport.behandling.beregning.felles.HentBeregningForSøknaderRespons
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestTemplate
@@ -21,6 +23,10 @@ class BidragBbmConsumer(
     }
 
     override fun hentAlleBeregninger(request: BidragBeregningRequestDto): BidragBeregningResponsDto {
+        TODO("Not yet implemented")
+    }
+
+    override fun hentBeregningForSøknader(request: HentBeregningForSøknaderRequest): HentBeregningForSøknaderRespons {
         TODO("Not yet implemented")
     }
 }

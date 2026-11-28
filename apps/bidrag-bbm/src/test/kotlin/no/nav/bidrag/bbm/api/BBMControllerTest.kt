@@ -20,6 +20,7 @@ import no.nav.bidrag.bbm.utils.SAKSNUMMER_2
 import no.nav.bidrag.bbm.utils.SAKSNUMMER_3
 import no.nav.bidrag.bbm.utils.lageSøknadTestdata
 import no.nav.bidrag.bbm.utils.opprettBlankett
+import no.nav.bidrag.bbm.utils.opprettHendelse
 import no.nav.bidrag.bbm.utils.opprettKodeSøknadStatus
 import no.nav.bidrag.bbm.utils.opprettPeriodeBidrag
 import no.nav.bidrag.bbm.utils.opprettPeriodeBidragKomplett
@@ -36,6 +37,9 @@ import no.nav.bidrag.transport.behandling.beregning.felles.BidragBeregningReques
 import no.nav.bidrag.transport.behandling.beregning.felles.BidragBeregningResponsDto
 import no.nav.bidrag.transport.behandling.beregning.felles.HentBPsÅpneSøknaderRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.HentBPsÅpneSøknaderResponse
+import no.nav.bidrag.transport.behandling.beregning.felles.HentBeregningForSøknad
+import no.nav.bidrag.transport.behandling.beregning.felles.HentBeregningForSøknaderRequest
+import no.nav.bidrag.transport.behandling.beregning.felles.HentBeregningForSøknaderRespons
 import org.junit.jupiter.api.Test
 import org.springframework.core.ParameterizedTypeReference
 import org.springframework.http.HttpEntity
@@ -1013,6 +1017,42 @@ class BBMControllerTest : CommonTestRunner() {
             personidentBarn shouldBe Personident(PERSONIDENT_BARN_2)
             faktiskBeløp shouldBe BigDecimal("1020.00")
             samværsklasse shouldBe Samværsklasse.SAMVÆRSKLASSE_2
+        }
+    }
+
+    @Test
+    fun `Skal hente beregning og vedtakskilde for søknader`() {
+        val søknadsid = testdataManager.lagreSøknadListe(lageSøknadTestdata()).first { it.saksnummer == SAKSNUMMER_1 }.søknadsid!!
+        testdataManager.lagreHendelseListe(listOf(opprettHendelse(søknadsid = søknadsid, fraBbm = '1')))
+        val httpEntity =
+            HttpEntity(
+                HentBeregningForSøknaderRequest(
+                    listOf(
+                        HentBeregningForSøknad(
+                            søknadsid = søknadsid,
+                            saksnummer = SAKSNUMMER_1,
+                            personidentBarn = Personident(PERSONIDENT_BARN_1),
+                            stønadstype = Stønadstype.BIDRAG,
+                        ),
+                    ),
+                ),
+            )
+
+        val response =
+            httpHeaderTestRestTemplate.postForEntity(
+                "$rootUri/api/beregning/soknader",
+                httpEntity,
+                HentBeregningForSøknaderRespons::class.java,
+            )
+
+        assertSoftly(response.body!!.søknadListe.single()) {
+            this.søknadsid shouldBe søknadsid
+            søknadMottattDato shouldBe DATO_SØKNAD_SØKNAD_1
+            erVedtakMedBeregning shouldBe true
+            hendelseFunnet shouldBe true
+            beregningListe shouldHaveSize 1
+            beregningListe.first().periode shouldBe ÅrMånedsperiode(LocalDate.parse("2024-07-01"), null)
+            beregningListe.first().samværsklasse shouldBe Samværsklasse.SAMVÆRSKLASSE_1
         }
     }
 }

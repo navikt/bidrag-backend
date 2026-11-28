@@ -4,15 +4,18 @@ import no.nav.bidrag.bbm.model.konverterTilBisyskode
 import no.nav.bidrag.bbm.persistence.bbm.entity.PeriodeBidrag
 import no.nav.bidrag.bbm.persistence.bbm.entity.Samvær
 import no.nav.bidrag.bbm.persistence.bisys.entity.Blankett
+import no.nav.bidrag.bbm.persistence.bisys.entity.Hendelse
 import no.nav.bidrag.bbm.persistence.bisys.entity.KodeSøknadStatus
 import no.nav.bidrag.bbm.persistence.bisys.entity.Rolle
 import no.nav.bidrag.bbm.persistence.bisys.entity.Søknad
 import no.nav.bidrag.bbm.persistence.bisys.entity.Søknadslinje
+import no.nav.bidrag.domene.enums.behandling.HendelseType
 import no.nav.bidrag.domene.enums.beregning.Samværsklasse
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.generer.testdata.person.genererFødselsnummer
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 val PERSONIDENT_BARN_1 = "12345678910"
 val PERSONIDENT_BARN_2 = "22345678910"
@@ -244,4 +247,20 @@ fun opprettKodeSøknadStatus(
 ) = KodeSøknadStatus(
     kode = kode,
     lukketStatus = lukketStatus,
+)
+
+fun opprettHendelse(
+    søknadsid: Long?,
+    hendelsestype: HendelseType = HendelseType.VEDTAK,
+    fraBbm: Char = '0',
+    opprettetDato: LocalDateTime = LocalDateTime.parse("2024-06-01T12:00:00"),
+    saksnummer: String = SAKSNUMMER_1,
+) = Hendelse(
+    saksnummer = saksnummer,
+    hendelsestype = hendelsestype.kode,
+    opprettetDato = opprettetDato,
+    enhet = "4806",
+    søknadsid = søknadsid,
+    fraBbm = fraBbm,
+    systemOpprettetDato = opprettetDato,
 )

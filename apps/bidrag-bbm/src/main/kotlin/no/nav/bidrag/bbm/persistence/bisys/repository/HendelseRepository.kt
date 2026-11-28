@@ -9,4 +9,12 @@ interface HendelseRepository : CrudRepository<Hendelse, String> {
         "select h from Hendelse h where h.søknadsid = :søknadsid ",
     )
     fun finnHendelserForSøknad(søknadsid: Long): List<Hendelse>
+
+    @Query(
+        "select h from Hendelse h where h.søknadsid in :søknadsider and h.hendelsestype in :hendelsestyper",
+    )
+    fun finnHendelserForSøknader(
+        søknadsider: Collection<Long>,
+        hendelsestyper: Collection<String>,
+    ): List<Hendelse>
 }

@@ -52,8 +52,10 @@ import no.nav.bidrag.transport.behandling.beregning.forskudd.ResultatBeregning
 import no.nav.bidrag.transport.behandling.beregning.forskudd.ResultatPeriode
 import no.nav.bidrag.transport.behandling.beregning.særbidrag.BeregnetSærbidragResultat
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningBarnIHusstand
+import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningSumBidragTilFordeling
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningSumInntekt
 import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
+import no.nav.bidrag.transport.behandling.felles.grunnlag.InnholdMedReferanse
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SivilstandPeriode
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -678,5 +680,69 @@ class BeregningDtoMappingTest {
         val inntekter = grunnlagListe.byggResultatInntekter(listOf("sluttberegning_barn2"), søknadsbarnReferanse = "person_barn2")
 
         inntekter.inntektBarn!!.compareTo(BigDecimal.ZERO) shouldBe 0
+    }
+
+    @Test
+    fun `skal velge sum bidrag til fordeling som overlapper fra slutten er eksklusiv`() {
+        val periodeSeptember = ÅrMånedsperiode("2026-09", "2026-10")
+        val periodeOktober = ÅrMånedsperiode("2026-10", "2026-11")
+        val september =
+            sumBidragTilFordeling(
+                referanse = "sum_bidrag_september",
+                periode = periodeSeptember,
+                sumBidragTilFordeling = 1000,
+            )
+        val oktober =
+            sumBidragTilFordeling(
+                referanse = "sum_bidrag_oktober",
+                periode = periodeOktober,
+                sumBidragTilFordeling = 2000,
+            )
+
+        val resultat = listOf(oktober, september).finnFørsteSomOverlapper(periodeSeptember)
+
+        resultat shouldBe september
+    }
+
+    @Test
+    fun `skal velge periode som overlapper og er løpende selv om forrige slutter på samme periode som sammenlignes starter på samme dato `() {
+        val periode1Btf =
+            sumBidragTilFordeling(
+                referanse = "sum_bidrag_1",
+                periode = ÅrMånedsperiode(YearMonth.of(2026, 9), YearMonth.of(2026, 10)),
+                sumBidragTilFordeling = 1000,
+            )
+        val periode2Btf =
+            sumBidragTilFordeling(
+                referanse = "sum_bidrag_2",
+                periode = ÅrMånedsperiode(YearMonth.of(2026, 10), null),
+                sumBidragTilFordeling = 2000,
+            )
+
+        val resultat = listOf(periode1Btf, periode2Btf).finnFørsteSomOverlapper(ÅrMånedsperiode(YearMonth.of(2026, 10), null))
+
+        resultat shouldBe periode2Btf
+    }
+
+    private fun sumBidragTilFordeling(
+        referanse: String,
+        periode: ÅrMånedsperiode,
+        sumBidragTilFordeling: Int,
+    ): InnholdMedReferanse<DelberegningSumBidragTilFordeling> {
+        val innhold =
+            DelberegningSumBidragTilFordeling(
+                periode = periode,
+                sumBidragTilFordeling = BigDecimal(sumBidragTilFordeling),
+            )
+        return InnholdMedReferanse(
+            referanse = referanse,
+            innhold = innhold,
+            grunnlag =
+            GrunnlagDto(
+                type = Grunnlagstype.DELBEREGNING_SUM_BIDRAG_TIL_FORDELING,
+                referanse = referanse,
+                innhold = POJONode(innhold),
+            ),
+        )
     }
 }

@@ -1069,7 +1069,7 @@ class BidragsberegningOrkestrator(
         val beregningsperiode = request.beregningsperiode
 
         // Henter grunnlag for løpende bidrag
-        val løpendeBidragOgBeregninger = hentLøpendeBidragService.hentLøpendeBidragForBehandling(
+        val løpendeBidragListe = hentLøpendeBidragService.hentLøpendeBidragForBehandling(
             bpIdent = Personident(bidragspliktig.personIdent!!),
             beregningsperiode = beregningsperiode,
             request = request,
@@ -1077,7 +1077,7 @@ class BidragsberegningOrkestrator(
 
         val løpendeBarnFødselsdatoMap = mutableMapOf<Personident, LocalDate?>()
 
-        løpendeBidragOgBeregninger.løpendeBidragListe
+        løpendeBidragListe
             .filterNot { lb ->
                 PersonStønad(
                     ident = lb.kravhaver.verdi,
@@ -1099,14 +1099,14 @@ class BidragsberegningOrkestrator(
             }
 
         // Sjekker om sak for innhentede løpende bidrag er utlandssaker og lager en liste med disse
-        val utlandssakerListe = løpendeBidragOgBeregninger.løpendeBidragListe
+        val utlandssakerListe = løpendeBidragListe
             .distinctBy { it.sak }
             .mapNotNull {
                 val sak = sakConsumer.hentSak(it.sak.toString())
                 if (sak.kategori == Sakskategori.UTLAND) it.sak.toString() else null
             }
 
-        return løpendeBidragOgBeregninger.tilBeregnGrunnlag(
+        return løpendeBidragListe.tilBeregnGrunnlag(
             bpReferanse = bidragspliktig.referanse,
             søknadsbarnListe = søknadsbarnListe,
             løpendeBarnFødselsdatoMap = løpendeBarnFødselsdatoMap,

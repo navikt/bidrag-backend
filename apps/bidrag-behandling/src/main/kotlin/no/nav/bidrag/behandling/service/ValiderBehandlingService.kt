@@ -4,9 +4,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.behandling.config.UnleashFeatures
 import no.nav.bidrag.behandling.consumer.BidragBeløpshistorikkConsumer
 import no.nav.bidrag.behandling.consumer.BidragSakConsumer
-import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.minified.BehandlingSimple
-import no.nav.bidrag.behandling.database.repository.BehandlingRepository
 import no.nav.bidrag.behandling.dto.v2.behandling.KanBehandlesINyLøsningRequest
 import no.nav.bidrag.behandling.dto.v2.behandling.KanBehandlesINyLøsningResponse
 import no.nav.bidrag.behandling.dto.v2.behandling.tilType
@@ -15,7 +13,6 @@ import no.nav.bidrag.behandling.transformers.behandling.kanFatteVedtakBegrunnels
 import no.nav.bidrag.behandling.transformers.behandling.tilKanBehandlesINyLøsningRequest
 import no.nav.bidrag.behandling.transformers.behandling.toSimple
 import no.nav.bidrag.behandling.transformers.erBidrag
-import no.nav.bidrag.behandling.transformers.tilType
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.behandling.Behandlingstype
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
@@ -61,11 +58,11 @@ class ValiderBehandlingService(
     private fun kanSærbidragBehandlesINyLøsning(request: KanBehandlesINyLøsningRequest): String? {
         val bpIdent = request.roller.find { it.rolletype == Rolletype.BIDRAGSPLIKTIG }?.ident ?: return "Saken mangler bidragspliktig"
         val løpendeBidrag = bidragBeløpshistorikkConsumer.hentLøpendeBidrag(LøpendeBidragssakerRequest(skyldner = bpIdent))
-        val harLøpendeBidragUtenlandskValuta =
-            løpendeBidrag.bidragssakerListe.all {
-                it.valutakode == "NOK" || it.valutakode.isEmpty()
+        val harLøpendeBidragMedUtenlandskValuta =
+            løpendeBidrag.bidragssakerListe.any {
+                it.valutakode.isNotEmpty() && it.valutakode != "NOK"
             }
-        return if (!harLøpendeBidragUtenlandskValuta) "Bidragspliktig har løpende bidrag i utenlandsk valuta" else null
+        return if (harLøpendeBidragMedUtenlandskValuta && !UnleashFeatures.FATTE_VEDTAK_SÆRBIDRAG_UTENLANDSK_VALUTA.isEnabled) "Bidragspliktig har løpende bidrag i utenlandsk valuta" else null
     }
 
     private fun kanBidragBehandlesINyLøsning(request: KanBehandlesINyLøsningRequest): String? = kanBidragV1BehandlesINyLøsning(request)

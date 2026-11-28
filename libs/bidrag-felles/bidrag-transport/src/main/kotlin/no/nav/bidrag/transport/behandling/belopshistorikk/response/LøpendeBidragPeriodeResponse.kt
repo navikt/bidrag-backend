@@ -30,6 +30,8 @@ data class LøpendeBidrag(
 data class BidragPeriode(
     @param:Schema(description = "Periode for bidrag")
     val periode: ÅrMånedsperiode,
+    @param:Schema(description = "Vedtaksid som gjelder for perioden")
+    val vedtaksid: Int? = null,
     @param:Schema(description = "Løpende beløp i stønaden for periode")
     val løpendeBeløp: BigDecimal,
     @param:Schema(description = "Valutakode")

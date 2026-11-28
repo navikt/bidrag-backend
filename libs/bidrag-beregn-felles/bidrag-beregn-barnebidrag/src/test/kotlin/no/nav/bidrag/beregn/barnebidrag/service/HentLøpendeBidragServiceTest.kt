@@ -7,11 +7,13 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import no.nav.bidrag.beregn.barnebidrag.felles.FellesTest
+import no.nav.bidrag.beregn.barnebidrag.service.external.BeregningBBMConsumer
 import no.nav.bidrag.beregn.barnebidrag.service.external.BeregningPersonConsumer
 import no.nav.bidrag.beregn.barnebidrag.service.external.BeregningVedtakConsumer
 import no.nav.bidrag.beregn.barnebidrag.service.external.VedtakService
 import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.HentLøpendeBidragService
-import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.LøpendeBidragOgBeregninger
+import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.LøpendeBidragMedBeregning
+import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.LøpendeBidragPeriodeMedBeregning
 import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.filtrerVedtakMotBeregningsperiode
 import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.tilBeregnGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.testdata.hentVedtak3
@@ -59,7 +61,11 @@ import no.nav.bidrag.transport.behandling.belopshistorikk.response.LøpendeBidra
 import no.nav.bidrag.transport.behandling.belopshistorikk.response.LøpendeBidragPeriodeResponse
 import no.nav.bidrag.transport.behandling.beregning.barnebidrag.BeregningGrunnlagV2
 import no.nav.bidrag.transport.behandling.beregning.barnebidrag.BidragsberegningOrkestratorRequestV2
+import no.nav.bidrag.transport.behandling.beregning.felles.BeregningForSøknad
 import no.nav.bidrag.transport.behandling.beregning.felles.BidragBeregningResponsDto
+import no.nav.bidrag.transport.behandling.beregning.felles.HentBeregningForSøknad
+import no.nav.bidrag.transport.behandling.beregning.felles.HentBeregningForSøknaderRequest
+import no.nav.bidrag.transport.behandling.beregning.felles.HentBeregningForSøknaderRespons
 import no.nav.bidrag.transport.behandling.felles.grunnlag.LøpendeBidragPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåEgenReferanse
 import no.nav.bidrag.transport.behandling.vedtak.request.HentManuelleVedtakRequest
@@ -79,6 +85,7 @@ import java.time.YearMonth
 
 internal class HentLøpendeBidragServiceTest : FellesTest() {
     private lateinit var vedtakService: VedtakService
+    private lateinit var bbmConsumer: BeregningBBMConsumer
     private lateinit var hentLøpendeBidragService: HentLøpendeBidragService
     private lateinit var personConsumer: BeregningPersonConsumer
     private lateinit var vedtakFilter: Vedtaksfiltrering
@@ -87,7 +94,8 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
     @BeforeEach
     fun setup() {
         vedtakService = mockk()
-        hentLøpendeBidragService = HentLøpendeBidragService(vedtakService)
+        bbmConsumer = mockk()
+        hentLøpendeBidragService = HentLøpendeBidragService(vedtakService, bbmConsumer)
         personConsumer = mockk()
         vedtakFilter = mockk()
         vedtakConsumer = mockk()
@@ -157,9 +165,9 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
 
         assertAll(
             { assertThat(resultat).isNotNull() },
-            { assertThat(resultat.løpendeBidragListe).hasSize(1) },
-            { assertThat(resultat.løpendeBidragListe[0].sak).isEqualTo(Saksnummer(saksnummer)) },
-            { assertThat(resultat.beregnetBeløpListe.beregningListe).isEmpty() },
+            { assertThat(resultat).hasSize(1) },
+            { assertThat(resultat[0].sak).isEqualTo(Saksnummer(saksnummer)) },
+            { assertThat(resultat.beregninger()).isEmpty() },
         )
 
         verify { vedtakService.hentAlleStønaderForBidragspliktig(any()) }
@@ -173,6 +181,7 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
 
         val bidragPeriode = BidragPeriode(
             periode = ÅrMånedsperiode(LocalDate.of(2024, 7, 1), LocalDate.of(2024, 12, 1)),
+            vedtaksid = 1,
             løpendeBeløp = BigDecimal.valueOf(5160),
             valutakode = "NOK",
         )
@@ -205,9 +214,7 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
             vedtakService.finnAlleManuelleVedtakForBp(any())
         } returns listOf(vedtakForStønad)
 
-        every {
-            vedtakService.hentAlleBeregningerFraBBM(any())
-        } returns BidragBeregningResponsDto(beregningRespons)
+        mockBeregningerFraBBM(beregningRespons)
 
         val søknadsbarn1Referanse = "person_PERSON_SØKNADSBARN_$personIdentSøknadsbarn1"
 
@@ -242,12 +249,12 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
 
         assertAll(
             { assertThat(resultat).isNotNull() },
-            { assertThat(resultat.løpendeBidragListe).hasSize(1) },
-            { assertThat(resultat.beregnetBeløpListe.beregningListe).hasSize(1) },
-            { assertThat(resultat.beregnetBeløpListe.beregningListe[0].beregnetBeløp).isEqualTo(BigDecimal.valueOf(5160)) },
+            { assertThat(resultat).hasSize(1) },
+            { assertThat(resultat.beregninger()).hasSize(1) },
+            { assertThat(resultat.beregninger()[0].beregnetBeløp).isEqualTo(BigDecimal.valueOf(5160)) },
         )
 
-        verify { vedtakService.hentAlleBeregningerFraBBM(any()) }
+        verify { bbmConsumer.hentBeregningForSøknader(any()) }
     }
 
     @Test
@@ -268,6 +275,7 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
             periodeListe = listOf(
                 BidragPeriode(
                     periode = ÅrMånedsperiode(LocalDate.of(2024, 5, 1), null),
+                    vedtaksid = 1,
                     løpendeBeløp = beregnetBeløp,
                     valutakode = "NOK",
                 ),
@@ -336,14 +344,14 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
 
         assertAll(
             { assertThat(resultat).isNotNull() },
-            { assertThat(resultat.løpendeBidragListe).hasSize(1) },
-            { assertThat(resultat.beregnetBeløpListe.beregningListe).hasSize(1) },
-            { assertThat(resultat.beregnetBeløpListe.beregningListe[0].beregnetBeløp).isEqualTo(beregnetBeløp) },
-            { assertThat(resultat.beregnetBeløpListe.beregningListe[0].faktiskBeløp).isEqualTo(resultatBeløp) },
-            { assertThat(resultat.beregnetBeløpListe.beregningListe[0].samværsklasse).isEqualTo(Samværsklasse.SAMVÆRSKLASSE_0) },
-            { assertThat(resultat.beregnetBeløpListe.beregningListe[0].bruttoBidragEtterBarnetilleggBM).isEqualTo(bruttoBidragEtterBarnetilleggBM) },
-            { assertThat(resultat.beregnetBeløpListe.beregningListe[0].bruttoBidragEtterBarnetilleggBP).isEqualTo(bruttoBidragEtterBarnetilleggBP) },
-            { assertThat(resultat.beregnetBeløpListe.beregningListe[0].erVedtakKildeBBM).isFalse },
+            { assertThat(resultat).hasSize(1) },
+            { assertThat(resultat.beregninger()).hasSize(1) },
+            { assertThat(resultat.beregninger()[0].beregnetBeløp).isEqualTo(beregnetBeløp) },
+            { assertThat(resultat.beregninger()[0].faktiskBeløp).isEqualTo(resultatBeløp) },
+            { assertThat(resultat.beregninger()[0].samværsklasse).isEqualTo(Samværsklasse.SAMVÆRSKLASSE_0) },
+            { assertThat(resultat.beregninger()[0].bruttoBidragEtterBarnetilleggBM).isEqualTo(bruttoBidragEtterBarnetilleggBM) },
+            { assertThat(resultat.beregninger()[0].bruttoBidragEtterBarnetilleggBP).isEqualTo(bruttoBidragEtterBarnetilleggBP) },
+            { assertThat(resultat.beregninger()[0].erVedtakKildeBBM).isFalse },
         )
 
         verify { vedtakService.hentVedtak(vedtakForStønad.vedtaksid) }
@@ -420,9 +428,9 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
 
         assertAll(
             { assertThat(resultat).isNotNull() },
-            { assertThat(resultat.løpendeBidragListe).hasSize(1) },
-            { assertThat(resultat.løpendeBidragListe[0].periodeListe).hasSize(1) },
-            { assertThat(resultat.løpendeBidragListe[0].periodeListe[0].periode.fom).isEqualTo(YearMonth.of(2024, 6)) },
+            { assertThat(resultat).hasSize(1) },
+            { assertThat(resultat[0].periodeListe).hasSize(1) },
+            { assertThat(resultat[0].periodeListe[0].periode.fom).isEqualTo(YearMonth.of(2024, 6)) },
         )
     }
 
@@ -469,8 +477,8 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
 
         assertAll(
             { assertThat(resultat).isNotNull() },
-            { assertThat(resultat.løpendeBidragListe).isEmpty() },
-            { assertThat(resultat.beregnetBeløpListe.beregningListe).isEmpty() },
+            { assertThat(resultat).isEmpty() },
+            { assertThat(resultat.beregninger()).isEmpty() },
         )
     }
 
@@ -611,10 +619,22 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
             ),
         )
 
-        val løpendeBidragOgBeregninger = LøpendeBidragOgBeregninger(
-            beregnetBeløpListe = BidragBeregningResponsDto(beregninger),
-            løpendeBidragListe = løpendeBidragListe,
-        )
+        val løpendeBidragMedBeregningListe = løpendeBidragListe.map { løpendeBidrag ->
+            LøpendeBidragMedBeregning(
+                sak = løpendeBidrag.sak,
+                type = løpendeBidrag.type,
+                kravhaver = løpendeBidrag.kravhaver,
+                mottaker = løpendeBidrag.mottaker,
+                periodeListe = løpendeBidrag.periodeListe.map { periode ->
+                    LøpendeBidragPeriodeMedBeregning(
+                        periode = periode.periode,
+                        løpendeBeløp = periode.løpendeBeløp,
+                        valutakode = periode.valutakode,
+                        beregning = beregninger.first { it.personidentBarn == løpendeBidrag.kravhaver },
+                    )
+                },
+            )
+        }
 
         val beregningBarnListe = listOf(
             BeregningGrunnlagV2(
@@ -647,7 +667,7 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
 
         )
 
-        val resultat = løpendeBidragOgBeregninger.tilBeregnGrunnlag(
+        val resultat = løpendeBidragMedBeregningListe.tilBeregnGrunnlag(
             bpReferanse = bpReferanse,
             søknadsbarnListe = søknadsbarnListe,
             løpendeBarnFødselsdatoMap = løpendeBarnFødselsdatoMap,
@@ -677,6 +697,7 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
             periodeListe = listOf(
                 BidragPeriode(
                     periode = ÅrMånedsperiode(LocalDate.of(2024, 7, 1), null),
+                    vedtaksid = 1,
                     løpendeBeløp = BigDecimal.valueOf(5000),
                     valutakode = "NOK",
                 ),
@@ -703,9 +724,7 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
             vedtakService.finnAlleManuelleVedtakForBp(any())
         } returns listOf(vedtakForStønad)
 
-        every {
-            vedtakService.hentAlleBeregningerFraBBM(any())
-        } returns BidragBeregningResponsDto(beregningRespons)
+        mockBeregningerFraBBM(beregningRespons)
 
         val søknadsbarn1Referanse = "person_PERSON_SØKNADSBARN_$personIdentSøknadsbarn1"
 
@@ -739,14 +758,14 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
         )
 
         assertAll(
-            { assertThat(resultat.beregnetBeløpListe.beregningListe).hasSize(1) },
-            { assertThat(resultat.beregnetBeløpListe.beregningListe[0].beregnetBeløp).isEqualTo(BigDecimal.valueOf(5000)) },
-            { assertThat(resultat.beregnetBeløpListe.beregningListe[0].faktiskBeløp).isEqualTo(BigDecimal.valueOf(4500)) },
-            { assertThat(resultat.beregnetBeløpListe.beregningListe[0].beløpSamvær).isEqualTo(BigDecimal.ZERO) },
-            { assertThat(resultat.beregnetBeløpListe.beregningListe[0].samværsklasse).isEqualTo(Samværsklasse.SAMVÆRSKLASSE_0) },
+            { assertThat(resultat.beregninger()).hasSize(1) },
+            { assertThat(resultat.beregninger()[0].beregnetBeløp).isEqualTo(BigDecimal.valueOf(5000)) },
+            { assertThat(resultat.beregninger()[0].faktiskBeløp).isEqualTo(BigDecimal.valueOf(4500)) },
+            { assertThat(resultat.beregninger()[0].beløpSamvær).isEqualTo(BigDecimal.ZERO) },
+            { assertThat(resultat.beregninger()[0].samværsklasse).isEqualTo(Samværsklasse.SAMVÆRSKLASSE_0) },
         )
 
-        verify(exactly = 1) { vedtakService.hentAlleBeregningerFraBBM(any()) }
+        verify(exactly = 1) { bbmConsumer.hentBeregningForSøknader(any()) }
         verify(exactly = 0) { vedtakService.hentVedtak(any()) }
     }
 
@@ -766,6 +785,7 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
             periodeListe = listOf(
                 BidragPeriode(
                     periode = ÅrMånedsperiode(LocalDate.of(2024, 7, 1), null),
+                    vedtaksid = 1,
                     løpendeBeløp = beregnetBeløp,
                     valutakode = "NOK",
                 ),
@@ -833,13 +853,13 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
         )
 
         assertAll(
-            { assertThat(resultat.beregnetBeløpListe.beregningListe).hasSize(1) },
-            { assertThat(resultat.beregnetBeløpListe.beregningListe[0].beregnetBeløp).isEqualTo(beregnetBeløp) },
-            { assertThat(resultat.beregnetBeløpListe.beregningListe[0].faktiskBeløp).isEqualTo(resultatBeløp) },
+            { assertThat(resultat.beregninger()).hasSize(1) },
+            { assertThat(resultat.beregninger()[0].beregnetBeløp).isEqualTo(beregnetBeløp) },
+            { assertThat(resultat.beregninger()[0].faktiskBeløp).isEqualTo(resultatBeløp) },
         )
 
         verify(exactly = 1) { vedtakService.hentVedtak(vedtakForStønad.vedtaksid) }
-        verify(exactly = 0) { vedtakService.hentAlleBeregningerFraBBM(any()) }
+        verify(exactly = 0) { bbmConsumer.hentBeregningForSøknader(any()) }
     }
 
     @Test
@@ -902,10 +922,10 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
         )
 
         assertAll(
-            { assertThat(resultat.beregnetBeløpListe.beregningListe).isEmpty() },
+            { assertThat(resultat.beregninger()).isEmpty() },
         )
 
-        verify(exactly = 0) { vedtakService.hentAlleBeregningerFraBBM(any()) }
+        verify(exactly = 0) { bbmConsumer.hentBeregningForSøknader(any()) }
         verify(exactly = 0) { vedtakService.hentVedtak(any()) }
     }
 
@@ -923,6 +943,7 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
             periodeListe = listOf(
                 BidragPeriode(
                     periode = ÅrMånedsperiode(LocalDate.of(2024, 7, 1), null),
+                    vedtaksid = 1,
                     løpendeBeløp = BigDecimal.valueOf(5000),
                     valutakode = "NOK",
                 ),
@@ -981,7 +1002,7 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
         )
 
         assertAll(
-            { assertThat(resultat.beregnetBeløpListe.beregningListe).isEmpty() },
+            { assertThat(resultat.beregninger()).isEmpty() },
         )
     }
 
@@ -1000,6 +1021,7 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
                 periodeListe = listOf(
                     BidragPeriode(
                         periode = ÅrMånedsperiode(LocalDate.of(2024, 7, 1), null),
+                        vedtaksid = 1,
                         løpendeBeløp = BigDecimal.valueOf(5000),
                         valutakode = "NOK",
                     ),
@@ -1013,6 +1035,7 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
                 periodeListe = listOf(
                     BidragPeriode(
                         periode = ÅrMånedsperiode(LocalDate.of(2024, 7, 1), null),
+                        vedtaksid = 1,
                         løpendeBeløp = BigDecimal.valueOf(3000),
                         valutakode = "NOK",
                     ),
@@ -1031,7 +1054,7 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
             mottaker = personIdentBidragsmottaker,
             sak = saksnummer,
             beregnetBeløp = BigDecimal.valueOf(3000),
-        )
+        ).copy(vedtaksid = 1)
 
         val vedtakDto = opprettVedtakDtoForLøpendeBidrag(
             skyldner = personIdentBidragspliktig,
@@ -1057,9 +1080,7 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
             vedtakService.finnAlleManuelleVedtakForBp(any())
         } returns listOf(vedtakForStønadFraBBM, vedtakForStønadFraBidragVedtak)
 
-        every {
-            vedtakService.hentAlleBeregningerFraBBM(any())
-        } returns BidragBeregningResponsDto(beregningResponsFraBBM)
+        mockBeregningerFraBBM(beregningResponsFraBBM)
 
         every {
             vedtakService.hentVedtak(vedtakForStønadFraBidragVedtak.vedtaksid)
@@ -1097,10 +1118,34 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
         )
 
         assertAll(
-            { assertThat(resultat.beregnetBeløpListe.beregningListe).hasSize(2) },
+            { assertThat(resultat.beregninger()).hasSize(2) },
+            {
+                assertThat(
+                    resultat.single { it.kravhaver == Personident(personIdentSøknadsbarn1) }
+                        .periodeListe.single().beregning?.beregnetBeløp,
+                ).isEqualTo(BigDecimal.valueOf(5000))
+            },
+            {
+                assertThat(
+                    resultat.single { it.kravhaver == Personident(personIdentSøknadsbarn1) }
+                        .periodeListe.single().beregning?.samværsklasse,
+                ).isEqualTo(Samværsklasse.SAMVÆRSKLASSE_0)
+            },
+            {
+                assertThat(
+                    resultat.single { it.kravhaver == Personident(personIdentSøknadsbarn2) }
+                        .periodeListe.single().beregning?.beregnetBeløp,
+                ).isEqualTo(BigDecimal.valueOf(3200))
+            },
+            {
+                assertThat(
+                    resultat.single { it.kravhaver == Personident(personIdentSøknadsbarn2) }
+                        .periodeListe.single().beregning?.samværsklasse,
+                ).isEqualTo(Samværsklasse.SAMVÆRSKLASSE_0)
+            },
         )
 
-        verify(exactly = 1) { vedtakService.hentAlleBeregningerFraBBM(any()) }
+        verify(exactly = 1) { bbmConsumer.hentBeregningForSøknader(any()) }
         verify(exactly = 1) { vedtakService.hentVedtak(any()) }
     }
 
@@ -1126,9 +1171,7 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
             )
         } returns opprettFlereVedtakBBMOgBehandlingBarn1() + opprettFlereVedtakBBMOgBehandlingBarn2() + opprettFlereVedtakBBMOgBehandlingBarn3()
 
-        every {
-            vedtakService.hentAlleBeregningerFraBBM(any())
-        } returns BidragBeregningResponsDto(opprettBeregningResponsBBM())
+        mockBeregningerFraBBM(opprettBeregningResponsBBM())
 
         every {
             vedtakService.hentVedtak(vedtaksId = 3)
@@ -1172,13 +1215,13 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
             ) + opprettGrunnlagobjektForBidragspliktig(personIdentBidragspliktig),
         )
 
-        val løpendeBidragOgBeregninger = hentLøpendeBidragService.hentLøpendeBidragForBehandling(
+        val løpendeBidragMedBeregningListe = hentLøpendeBidragService.hentLøpendeBidragForBehandling(
             bidragspliktigIdent,
             beregningsperiode,
             bidragberegningOrkestratorRequestV2,
         )
 
-        val resultatGrunnlagsobjekter = løpendeBidragOgBeregninger.tilBeregnGrunnlag(
+        val resultatGrunnlagsobjekter = løpendeBidragMedBeregningListe.tilBeregnGrunnlag(
             bpReferanse = "bPReferanse",
             søknadsbarnListe = listOf(
                 PersonStønad(personIdentSøknadsbarn1, Stønadstype.BIDRAG),
@@ -1280,6 +1323,7 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
                 periodeListe = listOf(
                     BidragPeriode(
                         periode = ÅrMånedsperiode(YearMonth.of(2024, 5), null),
+                        vedtaksid = 3,
                         løpendeBeløp = BigDecimal.valueOf(32450),
                         valutakode = "NOK",
                     ),
@@ -1370,13 +1414,13 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
             ) + opprettGrunnlagobjektForBidragspliktig(personIdentBidragspliktig),
         )
 
-        val løpendeBidragOgBeregninger = hentLøpendeBidragService.hentLøpendeBidragForBehandling(
+        val løpendeBidragMedBeregningListe = hentLøpendeBidragService.hentLøpendeBidragForBehandling(
             bidragspliktigIdent,
             beregningsperiode,
             bidragberegningOrkestratorRequestV2,
         )
 
-        val resultatGrunnlagsobjekter = løpendeBidragOgBeregninger.tilBeregnGrunnlag(
+        val resultatGrunnlagsobjekter = løpendeBidragMedBeregningListe.tilBeregnGrunnlag(
             bpReferanse = "bPReferanse",
             søknadsbarnListe = listOf(
                 PersonStønad(ident = personIdentSøknadsbarn1, stønadstype = Stønadstype.BIDRAG),
@@ -1432,6 +1476,7 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
                 periodeListe = listOf(
                     BidragPeriode(
                         periode = ÅrMånedsperiode(YearMonth.of(2024, 5), null),
+                        vedtaksid = 3,
                         løpendeBeløp = BigDecimal.valueOf(32450),
                         valutakode = "NOK",
                     ),
@@ -1522,13 +1567,13 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
             ) + opprettGrunnlagobjektForBidragspliktig(personIdentBidragspliktig),
         )
 
-        val løpendeBidragOgBeregninger = hentLøpendeBidragService.hentLøpendeBidragForBehandling(
+        val løpendeBidragMedBeregningListe = hentLøpendeBidragService.hentLøpendeBidragForBehandling(
             bidragspliktigIdent,
             beregningsperiode,
             bidragberegningOrkestratorRequestV2,
         )
 
-        val resultatGrunnlagsobjekter = løpendeBidragOgBeregninger.tilBeregnGrunnlag(
+        val resultatGrunnlagsobjekter = løpendeBidragMedBeregningListe.tilBeregnGrunnlag(
             bpReferanse = "bPReferanse",
             søknadsbarnListe = listOf(
                 PersonStønad(ident = personIdentSøknadsbarn1, stønadstype = Stønadstype.BIDRAG),
@@ -1754,15 +1799,15 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
             ) + opprettGrunnlagobjektForBidragspliktig(personIdentBidragspliktig),
         )
 
-        val løpendeBidragOgBeregninger = hentLøpendeBidragService.hentLøpendeBidragForBehandling(
+        val løpendeBidragMedBeregningListe = hentLøpendeBidragService.hentLøpendeBidragForBehandling(
             bidragspliktigIdent,
             beregningsperiode,
             bidragberegningOrkestratorRequestV2,
         )
 
         assertAll(
-            { assertThat(løpendeBidragOgBeregninger.løpendeBidragListe).hasSize(1) },
-            { assertThat(løpendeBidragOgBeregninger.løpendeBidragListe.first().kravhaver.verdi).isEqualTo(personIdentAnnetbarn) },
+            { assertThat(løpendeBidragMedBeregningListe).hasSize(1) },
+            { assertThat(løpendeBidragMedBeregningListe.first().kravhaver.verdi).isEqualTo(personIdentAnnetbarn) },
         )
     }
 
@@ -1787,9 +1832,7 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
             )
         } returns opprettVedtakOppfostringBarn1() + opprettVedtakUtlandBarn2()
 
-        every {
-            vedtakService.hentAlleBeregningerFraBBM(any())
-        } returns BidragBeregningResponsDto(emptyList())
+        mockBeregningerFraBBM(emptyList())
 
         val beregningBarnListe = listOf(
             BeregningGrunnlagV2(
@@ -1814,13 +1857,13 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
             ) + opprettGrunnlagobjektForBidragspliktig(personIdentBidragspliktig),
         )
 
-        val løpendeBidragOgBeregninger = hentLøpendeBidragService.hentLøpendeBidragForBehandling(
+        val løpendeBidragMedBeregningListe = hentLøpendeBidragService.hentLøpendeBidragForBehandling(
             bidragspliktigIdent,
             beregningsperiode,
             bidragberegningOrkestratorRequestV2,
         )
 
-        val resultatGrunnlagsobjekter = løpendeBidragOgBeregninger.tilBeregnGrunnlag(
+        val resultatGrunnlagsobjekter = løpendeBidragMedBeregningListe.tilBeregnGrunnlag(
             bpReferanse = "bPReferanse",
             søknadsbarnListe = listOf(
                 PersonStønad(ident = personIdentSøknadsbarn1, stønadstype = Stønadstype.BIDRAG),
@@ -1882,6 +1925,7 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
 
         val bidragPeriode = BidragPeriode(
             periode = ÅrMånedsperiode(LocalDate.of(2024, 7, 1), LocalDate.of(2024, 12, 1)),
+            vedtaksid = 1,
             løpendeBeløp = BigDecimal.valueOf(5160),
             valutakode = "NOK",
         )
@@ -1920,9 +1964,7 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
             vedtakService.finnAlleManuelleVedtakForBp(any())
         } returns listOf(vedtakForStønad, vedtakForStønad2)
 
-        every {
-            vedtakService.hentAlleBeregningerFraBBM(any())
-        } returns BidragBeregningResponsDto(beregningRespons)
+        mockBeregningerFraBBM(beregningRespons)
 
         val søknadsbarn1Referanse = "person_PERSON_SØKNADSBARN_$personIdentSøknadsbarn1"
 
@@ -1957,11 +1999,268 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
 
         assertAll(
             { assertThat(resultat).isNotNull() },
-            { assertThat(resultat.løpendeBidragListe).hasSize(1) },
-            { assertThat(resultat.beregnetBeløpListe.beregningListe).hasSize(1) },
-            { assertThat(resultat.beregnetBeløpListe.beregningListe[0].beregnetBeløp).isEqualTo(BigDecimal.valueOf(5160)) },
+            { assertThat(resultat).hasSize(1) },
+            { assertThat(resultat.beregninger()).hasSize(1) },
+            { assertThat(resultat.beregninger()[0].beregnetBeløp).isEqualTo(BigDecimal.valueOf(5160)) },
         )
 
-        verify { vedtakService.hentAlleBeregningerFraBBM(any()) }
+        verify { bbmConsumer.hentBeregningForSøknader(any()) }
+    }
+
+    @Test
+    @Suppress("NonAsciiCharacters")
+    fun `skal filtrere bort manuelt vedtak når siste vedtakshendelse i BBM ikke har beregning`() {
+        mockBeregningerFraBBM(
+            opprettBidragBeregningResponsDto(
+                kravhaver = personIdentSøknadsbarn1,
+                sak = saksnummer,
+                beregnetBeløp = BigDecimal.valueOf(5000),
+                faktiskBeløp = BigDecimal.valueOf(4500),
+            ),
+            erVedtakMedBeregning = { false },
+        )
+
+        val resultat = hentLøpendeBidrag(
+            løpendeBidragListe = listOf(opprettLøpendeBidragForBarn(personIdentSøknadsbarn1, ÅrMånedsperiode(YearMonth.of(2024, 7), null))),
+            vedtakListe = listOf(opprettVedtakForStønad(kravhaver = personIdentSøknadsbarn1, stønadstype = Stønadstype.BIDRAG)),
+        )
+
+        resultat shouldHaveSize 1
+        resultat[0].periodeListe shouldHaveSize 1
+        resultat[0].periodeListe[0].beregning shouldBe null
+        verify(exactly = 1) { bbmConsumer.hentBeregningForSøknader(any()) }
+    }
+
+    @Test
+    @Suppress("NonAsciiCharacters")
+    fun `skal beholde manuelt vedtak når søknad eller vedtakshendelse ikke finnes i BBM`() {
+        mockBeregningerFraBBM(
+            opprettBidragBeregningResponsDto(
+                kravhaver = personIdentSøknadsbarn1,
+                sak = saksnummer,
+                beregnetBeløp = BigDecimal.valueOf(5000),
+                faktiskBeløp = BigDecimal.valueOf(4500),
+            ),
+            erVedtakMedBeregning = { false },
+            hendelseFunnet = { false },
+        )
+
+        val resultat = hentLøpendeBidrag(
+            løpendeBidragListe = listOf(opprettLøpendeBidragForBarn(personIdentSøknadsbarn1, ÅrMånedsperiode(YearMonth.of(2024, 7), null))),
+            vedtakListe = listOf(opprettVedtakForStønad(kravhaver = personIdentSøknadsbarn1, stønadstype = Stønadstype.BIDRAG)),
+        )
+
+        resultat shouldHaveSize 1
+        resultat[0].periodeListe[0].beregning?.beregnetBeløp shouldBe BigDecimal.valueOf(5000)
+        resultat[0].periodeListe[0].beregning?.faktiskBeløp shouldBe BigDecimal.valueOf(4500)
+    }
+
+    @Test
+    @Suppress("NonAsciiCharacters")
+    fun `skal ikke bruke beregning fra et annet søknadsdato for samme vedtak`() {
+        mockBeregningerFraBBM(
+            opprettBidragBeregningResponsDto(
+                kravhaver = personIdentSøknadsbarn1,
+                sak = saksnummer,
+                beregnetBeløp = BigDecimal.valueOf(5000),
+                faktiskBeløp = BigDecimal.valueOf(4500),
+            ),
+            datoSøknadIBeregning = SØKNAD_MOTTATT_DATO.minusDays(1),
+        )
+
+        val resultat = hentLøpendeBidrag(
+            løpendeBidragListe = listOf(opprettLøpendeBidragForBarn(personIdentSøknadsbarn1, ÅrMånedsperiode(YearMonth.of(2024, 7), null))),
+            vedtakListe = listOf(opprettVedtakForStønad(kravhaver = personIdentSøknadsbarn1, stønadstype = Stønadstype.BIDRAG)),
+        )
+
+        resultat.single().periodeListe.single().beregning shouldBe null
+    }
+
+    @Test
+    @Suppress("NonAsciiCharacters")
+    fun `skal koble vedtakets beregningsperioder til løpende bidrag etter mottatt dato`() {
+        mockBeregningerFraBBM(
+            opprettBidragBeregningResponsDto(
+                periode = ÅrMånedsperiode(YearMonth.of(2024, 7), YearMonth.of(2024, 9)),
+                kravhaver = personIdentSøknadsbarn1,
+                sak = saksnummer,
+                beregnetBeløp = BigDecimal.valueOf(5000),
+                faktiskBeløp = BigDecimal.valueOf(5000),
+            ) + opprettBidragBeregningResponsDto(
+                periode = ÅrMånedsperiode(YearMonth.of(2024, 9), null),
+                kravhaver = personIdentSøknadsbarn1,
+                sak = saksnummer,
+                beregnetBeløp = BigDecimal.valueOf(6000),
+                faktiskBeløp = BigDecimal.valueOf(6000),
+            ),
+        )
+
+        val resultat = hentLøpendeBidrag(
+            løpendeBidragListe = listOf(
+                opprettLøpendeBidragForBarn(
+                    personIdentSøknadsbarn1,
+                    ÅrMånedsperiode(YearMonth.of(2024, 7), YearMonth.of(2024, 9)),
+                    ÅrMånedsperiode(YearMonth.of(2024, 9), null),
+                ),
+            ),
+            vedtakListe = listOf(opprettVedtakForStønad(kravhaver = personIdentSøknadsbarn1, stønadstype = Stønadstype.BIDRAG)),
+        )
+
+        val periodeListe = resultat.single().periodeListe
+        periodeListe shouldHaveSize 2
+        periodeListe[0].periode.fom shouldBe YearMonth.of(2024, 7)
+        periodeListe[0].beregning?.beregnetBeløp shouldBe BigDecimal.valueOf(5000)
+        periodeListe[1].periode.fom shouldBe YearMonth.of(2024, 9)
+        periodeListe[1].beregning?.beregnetBeløp shouldBe BigDecimal.valueOf(6000)
+    }
+
+    @Test
+    @Suppress("NonAsciiCharacters")
+    fun `skal bruke nyeste beregning for samme stønad når ingen beregning gjaldt ved periodens start`() {
+        mockBeregningerFraBBM(
+            opprettBidragBeregningResponsDto(
+                periode = ÅrMånedsperiode(YearMonth.of(2024, 9), YearMonth.of(2024, 11)),
+                kravhaver = personIdentSøknadsbarn1,
+                sak = saksnummer,
+                beregnetBeløp = BigDecimal.valueOf(5000),
+                faktiskBeløp = BigDecimal.valueOf(5000),
+            ) + opprettBidragBeregningResponsDto(
+                periode = ÅrMånedsperiode(YearMonth.of(2024, 11), null),
+                kravhaver = personIdentSøknadsbarn1,
+                sak = saksnummer,
+                beregnetBeløp = BigDecimal.valueOf(6000),
+                faktiskBeløp = BigDecimal.valueOf(6000),
+            ),
+        )
+
+        val resultat = hentLøpendeBidrag(
+            løpendeBidragListe = listOf(opprettLøpendeBidragForBarn(personIdentSøknadsbarn1, ÅrMånedsperiode(YearMonth.of(2024, 7), YearMonth.of(2024, 9)))),
+            vedtakListe = listOf(opprettVedtakForStønad(kravhaver = personIdentSøknadsbarn1, stønadstype = Stønadstype.BIDRAG)),
+        )
+
+        resultat.single().periodeListe.single().beregning?.beregnetBeløp shouldBe BigDecimal.valueOf(6000)
+    }
+
+    @Test
+    @Suppress("NonAsciiCharacters")
+    fun `skal ikke bruke beregning for et annet barn når barnet mangler beregning`() {
+        mockBeregningerFraBBM(
+            opprettBidragBeregningResponsDto(
+                kravhaver = personIdentSøknadsbarn1,
+                sak = saksnummer,
+                beregnetBeløp = BigDecimal.valueOf(5000),
+                faktiskBeløp = BigDecimal.valueOf(5000),
+            ),
+        )
+
+        val resultat = hentLøpendeBidrag(
+            løpendeBidragListe = listOf(
+                opprettLøpendeBidragForBarn(personIdentSøknadsbarn1, ÅrMånedsperiode(YearMonth.of(2024, 7), null)),
+                opprettLøpendeBidragForBarn(personIdentSøknadsbarn2, ÅrMånedsperiode(YearMonth.of(2024, 7), null)),
+            ),
+            vedtakListe = listOf(
+                opprettVedtakForStønad(kravhaver = personIdentSøknadsbarn1, stønadstype = Stønadstype.BIDRAG),
+                opprettVedtakForStønad(kravhaver = personIdentSøknadsbarn2, stønadstype = Stønadstype.BIDRAG)
+                    .copy(vedtaksid = 2),
+            ),
+        ).associateBy { it.kravhaver.verdi }
+
+        resultat.getValue(personIdentSøknadsbarn1).periodeListe.single().beregning?.beregnetBeløp shouldBe BigDecimal.valueOf(5000)
+        resultat.getValue(personIdentSøknadsbarn2).periodeListe.single().beregning shouldBe null
+    }
+
+    @Test
+    @Suppress("NonAsciiCharacters")
+    fun `skal ikke hente beregning fra BBM for manuelt vedtak uten søknadsid`() {
+        val resultat = hentLøpendeBidrag(
+            løpendeBidragListe = listOf(opprettLøpendeBidragForBarn(personIdentSøknadsbarn1, ÅrMånedsperiode(YearMonth.of(2024, 7), null))),
+            vedtakListe = listOf(
+                opprettVedtakForStønad(kravhaver = personIdentSøknadsbarn1, stønadstype = Stønadstype.BIDRAG)
+                    .copy(behandlingsreferanser = emptyList()),
+            ),
+        )
+
+        resultat.single().periodeListe.single().beregning shouldBe null
+        verify(exactly = 0) { bbmConsumer.hentBeregningForSøknader(any()) }
+        verify(exactly = 0) { vedtakService.hentVedtak(any()) }
+    }
+
+    private fun opprettLøpendeBidragForBarn(kravhaver: String, vararg perioder: ÅrMånedsperiode) = LøpendeBidrag(
+        sak = Saksnummer(saksnummer),
+        type = Stønadstype.BIDRAG,
+        kravhaver = Personident(kravhaver),
+        mottaker = Personident(personIdentBidragsmottaker),
+        periodeListe = perioder.map {
+            BidragPeriode(
+                periode = it,
+                vedtaksid = if (kravhaver == personIdentSøknadsbarn2) 2 else 1,
+                løpendeBeløp = BigDecimal.valueOf(5000),
+                valutakode = "NOK",
+            )
+        },
+    )
+
+    // Søknadsbarnet har senere beregningsperiode enn behandlingen slik at løpende bidrag for alle barn tas med
+    private fun hentLøpendeBidrag(løpendeBidragListe: List<LøpendeBidrag>, vedtakListe: List<VedtakForStønad>): List<LøpendeBidragMedBeregning> {
+        val beregningsperiode = ÅrMånedsperiode(YearMonth.of(2024, 7), YearMonth.of(2025, 6))
+        val søknadsbarnReferanse = "person_PERSON_SØKNADSBARN_$personIdentSøknadsbarn1"
+
+        every { vedtakService.hentAlleStønaderForBidragspliktig(any()) } returns LøpendeBidragPeriodeResponse(løpendeBidragListe)
+        every { vedtakService.finnAlleManuelleVedtakForBp(any()) } returns vedtakListe
+
+        return hentLøpendeBidragService.hentLøpendeBidragForBehandling(
+            Personident(personIdentBidragspliktig),
+            beregningsperiode,
+            BidragsberegningOrkestratorRequestV2(
+                beregningsperiode = beregningsperiode,
+                beregningBarn = listOf(
+                    BeregningGrunnlagV2(
+                        søknadsbarnreferanse = søknadsbarnReferanse,
+                        periode = ÅrMånedsperiode("2024-09", "2025-06"),
+                        beregningsperiode = ÅrMånedsperiode("2024-09", "2025-06"),
+                        virkningstidspunkt = YearMonth.parse("2024-09"),
+                        opphørsdato = null,
+                        stønadstype = Stønadstype.BIDRAG,
+                        erDirekteAvslag = false,
+                        omgjøringOrkestratorGrunnlag = null,
+                    ),
+                ),
+                grunnlagsliste = opprettGrunnlagsobjektForSøknadsbarn(mapOf(Personident(personIdentSøknadsbarn1) to søknadsbarnReferanse)) +
+                    opprettGrunnlagobjektForBidragspliktig(personIdentBidragspliktig),
+            ),
+        )
+    }
+
+    private fun List<LøpendeBidragMedBeregning>.beregninger() = flatMap { løpendeBidrag -> løpendeBidrag.periodeListe.mapNotNull { it.beregning } }.distinct()
+
+    // Etterligner BBM: returnerer ett element per søknad i forespørselen, med beregninger for samme sak, barn og stønadstype
+    private fun mockBeregningerFraBBM(
+        beregningListe: List<BidragBeregningResponsDto.BidragBeregning>,
+        erVedtakMedBeregning: (HentBeregningForSøknad) -> Boolean = { true },
+        hendelseFunnet: (HentBeregningForSøknad) -> Boolean = { true },
+        datoSøknadIBeregning: LocalDate = SØKNAD_MOTTATT_DATO,
+    ) {
+        every { bbmConsumer.hentBeregningForSøknader(any()) } answers {
+            HentBeregningForSøknaderRespons(
+                firstArg<HentBeregningForSøknaderRequest>().søknadListe.map { søknad ->
+                    BeregningForSøknad(
+                        søknadsid = søknad.søknadsid,
+                        søknadMottattDato = SØKNAD_MOTTATT_DATO,
+                        erVedtakMedBeregning = erVedtakMedBeregning(søknad),
+                        hendelseFunnet = hendelseFunnet(søknad),
+                        beregningListe = beregningListe
+                            .filter {
+                                it.saksnummer == søknad.saksnummer &&
+                                    it.personidentBarn == søknad.personidentBarn &&
+                                    it.stønadstype == søknad.stønadstype
+                            }.map { it.copy(datoSøknad = datoSøknadIBeregning) },
+                    )
+                },
+            )
+        }
+    }
+
+    companion object {
+        private val SØKNAD_MOTTATT_DATO = LocalDate.parse("2024-06-15")
     }
 }

@@ -15,6 +15,8 @@ import no.nav.bidrag.transport.behandling.beregning.felles.BidragBeregningReques
 import no.nav.bidrag.transport.behandling.beregning.felles.FeilregistrerSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.FeilregistrerSøknadsBarnRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.HentBPsÅpneSøknaderRequest
+import no.nav.bidrag.transport.behandling.beregning.felles.HentBeregningForSøknaderRequest
+import no.nav.bidrag.transport.behandling.beregning.felles.HentBeregningForSøknaderRespons
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknaderForBehandlingRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.LeggTilBarnIFFSøknadRequest
@@ -279,6 +281,25 @@ class BidragBeregningController(
     fun hentAlleBeregninger(
         @Valid @RequestBody request: BidragBeregningRequestDto,
     ) = bbmService.hentAlleBeregningerOgSamværForVedtak(request)
+
+    @PostMapping("/soknader")
+    @Operation(
+        description =
+        "Henter beregninger og vedtaksinformasjon for søknader. Beregningene matches mot søknadens mottatt dato, " +
+            "og erVedtakMedBeregning settes fra FRA_BBM på siste vedtakshendelse for søknaden",
+        security = [SecurityRequirement(name = "bearer-key")],
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "Returnerer ett element per søknad. Søknader som ikke finnes returneres med hendelseFunnet = false",
+            ),
+        ],
+    )
+    fun hentBeregningForSøknader(
+        @Valid @RequestBody request: HentBeregningForSøknaderRequest,
+    ): HentBeregningForSøknaderRespons = bbmService.hentBeregningForSøknader(request)
 
     @PostMapping("/sammenknyttsoknader")
     @Operation(
