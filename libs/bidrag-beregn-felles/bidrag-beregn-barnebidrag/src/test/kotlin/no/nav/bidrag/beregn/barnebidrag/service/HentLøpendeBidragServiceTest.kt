@@ -2075,8 +2075,8 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
             løpendeBidragListe = listOf(
                 opprettLøpendeBidragForBarn(
                     personIdentSøknadsbarn1,
-                    ÅrMånedsperiode(YearMonth.of(2024, 7), YearMonth.of(2024, 10)),
-                    ÅrMånedsperiode(YearMonth.of(2024, 10), null),
+                    ÅrMånedsperiode(YearMonth.of(2024, 7), YearMonth.of(2024, 9)),
+                    ÅrMånedsperiode(YearMonth.of(2024, 9), null),
                 ),
             ),
             vedtakListe = listOf(opprettVedtakForStønad(kravhaver = personIdentSøknadsbarn1, stønadstype = Stønadstype.BIDRAG)),
@@ -2086,7 +2086,7 @@ internal class HentLøpendeBidragServiceTest : FellesTest() {
         periodeListe shouldHaveSize 2
         periodeListe[0].periode.fom shouldBe YearMonth.of(2024, 7)
         periodeListe[0].beregning?.beregnetBeløp shouldBe BigDecimal.valueOf(5000)
-        periodeListe[1].periode.fom shouldBe YearMonth.of(2024, 10)
+        periodeListe[1].periode.fom shouldBe YearMonth.of(2024, 9)
         periodeListe[1].beregning?.beregnetBeløp shouldBe BigDecimal.valueOf(6000)
     }
 

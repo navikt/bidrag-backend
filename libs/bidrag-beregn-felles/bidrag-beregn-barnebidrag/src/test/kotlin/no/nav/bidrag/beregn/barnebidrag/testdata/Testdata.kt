@@ -485,16 +485,19 @@ fun opprettLøpendeBidrag() = listOf(
         periodeListe = listOf(
             BidragPeriode(
                 periode = ÅrMånedsperiode(YearMonth.of(2022, 5), YearMonth.of(2022, 8)),
+                vedtaksid = 2,
                 løpendeBeløp = BigDecimal.valueOf(22250),
                 valutakode = "NOK",
             ),
             BidragPeriode(
                 periode = ÅrMånedsperiode(YearMonth.of(2022, 8), YearMonth.of(2024, 5)),
+                vedtaksid = 2,
                 løpendeBeløp = BigDecimal.valueOf(22280),
                 valutakode = "NOK",
             ),
             BidragPeriode(
                 periode = ÅrMånedsperiode(YearMonth.of(2024, 5), null),
+                vedtaksid = 3,
                 løpendeBeløp = BigDecimal.valueOf(32450),
                 valutakode = "NOK",
             ),
@@ -508,11 +511,13 @@ fun opprettLøpendeBidrag() = listOf(
         periodeListe = listOf(
             BidragPeriode(
                 periode = ÅrMånedsperiode(YearMonth.of(2024, 5), YearMonth.of(2024, 7)),
+                vedtaksid = 4,
                 løpendeBeløp = BigDecimal.valueOf(42450),
                 valutakode = "NOK",
             ),
             BidragPeriode(
                 periode = ÅrMånedsperiode(YearMonth.of(2024, 7), null),
+                vedtaksid = 4,
                 løpendeBeløp = BigDecimal.valueOf(42470),
                 valutakode = "NOK",
             ),
@@ -526,11 +531,13 @@ fun opprettLøpendeBidrag() = listOf(
         periodeListe = listOf(
             BidragPeriode(
                 periode = ÅrMånedsperiode(YearMonth.of(2020, 2), YearMonth.of(2024, 2)),
+                vedtaksid = 5,
                 løpendeBeløp = BigDecimal.valueOf(52020),
                 valutakode = "NOK",
             ),
             BidragPeriode(
                 periode = ÅrMånedsperiode(YearMonth.of(2024, 2), null),
+                vedtaksid = 5,
                 løpendeBeløp = BigDecimal.valueOf(52420),
                 valutakode = "NOK",
             ),
