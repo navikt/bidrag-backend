@@ -9,6 +9,7 @@ import no.nav.bidrag.domene.enums.vedtak.Beslutningstype
 import no.nav.bidrag.domene.enums.vedtak.Engangsbeløptype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
+import no.nav.bidrag.domene.enums.vedtak.konverterFraDeprekerteVerdier
 import no.nav.bidrag.domene.sak.Stønadsid
 import no.nav.bidrag.domene.tid.Datoperiode
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
@@ -269,7 +270,7 @@ fun VedtakDto.finnSluttberegningBarnebidragGrunnlagIPeriode(periode: VedtakPerio
 val VedtakDto.typeBehandling get() =
     when {
         stønadsendringListe.isNotEmpty() && stønadsendringListe.first().type == Stønadstype.FORSKUDD -> TypeBehandling.FORSKUDD
-        engangsbeløpListe.isNotEmpty() && engangsbeløpListe.first().type == Engangsbeløptype.SÆRBIDRAG -> TypeBehandling.SÆRBIDRAG
+        engangsbeløpListe.isNotEmpty() && engangsbeløpListe.first().type.konverterFraDeprekerteVerdier() == Engangsbeløptype.SÆRBIDRAG -> TypeBehandling.SÆRBIDRAG
         else -> TypeBehandling.BIDRAG
     }
 

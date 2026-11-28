@@ -164,7 +164,7 @@ class ValiderBeregning(
     }
 
     fun Behandling.tilSærbidragAvslagskode(): Resultatkode? {
-        if (avslag != null || utgift == null || utgift?.utgiftsposter?.isEmpty() == true) return avslag
+        if (avslag != null || utgift == null || utgift?.utgiftsposter?.isEmpty() == true || erBisysVedtak) return avslag
         val delberegningUtgift = tilGrunnlagUtgift().innholdTilObjekt<DelberegningUtgift>()
         return when {
             utgift?.utgiftsposter?.all { erDatoForUtgiftForeldet(it.dato) } == true -> Resultatkode.ALLE_UTGIFTER_ER_FORELDET
