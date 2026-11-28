@@ -17,12 +17,12 @@ import no.nav.bidrag.domene.enums.behandling.SøknadsknytningStatus
 import no.nav.bidrag.domene.enums.rolle.SøktAvType
 import no.nav.bidrag.transport.behandling.beregning.felles.BidragBeregningRequestDto
 import no.nav.bidrag.transport.behandling.beregning.felles.BidragBeregningResponsDto
-import no.nav.bidrag.transport.behandling.beregning.felles.HentBeregningForSøknaderRequest
-import no.nav.bidrag.transport.behandling.beregning.felles.HentBeregningForSøknaderRespons
 import no.nav.bidrag.transport.behandling.beregning.felles.FeilregistrerSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.FeilregistrerSøknadsBarnRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.HentBPsÅpneSøknaderRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.HentBPsÅpneSøknaderResponse
+import no.nav.bidrag.transport.behandling.beregning.felles.HentBeregningForSøknaderRequest
+import no.nav.bidrag.transport.behandling.beregning.felles.HentBeregningForSøknaderRespons
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknad
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknadResponse

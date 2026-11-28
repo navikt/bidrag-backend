@@ -162,7 +162,7 @@ class BBMService(
                 BeregningForSøknad(
                     søknadsid = it.søknadsid,
                     søknadMottattDato = søknadMottattDato,
-                    erVedtakMedBeregning = hendelse?.fraBbm == FRA_BBM || søknad?.behandlingsid != null,
+                    erVedtakMedBeregning = hendelse?.fraBbm == FRA_BBM,
                     hendelseFunnet = søknadMottattDato != null && hendelse != null,
                     beregningListe =
                     søknadMottattDato
